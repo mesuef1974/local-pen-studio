@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>حافّة | مختبر الحواف</title><link rel="stylesheet" href="/styles.css"><script src="/app.js" type="module"></script></head>
+<body>
+<a class="skip" href="#workspace">انتقل إلى الصورة</a>
+<header class="topbar"><div class="brand"><svg viewBox="0 0 36 36" fill="none" aria-hidden="true"><path d="M4 28V8h20M12 32V16h20M20 24h12" stroke="currentColor" stroke-width="2.8"/></svg><div><strong>حافّة</strong><span>مختبر الصورة والخط</span></div></div><div class="header-note"><span class="local-dot" aria-hidden="true"></span>معالجة محلية <span class="separator">/</span> OpenCV</div><button id="save" class="primary" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg>حفظ صورة الحواف</button></header>
+<main class="shell">
+<aside class="tools" id="tools" aria-label="لوحة أدوات الحواف">
+ <div class="tools-title"><div><h1>من الصورة إلى الحواف</h1><p>اضبط التفاصيل. شاهد الفرق.</p></div><button id="reset" class="icon-button" title="استعادة الإعدادات" aria-label="استعادة الإعدادات"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2 8M3 3v7h7"/></svg></button></div>
+ <div class="source-tools"><label class="upload" for="file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m-5 5 5-5 5 5M4 15v6h16v-6"/></svg><strong>افتح صورة</strong><span>أو اسحبها إلى مساحة العمل</span></label><input id="file" type="file" accept="image/png,image/jpeg,image/webp" class="sr-only"><button id="sample" class="text-button">جرّب الصورة الجاهزة</button><p id="filename" class="filename">PNG، JPG، WebP · حتى 20 ميغابايت</p></div>
+ <section class="method-section"><h2>طريقة استخراج الحواف</h2><div class="methods" id="methods" role="group" aria-label="خوارزمية استخراج الحواف"></div><p id="methodHelp" class="help"></p></section>
+ <div id="controls"></div>
+ <details class="tool-group"><summary>الإعدادات المحفوظة</summary><div class="group-content"><button id="saveSettings" class="secondary">تصدير الإعدادات JSON</button><label for="settingsFile" class="secondary file-label">استيراد إعدادات</label><input id="settingsFile" class="sr-only" type="file" accept="application/json,.json"><p class="help">يحفظ خيارات المعالجة فقط دون الصورة.</p></div></details>
+ <div class="tool-footer"><label class="check"><input id="auto" type="checkbox" checked> تحديث مباشر</label><button id="run" class="secondary" disabled>تحديث الحواف</button></div>
+</aside>
+<section class="workspace" id="workspace" aria-label="معاينة الصورة والحواف">
+ <div class="work-heading"><div><h2>مساحة المعاينة</h2><p>الأصل، المعالجة، والنتيجة في مكان واحد.</p></div></div>
+ <section class="preset-panel" aria-label="التفضيلات السريعة"><div class="preset-heading"><h3 id="presetHeading">تفضيلات Canny</h3><span id="presetState">متوازن</span></div><div id="presets" class="presets" role="group" aria-labelledby="presetHeading"></div><p id="presetDescription" class="help"></p><p class="preset-note">تضبط التفضيلات الكشف والتجهيز والتنقية معًا، وتحفظ الدقة واللون والخلفية. نتائجها تختلف حسب الصورة.</p></section>
+ <div class="viewer">
+  <div class="viewer-toolbar"><div class="view-modes" role="group" aria-label="طريقة عرض الصورة"><button data-view="split" aria-pressed="true">مقارنة</button><button data-view="edges" aria-pressed="false">الحواف</button><button data-view="overlay" aria-pressed="false">تراكب</button></div><div class="zoom-tools"><button id="fit" class="icon-button" title="ملاءمة الصورة" aria-label="ملاءمة الصورة"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5"/></svg></button><label for="zoom" class="sr-only">تكبير المعاينة</label><input id="zoom" type="range" min="50" max="250" value="100" step="10"><output id="zoomValue" for="zoom">100%</output></div></div>
+  <div id="empty" class="empty"><div class="empty-art" aria-hidden="true"><svg viewBox="0 0 240 180" fill="none"><rect x="34" y="20" width="172" height="140" rx="6"/><path d="m34 124 49-45 36 30 34-55 53 70M111 20v140M101 20h20M101 160h20"/><circle cx="71" cy="53" r="10"/></svg></div><h3>كل صورة تبدأ بخط</h3><p>أضف صورة لتستكشف حوافها، ثم تحكّم في النتيجة خطوة بخطوة.</p><button id="emptyUpload" class="primary">اختر صورة</button><span>لا تُرسل صورك إلى خدمة خارجية.</span></div>
+  <div class="image-grid" id="imageGrid" hidden>
+   <figure class="image-panel source-panel"><figcaption><strong id="sourceCaption">مدخل الحواف بعد التجهيز</strong><label for="sourceView" class="sr-only">الصورة المرجعية</label><select id="sourceView"><option value="prepared" selected>بعد التجهيز</option><option value="original">الأصل</option></select></figcaption><div class="image-viewport"><div class="image-paper"><img id="sourceImage" alt="مدخل كشف الحواف بعد تجهيز الصورة"></div></div></figure>
+   <figure class="image-panel result-panel"><figcaption><strong id="resultCaption">صورة الحواف</strong><span id="algorithmLabel">Canny</span></figcaption><div class="image-viewport"><div class="image-paper" id="resultPaper"><img id="resultImage" alt="صورة الحواف المعالجة" hidden><div id="resultPlaceholder" class="result-placeholder">ستظهر الحواف هنا</div><progress id="progress" hidden aria-label="معالجة الصورة محليًا"></progress></div></div></figure>
+  </div>
+  <div class="viewer-footer"><span id="dimensions">لا توجد صورة</span><span id="engine">OpenCV / Python</span></div>
+ </div>
+ <div class="result-info"><div><span>زمن المعالجة</span><strong id="timing">—</strong></div><div><span>تغطية الحواف</span><strong id="coverage">—</strong></div><div><span>المكونات المحذوفة</span><strong id="removed">—</strong></div><div><span>مقاس النتيجة</span><strong id="size">—</strong></div></div>
+ <p id="error" class="error" hidden></p>
+ <footer class="workspace-footer"><p>صورة تدخل. حواف تخرج. <span>دون نماذج، دون اشتراكات.</span></p><details><summary>عن طرق المعالجة</summary><p>الحواف تغيّرات في شدة الإضاءة؛ قد تشمل الملمس والظل أيضًا. لا تتعرف هذه الخوارزميات على ملامح الوجه معنويًا. الترقيق والفتح وحذف المكونات قد تزيل تفاصيل دقيقة، ووصل الفجوات قد يضيف حبرًا.</p><a href="https://docs.opencv.org/4.10.0/dd/d1a/group__imgproc__feature.html" target="_blank" rel="noopener">مرجع OpenCV الرسمي</a></details></footer>
+</section>
+</main>
+</body></html>
