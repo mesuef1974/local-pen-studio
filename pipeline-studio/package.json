@@ -1,0 +1,1 @@
+{"name":"local-image-pen-pipeline","private":true,"type":"module","scripts":{"test":"node --test test-core.mjs test-controller.mjs"}}
