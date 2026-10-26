@@ -1,0 +1,13 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync('lineart.js','utf8');
+const functions=source.slice(source.indexOf('function pathLength'),source.indexOf('function rememberPathEdit'));
+const context=vm.createContext({paths:[[[90,0],[100,0]],[[10,0],[20,0]],[[50,0],[40,0]]],deleted:new Set(),mode:'nearest',$:()=>({value:context.mode})});
+vm.runInContext(functions+';globalThis.orderedPaths=orderedPaths;',context);
+const before=JSON.stringify(context.paths),ordered=context.orderedPaths();
+assert.deepEqual(Array.from(ordered,v=>v.i),[1,2,0]);
+assert.equal(JSON.stringify(context.paths),before,'ordering must not mutate source geometry');
+assert.equal(JSON.stringify(ordered[1].p),'[[40,0],[50,0]]','reverse endpoint only, preserve every vertex');
+context.deleted.add(2);assert.equal(context.orderedPaths().length,2);
+context.mode='original';assert.deepEqual(Array.from(context.orderedPaths(),v=>v.i),[0,1]);
+context.deleted=new Set([0,1,2]);assert.equal(context.orderedPaths().length,0);
+console.log('PASS: ordering, endpoint reversal, source immutability, deletion, empty set');

@@ -1,0 +1,18 @@
+{
+  "OpenCV": "4.10.0",
+  "sourceSHA256": "c173be9f80a8fbbd831b7201d5d44afb34ab3ec068394657d8caf79024632a6c",
+  "settings": {
+    "level": 100,
+    "minLength": 2,
+    "lineDenoise": 0,
+    "detail": 60,
+    "backendTolerance": 0,
+    "workerTolerance": 0,
+    "shading": false,
+    "joining": false,
+    "smoothing": false,
+    "protection": false,
+    "timeLimit": false
+  },
+  "limits": "Synthetic separated strokes only. Actual Python extractor and JS worker; static rasterization of returned geometry, no mechanical simulation."
+}

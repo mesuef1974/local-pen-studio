@@ -1,0 +1,52 @@
+[
+  {
+    "mode": "edges",
+    "strokeCount": 16,
+    "precisionWithin2px": 0.0,
+    "recallWithin2px": 0.0,
+    "precisionWithin4px": 0.9691211401425178,
+    "recallWithin4px": 0.9995329285380663,
+    "components": 16,
+    "expectedComponents": 10,
+    "lengthRatio": 2.1242576299444806,
+    "overlapPixelFraction": 0.0,
+    "featureRecall": {
+      "outline": 0.0,
+      "brow-left": 0.0,
+      "brow-right": 0.0,
+      "eye-left": 0.0,
+      "eye-right": 0.0,
+      "pupil-left": 0.0,
+      "pupil-right": 0.0,
+      "nose": 0.0,
+      "mouth": 0.0,
+      "mouth-line": 0.0
+    },
+    "pass": false
+  },
+  {
+    "mode": "centerline",
+    "strokeCount": 10,
+    "precisionWithin2px": 1.0,
+    "recallWithin2px": 0.9995329285380663,
+    "precisionWithin4px": 1.0,
+    "recallWithin4px": 1.0,
+    "components": 10,
+    "expectedComponents": 10,
+    "lengthRatio": 1.0786953909389017,
+    "overlapPixelFraction": 0.0,
+    "featureRecall": {
+      "outline": 1.0,
+      "brow-left": 1.0,
+      "brow-right": 1.0,
+      "eye-left": 1.0,
+      "eye-right": 1.0,
+      "pupil-left": 1.0,
+      "pupil-right": 1.0,
+      "nose": 0.9888888888888889,
+      "mouth": 1.0,
+      "mouth-line": 1.0
+    },
+    "pass": true
+  }
+]

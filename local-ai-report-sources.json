@@ -1,0 +1,310 @@
+{
+  "review_date": "2026-10-25",
+  "scope": "Official documentation, publisher model cards and primary research; no application installation or inference benchmark in this task.",
+  "sources": [
+    {
+      "id": "offline",
+      "number": 1,
+      "title": "LM Studio — Offline Operation",
+      "url": "https://lmstudio.ai/docs/app/offline",
+      "type": "وثائق رسمية",
+      "use": "ما يعمل بلا اتصال، وما يحتاج تنزيلًا أو اتصالًا."
+    },
+    {
+      "id": "rag",
+      "number": 2,
+      "title": "LM Studio — Chat with Documents",
+      "url": "https://lmstudio.ai/docs/app/basics/rag",
+      "type": "وثائق رسمية",
+      "use": "إرفاق PDF وDOCX وTXT، والفرق بين إدخال الملف كاملًا واسترجاع مقاطع."
+    },
+    {
+      "id": "api",
+      "number": 3,
+      "title": "LM Studio — OpenAI-compatible endpoints",
+      "url": "https://lmstudio.ai/docs/developer/openai-compat",
+      "type": "وثائق رسمية",
+      "use": "نقاط API المحلية وربط التطبيقات بعنوان base URL."
+    },
+    {
+      "id": "structured",
+      "number": 4,
+      "title": "LM Studio — Structured Output",
+      "url": "https://lmstudio.ai/docs/developer/openai-compat/structured-output",
+      "type": "وثائق رسمية",
+      "use": "تقييد شكل المخرجات بمخطط JSON؛ الشكل لا يثبت صحة المحتوى."
+    },
+    {
+      "id": "mcp",
+      "number": 5,
+      "title": "LM Studio — Use MCP Servers",
+      "url": "https://lmstudio.ai/docs/app/mcp",
+      "type": "وثائق رسمية",
+      "use": "إتاحة الأدوات للنموذج، ودعم الخوادم المحلية والبعيدة."
+    },
+    {
+      "id": "auth",
+      "number": 6,
+      "title": "LM Studio — Authentication",
+      "url": "https://lmstudio.ai/docs/developer/core/authentication",
+      "type": "وثائق رسمية",
+      "use": "المصادقة بالرموز والصلاحيات في الإصدارات 0.4 وما بعدها."
+    },
+    {
+      "id": "load",
+      "number": 7,
+      "title": "LM Studio — lms load",
+      "url": "https://lmstudio.ai/docs/cli/local-models/load",
+      "type": "وثائق رسمية",
+      "use": "السياق وGPU offload وتقدير الذاكرة قبل التحميل."
+    },
+    {
+      "id": "defaults",
+      "number": 8,
+      "title": "LM Studio — Per-model defaults",
+      "url": "https://lmstudio.ai/docs/app/advanced/per-model",
+      "type": "وثائق رسمية",
+      "use": "حفظ إعدادات التحميل لكل نموذج."
+    },
+    {
+      "id": "anything",
+      "number": 9,
+      "title": "AnythingLLM — LM Studio provider",
+      "url": "https://docs.anythingllm.com/setup/llm-configuration/local/lmstudio",
+      "type": "وثائق رسمية",
+      "use": "الربط المباشر بين AnythingLLM وخادم LM Studio."
+    },
+    {
+      "id": "anything-embed",
+      "number": 10,
+      "title": "AnythingLLM — LM Studio embedder",
+      "url": "https://docs.anythingllm.com/setup/embedder-configuration/local/lmstudio",
+      "type": "وثائق رسمية",
+      "use": "الفهرسة بنموذج embedding محلي مستقل."
+    },
+    {
+      "id": "assistant",
+      "number": 11,
+      "title": "AnythingLLM — Desktop Assistant",
+      "url": "https://docs.anythingllm.com/desktop-assistant/introduction",
+      "type": "وثائق رسمية",
+      "use": "التعامل مع سياق الشاشة؛ موقع المعالجة يتبع المزود المختار."
+    },
+    {
+      "id": "anything-docker",
+      "number": 12,
+      "title": "AnythingLLM — Docker and localhost",
+      "url": "https://docs.anythingllm.com/installation-docker/localhost",
+      "type": "وثائق رسمية",
+      "use": "الفرق بين عنوان الخدمة على الجهاز وداخل الحاوية."
+    },
+    {
+      "id": "continue",
+      "number": 13,
+      "title": "Continue — LM Studio",
+      "url": "https://docs.continue.dev/customize/model-providers/top-level/lmstudio",
+      "type": "وثائق رسمية",
+      "use": "المزود المحلي وإعداد YAML داخل مساعد البرمجة."
+    },
+    {
+      "id": "continue-offline",
+      "number": 14,
+      "title": "Continue — Running without internet",
+      "url": "https://docs.continue.dev/guides/running-continue-without-internet",
+      "type": "وثائق رسمية",
+      "use": "متطلبات الاستخدام دون اتصال؛ يلزم إعداد كل المكونات محليًا."
+    },
+    {
+      "id": "webui",
+      "number": 15,
+      "title": "Open WebUI — OpenAI-compatible providers",
+      "url": "https://docs.openwebui.com/getting-started/quick-start/connect-a-provider/starting-with-openai-compatible/",
+      "type": "وثائق رسمية",
+      "use": "دعم LM Studio واتصال localhost:1234/v1."
+    },
+    {
+      "id": "webui-privacy",
+      "number": 16,
+      "title": "Open WebUI — Local and cloud models",
+      "url": "https://docs.openwebui.com/getting-started/quick-start/connect-a-provider/",
+      "type": "وثائق رسمية",
+      "use": "المزود والأدوات والـembeddings هي ما يحدد وجهة البيانات."
+    },
+    {
+      "id": "n8n",
+      "number": 17,
+      "title": "n8n — HTTP Request",
+      "url": "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/",
+      "type": "وثائق رسمية",
+      "use": "طلب HTTP إلى API محلي ضمن سير عمل."
+    },
+    {
+      "id": "n8n-host",
+      "number": 18,
+      "title": "n8n — Docker Compose",
+      "url": "https://docs.n8n.io/deploy/host-n8n/install-options/install-using-docker-compose.md",
+      "type": "وثائق رسمية",
+      "use": "التشغيل الذاتي على Windows عبر WSL وDocker؛ خدمات إضافية لها كلفة موارد."
+    },
+    {
+      "id": "dify",
+      "number": 19,
+      "title": "Dify — Self-host with Docker Compose",
+      "url": "https://docs.dify.ai/en/self-host/deploy/quick-start/docker-compose",
+      "type": "وثائق رسمية",
+      "use": "متطلبات التشغيل الذاتي والخدمات على Windows/WSL2."
+    },
+    {
+      "id": "dify-provider",
+      "number": 20,
+      "title": "Dify Marketplace — OpenAI-API-compatible",
+      "url": "https://marketplace.dify.ai/plugin/langgenius/openai_api_compatible",
+      "type": "متجر رسمي",
+      "use": "إضافة موثقة تذكر LM Studio صراحةً؛ ربط مباشر بمزود متوافق."
+    },
+    {
+      "id": "docling",
+      "number": 21,
+      "title": "Docling — Advanced options and offline usage",
+      "url": "https://docling-project.github.io/docling/usage/advanced_options/",
+      "type": "وثائق رسمية",
+      "use": "تجهيز النماذج مسبقًا، استخراج الجداول، وضبط خدمات المعالجة."
+    },
+    {
+      "id": "paddle",
+      "number": 22,
+      "title": "PaddleX — Text recognition models",
+      "url": "https://paddlepaddle.github.io/PaddleX/3.5/en/module_usage/tutorials/ocr_modules/text_recognition.html",
+      "type": "وثائق رسمية",
+      "use": "وجود نماذج تعرف حروف عربية؛ لا يثبت جودة كل مستند عربي."
+    },
+    {
+      "id": "bionic",
+      "number": 23,
+      "title": "LM Studio — Bionic overview",
+      "url": "https://lmstudio.ai/docs/bionic",
+      "type": "وثائق رسمية",
+      "use": "تطبيق وكيل منفصل، ومواضع تشغيل النموذج: محلي أو بعيد أو سحابي."
+    },
+    {
+      "id": "skills",
+      "number": 24,
+      "title": "LM Studio Bionic — Skills",
+      "url": "https://lmstudio.ai/docs/bionic/agent/skills",
+      "type": "وثائق رسمية",
+      "use": "المهارة تعليمات قابلة لإعادة الاستخدام، وليست تعديلًا لأوزان النموذج."
+    },
+    {
+      "id": "embed",
+      "number": 25,
+      "title": "Qwen3-Embedding-0.6B — Model card",
+      "url": "https://huggingface.co/Qwen/Qwen3-Embedding-0.6B",
+      "type": "Hugging Face / الناشر",
+      "use": "تمثيل متعدد اللغات للبحث واسترجاع النصوص."
+    },
+    {
+      "id": "whisper",
+      "number": 26,
+      "title": "Whisper large-v3-turbo — Model card",
+      "url": "https://huggingface.co/openai/whisper-large-v3-turbo",
+      "type": "Hugging Face / بطاقة النموذج",
+      "use": "نسخ الصوت إلى نص؛ تشغيله مسار متخصص مستقل عن المحادثة النصية."
+    },
+    {
+      "id": "vision",
+      "number": 27,
+      "title": "LM Studio — Qwen3.5 4B",
+      "url": "https://lmstudio.ai/models/qwen/qwen3.5-4b",
+      "type": "فهرس رسمي",
+      "use": "نموذج نص وصورة بملفات GGUF، مع اختلاف متطلبات الذاكرة حسب النسخة."
+    },
+    {
+      "id": "olmocr",
+      "number": 28,
+      "title": "LM Studio — olmOCR 2",
+      "url": "https://lmstudio.ai/models/olmocr2",
+      "type": "فهرس رسمي",
+      "use": "إعداد الصفحة وتعليمات OCR وحدود نقل نتيجة خط المعالجة إلى الدردشة."
+    },
+    {
+      "id": "rag-paper",
+      "number": 29,
+      "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "type": "ورقة بحثية · NeurIPS 2020",
+      "use": "المرجع التأسيسي لربط التوليد باسترجاع معرفة خارج الأوزان."
+    },
+    {
+      "id": "lost",
+      "number": 30,
+      "title": "Lost in the Middle: How Language Models Use Long Contexts",
+      "url": "https://arxiv.org/abs/2307.03172",
+      "type": "ورقة بحثية · TACL 2023",
+      "use": "اختبارات تبين أثر موضع المعلومة وطول السياق في النماذج المختبرة."
+    },
+    {
+      "id": "awq",
+      "number": 31,
+      "title": "AWQ: Activation-aware Weight Quantization",
+      "url": "https://arxiv.org/abs/2306.00978",
+      "type": "ورقة بحثية · MLSys 2024",
+      "use": "تكميم يقلل ذاكرة الأوزان؛ لا نعامل AWQ وGGUF Q4 كصيغة واحدة."
+    },
+    {
+      "id": "qlora",
+      "number": 32,
+      "title": "QLoRA: Efficient Finetuning of Quantized LLMs",
+      "url": "https://arxiv.org/abs/2305.14314",
+      "type": "ورقة بحثية · 2023",
+      "use": "تعديل أوزان عبر adapters بكلفة ذاكرة أقل؛ ليس أداة داخل LM Studio."
+    },
+    {
+      "id": "small",
+      "number": 33,
+      "title": "Small Language Models are the Future of Agentic AI",
+      "url": "https://arxiv.org/abs/2506.02153",
+      "type": "ورقة موقف · 2025؛ مراجعة سبتمبر 2026",
+      "use": "حجة لاستخدام نماذج صغيرة في مهام وكلاء محدودة ومتكررة، وليست ضمانًا عامًا."
+    },
+    {
+      "id": "consumer",
+      "number": 34,
+      "title": "Private LLM Inference on Consumer Blackwell GPUs",
+      "url": "https://arxiv.org/abs/2601.09527",
+      "type": "ورقة تجريبية أولية · 2026",
+      "use": "دراسة 79 إعدادًا على RTX 50؛ لا تُنقل أرقامها إلى RTX 4060 Laptop."
+    },
+    {
+      "id": "ragas",
+      "number": 35,
+      "title": "Ragas: Automated Evaluation of Retrieval Augmented Generation",
+      "url": "https://arxiv.org/abs/2309.15217",
+      "type": "ورقة بحثية · 2023؛ مراجعة 2025",
+      "use": "تقييم الاسترجاع وارتباط الإجابة بالأدلة على نحو منفصل."
+    },
+    {
+      "id": "agentdojo",
+      "number": 36,
+      "title": "AgentDojo: Prompt Injection Attacks and Defenses for LLM Agents",
+      "url": "https://arxiv.org/abs/2406.13352",
+      "type": "ورقة بحثية · 2024",
+      "use": "اختبار مخاطر التلاعب بالوكلاء عبر بيانات الأدوات؛ الاتصال المحلي لا يزيل الخطر."
+    },
+    {
+      "id": "arabic",
+      "number": 37,
+      "title": "ArabicMMLU: Assessing Multitask Language Understanding in Arabic",
+      "url": "https://arxiv.org/abs/2402.12840",
+      "type": "ورقة بحثية · Findings of ACL 2024",
+      "use": "تقييم عربي نصي؛ لا يصلح وحده لتقييم OCR أو جودة استخراج حقول."
+    },
+    {
+      "id": "camel",
+      "number": 38,
+      "title": "CAMEL-Bench: A Comprehensive Arabic LMM Benchmark",
+      "url": "https://arxiv.org/abs/2410.18976",
+      "type": "ورقة بحثية · 2024",
+      "use": "تقييم عربي متعدد الوسائط؛ دليل على ضرورة قياس مهامك العربية بصريًا."
+    }
+  ]
+}
