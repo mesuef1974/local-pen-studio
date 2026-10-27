@@ -41,7 +41,17 @@ jobs:
           curl --fail --silent --show-error --location --retry 3 "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" --output "$archive"
           printf '%s  %s\n' "$GITLEAKS_SHA256" "$archive" | sha256sum --check --status
           tar -xzf "$archive" -C "$RUNNER_TEMP" gitleaks
-          "$RUNNER_TEMP/gitleaks" git --redact=100 --no-banner --log-opts="--all" .
+          status=0
+          "$RUNNER_TEMP/gitleaks" git --redact=100 --no-banner --log-opts="--all" --report-format=json --report-path="$RUNNER_TEMP/gitleaks.json" . || status=$?
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          report = Path(os.environ['RUNNER_TEMP']) / 'gitleaks.json'
+          if report.exists():
+              for finding in json.loads(report.read_text()):
+                  print({key: finding.get(key) for key in ['RuleID', 'File', 'StartLine', 'Commit', 'Fingerprint']})
+          PY
+          exit "$status"
   python:
     name: Python (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -87,6 +97,8 @@ jobs:
         working-directory: edge-studio
   javascript:
     name: JavaScript (${{ matrix.os }})
+    env:
+      PYTHONUTF8: '1'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
@@ -103,6 +115,10 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==12.1.1
       - run: node --test flux-studio/test-api-client.mjs flux-studio/test-core.mjs flux-studio/test-paper.mjs flux-studio/test-prompts.mjs
       - run: node --test test-controller.mjs test-core.mjs
         working-directory: pipeline-studio
