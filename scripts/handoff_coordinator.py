@@ -167,10 +167,11 @@ def reconcile_if_safe(root, transcript, owner):
     return True, audit
 
 
-def prompt_for(identity, card, snapshot):
+def prompt_for(identity, card, snapshot, existing=False):
+    origin = 'رشحها المستخدم لاستلام المسار' if existing else 'أنشأها منسق HANDOFF0001 بعد بلوغ 200000 توكن'
     return f"""0001 — استئناف آلي آمن
 
-هذه جلسة جديدة أنشأها منسق HANDOFF0001 بعد بلوغ 200000 توكن. اقرأ بطاقة
+هذه جلسة {origin}. اقرأ بطاقة
 docs/handoffs/HANDOFF0001.md من المشروع الحالي وتحقق فعليًا من Git. لا تعدل أي
 ملف، ولا تنشر، ولا تدمج، ولا تنشئ أو تؤرشف جلسة. أعد إقرار JSON فقط بالقيم
 المطلوبة إذا تطابقت بصمة البطاقة ومساحة العمل، وإلا أعد status=\"rejected\".
@@ -196,7 +197,7 @@ class CodexCLI:
         if result.returncode:
             raise RuntimeError('Codex queue failed')
 
-    def create(self, root, identity, card, snapshot, local):
+    def _receive(self, root, identity, card, snapshot, local):
         schema = local / 'ack-schema.json'
         ack_path = local / 'ack.json'
         schema_value = {
@@ -214,19 +215,55 @@ class CodexCLI:
                                 encoding='utf-8', capture_output=True, timeout=self.timeout)
         if result.returncode:
             raise RuntimeError('Codex receiver failed')
-        receiver = None
+        observed = None
         for line in result.stdout.splitlines():
             try:
                 value = json.loads(line)
             except ValueError:
                 continue
-            receiver = receiver or value.get('thread_id') or value.get('threadId')
+            observed = observed or value.get('thread_id') or value.get('threadId')
             if value.get('type') == 'thread.started':
-                receiver = receiver or value.get('thread_id')
-        if not receiver or not ack_path.exists():
+                observed = observed or value.get('thread_id')
+        if not observed or not ack_path.exists():
             raise RuntimeError('Receiver identity or acknowledgement is missing')
         ack = json.loads(ack_path.read_text(encoding='utf-8'))
-        return receiver, ack
+        return observed, ack
+
+    def create(self, root, identity, card, snapshot, local):
+        return self._receive(root, identity, card, snapshot, local)
+
+def nominate(root, receiver):
+    uuid.UUID(receiver)
+    directory = h.state_dir(root)
+    local = directory / 'coordinator'
+    with h.lock(directory):
+        owner = h.read_state(directory).get('owner_session')
+        if not owner or receiver == owner:
+            raise ValueError('Receiver must differ from the registered owner')
+        h.atomic_json(local / 'nomination.json', {'source': owner, 'receiver': receiver,
+                                                  'time': h.now()})
+    return {'source': owner, 'receiver': receiver, 'ownership_changed': False}
+
+
+def read_receiver_ack(receiver, expected, requested_at, sessions_root=None):
+    transcript = discover_transcript(receiver, sessions_root)
+    requested = h.dt.datetime.fromisoformat(requested_at.replace('Z', '+00:00'))
+    accepted = None
+    with transcript.open('r', encoding='utf-8') as source:
+        for line in source:
+            row = json.loads(line)
+            if row.get('type') != 'event_msg' or (row.get('payload') or {}).get('type') != 'task_complete':
+                continue
+            timestamp = h.dt.datetime.fromisoformat(row['timestamp'].replace('Z', '+00:00'))
+            if timestamp < requested:
+                continue
+            try:
+                value = json.loads((row.get('payload') or {}).get('last_agent_message', ''))
+            except (TypeError, ValueError):
+                continue
+            if value == expected:
+                accepted = value
+    return accepted
 
 
 def refresh_usage(root, sessions_root=None):
@@ -299,26 +336,50 @@ def once(root, backend, sessions_root=None, idle_reader=None, dry_run=False):
                 h.atomic_json(history, transfer)
                 transfer = {}
             if dry_run:
-                return {'result': 'would_create', 'transfer': identity}
+                nominated = local / 'nomination.json'
+                return {'result': 'would_verify' if nominated.exists() else 'would_create',
+                        'transfer': identity}
+            nomination_path = local / 'nomination.json'
+            nomination = json.loads(nomination_path.read_text(encoding='utf-8')) if nomination_path.exists() else {}
+            nominated_receiver = nomination.get('receiver') if nomination.get('source') == owner else None
+            phase = 'awaiting_existing_ack' if nominated_receiver else 'creating'
             if transfer.get('phase') == 'creating':
-                return {'result': 'blocked', 'reasons': ['creation_outcome_needs_review']}
-            h.atomic_json(transfer_path, {'id': identity, 'phase': 'creating', 'source': owner,
-                                         'card': card['hash'], 'workspace': snapshot['fingerprint'],
-                                         'time': h.now()})
+                reason = 'creation_outcome_needs_review'
+                return {'result': 'blocked', 'reasons': [reason]}
+            if transfer.get('phase') == 'awaiting_existing_ack':
+                nominated_receiver = transfer.get('receiver')
+                requested_at = transfer.get('time')
+                queue_existing = False
+            else:
+                requested_at = h.now()
+                h.atomic_json(transfer_path, {'id': identity, 'phase': phase, 'source': owner,
+                                             'receiver': nominated_receiver,
+                                             'card': card['hash'], 'workspace': snapshot['fingerprint'],
+                                             'time': requested_at})
+                queue_existing = bool(nominated_receiver)
             nudge = False
             result = None
     if result is not None:
         if result.get('nudge'):
             backend.queue(owner, 'بلغ سياق HANDOFF0001 حد 200000. حدّث متن البطاقة الآن فقط، واجعل status=ready_to_resume بعد إكمال الأقسام والعمليات المعلقة، ثم أنهِ الدور. لا تنشئ أو تؤرشف جلسة ولا تنشر.')
         return result
-    try:
-        receiver, ack = backend.create(root, identity, card, snapshot, local)
-    except Exception:
-        # The creating marker deliberately blocks blind retries: a receiver may
-        # have been created even if its acknowledgement was interrupted.
-        raise
     expected = {'status': 'accepted', 'transfer': identity,
                 'card': card['hash'], 'workspace': snapshot['fingerprint']}
+    if nominated_receiver:
+        if queue_existing:
+            backend.queue(nominated_receiver, prompt_for(identity, card, snapshot, True))
+            return {'result': 'awaiting_receiver_ack', 'receiver': nominated_receiver}
+        ack = read_receiver_ack(nominated_receiver, expected, requested_at, sessions_root)
+        if ack is None:
+            return {'result': 'awaiting_receiver_ack', 'receiver': nominated_receiver}
+        receiver = nominated_receiver
+    else:
+        try:
+            receiver, ack = backend.create(root, identity, card, snapshot, local)
+        except Exception:
+            # The creating marker deliberately blocks blind retries: a receiver may
+            # have been created even if its acknowledgement was interrupted.
+            raise
     if ack != expected:
         h.atomic_json(local / 'transfer.json', {'id': identity, 'phase': 'rejected',
                       'source': owner, 'receiver': receiver, 'time': h.now()})
@@ -344,7 +405,9 @@ def once(root, backend, sessions_root=None, idle_reader=None, dry_run=False):
         h.atomic_json(local / 'transfer.json', {'id': identity, 'phase': 'complete',
                       'source': owner, 'receiver': receiver, 'time': h.now(),
                       'session_archived': False})
-    return {'result': 'created', 'receiver': receiver, 'source_archived': False}
+    (local / 'nomination.json').unlink(missing_ok=True)
+    return {'result': 'adopted' if nominated_receiver else 'created',
+            'receiver': receiver, 'source_archived': False}
 
 
 def watch(root, nonce):
@@ -375,11 +438,12 @@ def watch(root, nonce):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['once', 'start', 'watch', 'stop', 'status'])
+    parser.add_argument('action', choices=['once', 'nominate', 'start', 'watch', 'stop', 'status'])
     parser.add_argument('--root', type=Path, required=True)
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--nonce', default='direct')
     parser.add_argument('--codex', type=Path)
+    parser.add_argument('--receiver')
     args = parser.parse_args()
     root = args.root.resolve()
     local = h.state_dir(root) / 'coordinator'
@@ -389,6 +453,11 @@ def main():
         print(json.dumps({'runtime': json.loads(runtime.read_text(encoding='utf-8')) if runtime.exists() else {'running': False},
                           'transfer': json.loads(transfer.read_text(encoding='utf-8')) if transfer.exists() else {'phase': 'idle'}},
                          ensure_ascii=False, indent=2))
+        return
+    if args.action == 'nominate':
+        if not args.receiver:
+            parser.error('--receiver is required')
+        print(json.dumps(nominate(root, args.receiver), ensure_ascii=False, indent=2))
         return
     if args.action == 'stop':
         (local / 'stop.request').touch()

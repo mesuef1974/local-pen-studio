@@ -84,6 +84,16 @@ python scripts/handoff_coordinator.py once --root . --dry-run
 python scripts/handoff_coordinator.py status --root .
 ```
 
+إذا أنشأ المستخدم الجلسة المستقبلة يدويًا، يمكن ترشيح UUID لها قبل العتبة:
+
+```powershell
+python scripts/handoff_coordinator.py nominate --root . --receiver "UUID"
+```
+
+الترشيح لا ينقل الملكية. عند تحقق الشروط يرسل المنسق طلب الإقرار عبر `codex queue`
+ثم يقرأ رد `task_complete` من سجل المستقبل في دورة لاحقة؛ هذا يتجنب تعارض كاتب
+الجلسة المفتوحة. لا ينشئ جلسة إضافية إلا عند غياب الترشيح.
+
 يُثبت التشغيل المستمر بعد دمج النسخة المحتوية على المنسق. تعطيل المهمة لا يحذف
 البطاقة أو حالة الملكية.
 
