@@ -129,3 +129,8 @@
 !/CONTRIBUTING.md
 !/SECURITY.md
 !/.gitleaksignore
+
+# Opt-in handoff configuration; runtime state belongs in Git metadata.
+!/.codex/
+/.codex/*
+!/.codex/handoff.json
