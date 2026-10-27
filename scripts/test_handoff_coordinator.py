@@ -187,6 +187,11 @@ class CoordinatorTests(unittest.TestCase):
         self.assertTrue(changed); self.assertTrue(audit['safe'])
         saved = h.read_state(self.directory)
         self.assertFalse(saved['untracked_tool']); self.assertEqual(saved['active_tools'], {})
+        snapshot = h.workspace(self.root, CONFIG['card'])
+        card = h.read_card(self.card_path)
+        self.assertEqual(saved['checkpoint']['session'], OWNER)
+        self.assertEqual(saved['checkpoint']['workspace'], snapshot['fingerprint'])
+        self.assertEqual(saved['checkpoint']['card'], card['hash'])
         evidence = json.loads((self.directory / 'coordinator/reconciliation.json').read_text())
         self.assertEqual(evidence['owner'], OWNER); self.assertTrue(evidence['evidence']['safe'])
 
