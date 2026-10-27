@@ -9,6 +9,20 @@ for(const [start,end]of [[[50,50],[150,150]],[[150,150],[50,50]],[[50,150],[150,
  assert.equal(w/h,.8);assert.ok(x>=0&&y>=0&&x+w<=300&&y+h<=200);
  assert.ok(start[0]===x||start[0]===x+w);assert.ok(start[1]===y||start[1]===y+h);
 }
+context.tool='circle';
+for(const [start,end]of [[[30,40],[170,100]],[[170,100],[30,40]]]){
+ const [, ,w,h]=context.crop(start,end);assert.equal(w,h);
+}
+assert.match(source,/\['circle','دائرة · O'/);assert.match(source,/\['circle','ellipse'\]\.includes\(tool\)/);
+console.log('PASS: circle tool stays round and participates in shape drawing');
+let compositeAtDraw='';
+const mergeContext=vm.createContext({hasSelection:false,tool:'erase',alphaMask:()=>null,
+ layer:{width:10,height:10,getContext:()=>({globalCompositeOperation:'source-over',drawImage:()=>{},clearRect:()=>{}})},
+ ctx:{globalCompositeOperation:'source-over',drawImage(){compositeAtDraw=this.globalCompositeOperation;}}});
+const mergeSource=source.slice(source.indexOf(' function mergeLayer(){'),source.indexOf(' function choose('));
+vm.runInContext(mergeSource+';mergeLayer();',mergeContext);
+assert.equal(compositeAtDraw,'destination-out');assert.equal(mergeContext.ctx.globalCompositeOperation,'source-over');
+console.log('PASS: eraser removes pixels with destination-out and restores normal compositing');
 const pixels=new Uint8ClampedArray(10*8*4);let mask={width:10,height:8,getContext:()=>({getImageData:()=>({data:pixels})})};
 const boundSource=source.slice(source.indexOf(' function actualSelectionBounds(){'),source.indexOf(' function setSelection('));
 const boundsContext=vm.createContext({selection:mask});vm.runInContext(boundSource+';globalThis.bounds=actualSelectionBounds;',boundsContext);
