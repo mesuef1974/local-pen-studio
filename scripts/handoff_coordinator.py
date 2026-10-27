@@ -164,7 +164,15 @@ def reconcile_if_safe(root, transcript, owner):
         state['active_tools'] = {}
         state['untracked_tool'] = False
         state['turn_status'] = 'idle'
-        state.pop('checkpoint', None)
+        config = h.load_config(root)
+        card = h.read_card(root / config['card'])
+        snapshot = h.workspace(root, config['card'])
+        if (card['valid'] and card['meta'].get('status') == 'ready_to_resume'
+                and not card['meta'].get('pending_operations') and not snapshot['git_busy']):
+            state['checkpoint'] = {'session': owner, 'workspace': snapshot['fingerprint'],
+                                   'card': card['hash'], 'time': h.now()}
+        else:
+            state.pop('checkpoint', None)
         h.atomic_json(directory / 'state.json', state)
         h.atomic_json(directory / 'coordinator/reconciliation.json', {
             'time': h.now(), 'owner': owner, 'transcript_size': after.st_size,
