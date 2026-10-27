@@ -196,6 +196,23 @@ class HandoffTests(unittest.TestCase):
         self.assertEqual(h.handle(self.root, event, self.sessions), {})
         self.assertEqual((self.directory / 'state.json').read_bytes(), before)
 
+    def test_entry_receipt_distinguishes_foreign_owner_without_logging_input(self):
+        event = self.event('PreToolUse', tool_input={'command': 'private command'})
+        event['session_id'] = OTHER
+        h.handle(self.root, event, self.sessions)
+        receipt = json.loads((self.directory / 'foreign-dispatch.json').read_text())
+        self.assertFalse(receipt['owner_match'])
+        self.assertEqual(set(receipt), {'observed_at', 'event', 'owner_match'})
+        self.assertNotIn(OTHER, json.dumps(receipt))
+        self.assertNotIn('private command', json.dumps(receipt))
+
+    def test_owner_receipt_is_separate_from_foreign_receipt(self):
+        self.handle('PreToolUse', tool_use_id='call-1')
+        receipt = (self.directory / 'last-dispatch.json').read_bytes()
+        event = self.event('PreToolUse');event['session_id'] = OTHER
+        h.handle(self.root, event, self.sessions)
+        self.assertEqual((self.directory / 'last-dispatch.json').read_bytes(), receipt)
+
     def test_tool_lifecycle_never_marks_running_work_idle(self):
         self.handle('PreToolUse', tool_use_id='call-1')
         self.handle('Stop')
@@ -305,6 +322,31 @@ class HandoffTests(unittest.TestCase):
         home = Path(self.temp.name) / 'codex-home'
         with self.assertRaises(ValueError):install(self.root, OTHER, home)
         self.assertFalse((home / 'hooks.json').exists())
+
+    def test_installer_limits_context_to_session_start_and_interrupt_to_three_seconds(self):
+        home = Path(self.temp.name) / 'codex-home'
+        install(self.root, OWNER, home)
+        data = json.loads((home / 'hooks.json').read_text(encoding='utf-8'))
+        for event, groups in data['hooks'].items():
+            handler = groups[0]['hooks'][0]
+            self.assertEqual(handler['timeout'], 3 if event == 'Interrupt' else 15)
+            self.assertEqual('additionalContextLimit' in handler, event == 'SessionStart')
+
+    def test_known_legacy_definitions_are_migrated_without_touching_other_handlers(self):
+        home = Path(self.temp.name) / 'codex-home'
+        install(self.root, OWNER, home)
+        path = home / 'hooks.json'
+        data = json.loads(path.read_text(encoding='utf-8'))
+        for groups in data['hooks'].values():
+            groups[0]['hooks'][0].update(timeout=15, additionalContextLimit=30000)
+        external = {'hooks': [{'type': 'command', 'command': 'preserve-me'}]}
+        data['hooks']['Stop'].append(external)
+        path.write_text(json.dumps(data), encoding='utf-8')
+        self.assertTrue(install(self.root, OWNER, home)['changed'])
+        updated = json.loads(path.read_text(encoding='utf-8'))
+        self.assertEqual(updated['hooks']['Stop'][-1], external)
+        self.assertNotIn('additionalContextLimit', updated['hooks']['Stop'][0]['hooks'][0])
+        self.assertFalse(install(self.root, OWNER, home)['changed'])
 
     def test_registered_command_executes_json_contract_in_a_path_with_spaces(self):
         spaced = Path(self.temp.name) / 'repo with spaces'
