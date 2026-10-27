@@ -1,5 +1,6 @@
 """Focused tests for the live create-only coordinator."""
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -72,7 +73,7 @@ class CoordinatorTests(unittest.TestCase):
         return c.once(self.root, self.backend, self.sessions.parents[3], lambda url: True, dry)
 
     def test_discovers_only_the_matching_owner_transcript(self):
-        self.assertEqual(c.discover_transcript(OWNER, self.sessions.parents[3]), self.transcript)
+        self.assertTrue(os.path.samefile(c.discover_transcript(OWNER, self.sessions.parents[3]), self.transcript))
         with self.assertRaises(ValueError):
             c.discover_transcript(OTHER, self.sessions.parents[3])
 
@@ -179,7 +180,7 @@ class CoordinatorTests(unittest.TestCase):
         state = h.read_state(self.directory); state['untracked_tool'] = True
         h.atomic_json(self.directory / 'state.json', state)
         owner, transcript, measured = c.refresh_usage(self.root, self.sessions.parents[3])
-        self.assertEqual(owner, OWNER); self.assertEqual(transcript, self.transcript)
+        self.assertEqual(owner, OWNER); self.assertTrue(os.path.samefile(transcript, self.transcript))
         self.assertEqual(measured['context_estimate'], 200000)
         self.assertTrue(h.read_state(self.directory)['untracked_tool'])
 
