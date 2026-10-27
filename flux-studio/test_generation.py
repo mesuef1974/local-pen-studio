@@ -131,7 +131,7 @@ class FluxTests(unittest.TestCase):
             manifest = {'model': generation.MODEL_ID, 'revision': generation.REVISION,
                         'files': {generation.QUANT_FILE: {'bytes': 4}}}
             (root / 'verified.json').write_text(json.dumps(manifest))
-            with patch('generation.MODEL_DIR', root):
+            with patch('generation.MODEL_DIR', root), patch('generation.PYTHON', Path(__file__)):
                 self.assertFalse(generation.availability()[0])
                 (root / generation.QUANT_FILE).write_bytes(b'1234')
                 self.assertTrue(generation.availability()[0])

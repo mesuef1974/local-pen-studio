@@ -43,7 +43,7 @@ class GenerationTests(unittest.TestCase):
         self.assertFalse(generation.validate({'image':source(),'style':'watercolor'})['preserveSource'])
     def test_source_processing_does_not_require_sdxl_weights(self):
         gate=threading.Lock();jobs=generation.Jobs(gate)
-        with patch.object(generation,'availability',return_value=(False,'no weights')) as availability,patch.object(generation.threading,'Thread'):
+        with patch.object(generation,'PYTHON',Path(__file__)),patch.object(generation,'availability',return_value=(False,'no weights')) as availability,patch.object(generation.threading,'Thread'):
             jobs.start({'image':source(),'style':'watercolor','preserveSource':True})
             availability.assert_not_called()
         self.assertTrue(gate.locked());gate.release()
