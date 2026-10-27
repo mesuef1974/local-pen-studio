@@ -6,6 +6,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $rootPath = (Resolve-Path -LiteralPath $Root).Path
 $coordinator = Join-Path $rootPath 'scripts\handoff_coordinator.py'
+$codex = (Get-Command codex.exe -ErrorAction Stop).Source
 $python = (Get-Command pythonw.exe -ErrorAction SilentlyContinue).Source
 if (-not $python) {
     $python = (Get-Command python.exe -ErrorAction Stop).Source
@@ -15,7 +16,7 @@ if (-not (Test-Path -LiteralPath $coordinator)) {
 }
 
 $taskName = 'Masar HANDOFF0001 Coordinator'
-$arguments = '-X utf8 "{0}" once --root "{1}"' -f $coordinator, $rootPath
+$arguments = '-X utf8 "{0}" once --root "{1}" --codex "{2}"' -f $coordinator, $rootPath, $codex
 $action = New-ScheduledTaskAction -Execute $python -Argument $arguments -WorkingDirectory $rootPath
 $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
     -RepetitionInterval (New-TimeSpan -Minutes 1) `
@@ -31,6 +32,7 @@ Register-ScheduledTask -TaskName $taskName -InputObject $task -Force | Out-Null
     TaskName = $taskName
     Root = $rootPath
     Python = $python
+    Codex = $codex
     SessionCreation = $true
     SessionArchive = $false
 }
