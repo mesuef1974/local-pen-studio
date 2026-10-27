@@ -121,3 +121,11 @@
 !/flux-studio/pipeline-audit/editor-checks.json
 !/flux-studio/pipeline-audit/export-check.json
 !/flux-studio/pipeline-audit/gpu-check.json
+
+# Repository governance and CI source files.
+!/.github/
+!/docs/
+!/scripts/
+!/CONTRIBUTING.md
+!/SECURITY.md
+!/.gitleaksignore

@@ -1,0 +1,4 @@
+# Review routing. The sole owner cannot independently approve their own PR.
+* @mesuef1974
+/.github/ @mesuef1974
+/scripts/ @mesuef1974

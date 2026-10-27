@@ -2,6 +2,9 @@ import base64
 import io
 import sys
 import unittest
+import tempfile
+from contextlib import contextmanager
+from pathlib import Path
 import numpy as np
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -19,6 +22,17 @@ def decode(value):
 
 
 class BackgroundTests(unittest.TestCase):
+    @contextmanager
+    def model_fixture(self):
+        # Only satisfy the file precondition; inference remains mocked below.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            model = root / 'models/background/models/birefnet-general/birefnet-general.onnx'
+            model.parent.mkdir(parents=True)
+            model.touch()
+            with patch.object(service, 'ROOT', root):
+                yield
+
     def test_nonfinite_or_constant_cuda_mask_cannot_be_published(self):
         for value in [float('nan'),0.0]:
             inner=SimpleNamespace(get_inputs=lambda:[SimpleNamespace(name='input')],run=lambda *args: [np.full((1,1,8,8),value,dtype=np.float32)])
@@ -48,7 +62,7 @@ class BackgroundTests(unittest.TestCase):
         source.putpixel((0, 0), (255, 0, 0, 0))
         model = SimpleNamespace(new_session=lambda *a, **kw: None,
                                 remove=lambda image, **kw: image.convert('RGBA'))
-        with patch.dict(sys.modules, {'rembg': model}),patch.object(service,'local_session',return_value=None):
+        with self.model_fixture(),patch.dict(sys.modules, {'rembg': model}),patch.object(service,'local_session',return_value=None):
             result = decode(service.run({'image': encode(source)})['image'])
         self.assertEqual(result.convert('RGB').getpixel((0, 0)), (255, 255, 255))
         self.assertEqual(source.getpixel((0, 0)), (255, 0, 0, 0))
@@ -59,14 +73,14 @@ class BackgroundTests(unittest.TestCase):
         def remove(image,**kwargs):
             seen.append(image.copy())
             return Image.new('RGBA',image.size,(255,255,255,128))
-        with patch.dict(sys.modules,{'rembg':SimpleNamespace(remove=remove)}),patch.object(service,'local_session',return_value=None):
+        with self.model_fixture(),patch.dict(sys.modules,{'rembg':SimpleNamespace(remove=remove)}),patch.object(service,'local_session',return_value=None):
             result=decode(service.run({'image':encode(source)},transparent=True)['image'])
         self.assertEqual(result.mode,'RGBA');self.assertEqual(result.getpixel((1,1)),(10,90,180,64))
         self.assertEqual(result.getpixel((0,0))[3],0);self.assertEqual(seen[0].getpixel((0,0)),(255,255,255))
 
     def test_invalid_input_is_rejected_before_loading_model(self):
         for image in ['http://example.com/photo.png','data:image/png;base64,AAAA']:
-            with patch.object(service,'local_session') as session,self.assertRaises((ValueError,OSError)):
+            with self.model_fixture(),patch.object(service,'local_session') as session,self.assertRaises((ValueError,OSError)):
                 service.run({'image':image})
             session.assert_not_called()
 
