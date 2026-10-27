@@ -110,6 +110,20 @@ class CoordinatorTests(unittest.TestCase):
         transfer = json.loads((self.directory / 'coordinator/transfer.json').read_text())
         self.assertEqual(transfer['phase'], 'complete'); self.assertFalse(transfer['session_archived'])
 
+    def test_nominated_existing_receiver_is_verified_without_creating_another(self):
+        c.nominate(self.root, OTHER)
+        waiting = self.run_once()
+        self.assertEqual(waiting, {'result': 'awaiting_receiver_ack', 'receiver': OTHER})
+        transfer = json.loads((self.directory / 'coordinator/transfer.json').read_text())
+        expected = {'status': 'accepted', 'transfer': transfer['id'],
+                    'card': transfer['card'], 'workspace': transfer['workspace']}
+        with patch.object(c, 'read_receiver_ack', return_value=expected):
+            result = self.run_once()
+        self.assertEqual(result, {'result': 'adopted', 'receiver': OTHER, 'source_archived': False})
+        self.assertEqual(self.backend.created, 0); self.assertEqual(len(self.backend.queued), 1)
+        self.assertEqual(h.read_state(self.directory)['owner_session'], OTHER)
+        self.assertFalse((self.directory / 'coordinator/nomination.json').exists())
+
     def test_rejected_ack_preserves_source_owner(self):
         self.backend.reject = True
         self.assertEqual(self.run_once()['reasons'], ['receiver_rejected'])
@@ -203,6 +217,7 @@ class CoordinatorTests(unittest.TestCase):
         command = invoked.call_args.args[0]
         self.assertEqual(command[:4], ['codex', '-a', 'never', 'exec'])
         self.assertEqual(receiver, OTHER); self.assertEqual(ack['status'], 'accepted')
+
 
 
 if __name__ == '__main__':
