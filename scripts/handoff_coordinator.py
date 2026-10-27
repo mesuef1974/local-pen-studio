@@ -82,7 +82,7 @@ def audit_transcript(path, owner):
     backgrounds = set()
     last_turn = None
     completed_turn = None
-    rows = calls_started = calls_finished = 0
+    rows = calls_started = calls_finished = passive_outputs = 0
     with path.open('rb') as source:
         if h.header_session(source.read(4096).decode('utf-8', errors='ignore')) != owner:
             raise ValueError('Transcript owner mismatch')
@@ -112,6 +112,11 @@ def audit_transcript(path, owner):
                     calls_started += 1
                 elif kind in ('function_call_output', 'custom_tool_call_output'):
                     call = payload.get('call_id')
+                    if (not call and payload.get('namespace') == 'codex_app'
+                            and payload.get('name') == 'send_message_to_thread'
+                            and str(payload.get('id', '')).startswith('fco_')):
+                        passive_outputs += 1
+                        continue
                     targets = calls.pop(call, None)
                     if targets is None:
                         raise ValueError('Tool output without a matching call')
@@ -124,6 +129,7 @@ def audit_transcript(path, owner):
                     calls_finished += 1
     return {'safe': bool(last_turn and completed_turn == last_turn and not calls and not backgrounds),
             'rows': rows, 'calls_started': calls_started, 'calls_finished': calls_finished,
+            'passive_outputs': passive_outputs,
             'open_calls': len(calls), 'open_backgrounds': len(backgrounds),
             'last_turn_complete': bool(last_turn and completed_turn == last_turn)}
 
