@@ -82,6 +82,16 @@ class CoordinatorTests(unittest.TestCase):
         self.assertEqual(self.run_once()['result'], 'below_threshold')
         self.assertFalse(self.backend.queued); self.assertEqual(self.backend.created, 0)
 
+    def test_compaction_does_not_erase_owner_high_water_mark(self):
+        self.write_usage(210000)
+        _, _, before = c.refresh_usage(self.root, self.sessions.parents[3])
+        self.assertEqual(before['context_estimate'], 210000)
+        self.write_usage(50000)
+        _, _, after = c.refresh_usage(self.root, self.sessions.parents[3])
+        self.assertEqual(after['current_context_estimate'], 50000)
+        self.assertEqual(after['context_estimate'], 210000)
+        self.assertEqual(after['context_metric'], 'owner_high_water:last_token_usage.total_tokens')
+
     def test_preparation_nudges_before_the_hard_threshold(self):
         self.write_usage(180000)
         self.card_path.write_text(card(status='working'), encoding='utf-8')
