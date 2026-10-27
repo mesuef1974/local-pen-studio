@@ -115,6 +115,22 @@ class BridgeTests(unittest.TestCase):
                  'output':'Script running with cell ID is an example in a source file'})}]
         self.assertFalse(background_unknown(value))
 
+    def test_nested_work_mcp_envelope_is_not_unknown_work(self):
+        def envelope(value):
+            return [{'type': 'input_text', 'text': json.dumps(value)}]
+        self.assertFalse(background_unknown(envelope({'content': [
+            {'type': 'text', 'text': json.dumps({'running': True, 'pid': 123})}
+        ], 'isError': False})))
+        self.assertTrue(background_unknown(envelope({'content': [
+            {'type': 'text', 'text': json.dumps({'session_id': 42})}
+        ]})))
+
+    def test_excessive_envelope_depth_still_blocks(self):
+        value = 'unknown'
+        for _ in range(20):
+            value = {'content': value}
+        self.assertTrue(background_unknown(value))
+
     def test_secret_text_never_enters_receipts_or_cursor(self):
         self.append(call(), finish(output='private tool output'))
         self.bridge().step()

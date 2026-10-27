@@ -19,7 +19,9 @@ LIMIT = 1024 * 1024
 
 
 def background_unknown(value, depth=0):
-    if depth > 6:
+    # Work wraps tool results in text blocks and JSON more than once. Keep a
+    # finite bound, but allow the normal nested MCP -> text -> JSON envelope.
+    if depth > 16:
         return True
     if isinstance(value, str):
         if re.search(r'(?m)^(?:Script running with cell ID|Process running with session ID)\b', value):
