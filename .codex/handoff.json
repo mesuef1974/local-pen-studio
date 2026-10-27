@@ -4,9 +4,11 @@
   "workstream": "0001",
   "card": "docs/handoffs/HANDOFF0001.md",
   "threshold_tokens": 200000,
-  "mode": "observe",
-  "allow_session_create": false,
+  "prepare_tokens": 180000,
+  "mode": "create_only",
+  "allow_session_create": true,
   "allow_session_archive": false,
   "usage_max_age_seconds": 300,
+  "coordinator_poll_seconds": 60,
   "idle_probe_url": "http://127.0.0.1:8770/api/generation?summary=1"
 }

@@ -72,14 +72,22 @@ def load_config(root):
     config = json.loads(path.read_text(encoding='utf-8'))
     if not config.get('enabled'):
         return None
-    if config.get('workstream') != '0001' or config.get('mode') != 'observe':
-        raise ValueError('Only the explicitly opted-in observer is supported')
-    if config.get('allow_session_create') is not False or config.get('allow_session_archive') is not False:
-        raise ValueError('Live actions must remain disabled in the pilot')
+    if config.get('workstream') != '0001' or config.get('mode') not in ('observe', 'create_only'):
+        raise ValueError('Unsupported handoff mode')
+    if config.get('allow_session_archive') is not False:
+        raise ValueError('Automatic archive must remain disabled')
+    expected_create = config.get('mode') == 'create_only'
+    if config.get('allow_session_create') is not expected_create:
+        raise ValueError('Session creation must match the selected mode')
     if type(config.get('threshold_tokens')) is not int or config['threshold_tokens'] <= 0:
         raise ValueError('Invalid threshold')
+    prepare = config.get('prepare_tokens', config['threshold_tokens'])
+    if type(prepare) is not int or not 0 < prepare <= config['threshold_tokens']:
+        raise ValueError('Invalid preparation threshold')
     if type(config.get('usage_max_age_seconds')) is not int or config['usage_max_age_seconds'] <= 0:
         raise ValueError('Invalid freshness limit')
+    if type(config.get('coordinator_poll_seconds', 15)) is not int or not 5 <= config.get('coordinator_poll_seconds', 15) <= 300:
+        raise ValueError('Invalid coordinator polling interval')
     card = (root / config['card']).resolve()
     if not card.is_relative_to(root.resolve()) or card.name != 'HANDOFF0001.md':
         raise ValueError('Card must be inside this project')
@@ -274,9 +282,11 @@ def readiness(config, state, snapshot, card, idle):
         reasons.append('checkpoint_missing_or_stale')
     if checkpoint.get('session') != state.get('owner_session'):
         reasons.append('checkpoint_wrong_owner')
-    return {'eligible': not reasons, 'reasons': reasons, 'mode': 'observe', 'observed_at': now(),
-            'would_create': False, 'would_archive': False,
+    create = config.get('mode') == 'create_only' and config.get('allow_session_create') is True
+    return {'eligible': not reasons, 'reasons': reasons, 'mode': config['mode'], 'observed_at': now(),
+            'would_create': bool(not reasons and create), 'would_archive': False,
             'threshold_tokens': config['threshold_tokens'],
+            'prepare_tokens': config.get('prepare_tokens', config['threshold_tokens']),
             'context_estimate': usage.get('context_estimate') if usage else None}
 
 
