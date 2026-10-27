@@ -286,16 +286,26 @@ def refresh_usage(root, sessions_root=None):
         owner = h.read_state(directory).get('owner_session')
     transcript = discover_transcript(owner, sessions_root)
     reconcile_if_safe(root, transcript, owner)
-    usage = h.read_usage(transcript, owner, sessions_root)
-    if not usage:
+    current = h.read_usage(transcript, owner, sessions_root)
+    if not current:
         raise ValueError('Owner usage is unavailable')
     with h.lock(directory):
         state = h.read_state(directory)
         if state.get('owner_session') != owner:
             raise ValueError('Ownership changed during usage refresh')
+        history_path = directory / 'usage-history.json'
+        history = json.loads(history_path.read_text(encoding='utf-8')) if history_path.exists() else []
+        high_water = max([current['context_estimate']] + [
+            item['context_estimate'] for item in history
+            if item.get('session') == owner and type(item.get('context_estimate')) is int
+        ])
+        usage = dict(current)
+        usage['current_context_estimate'] = current['context_estimate']
+        usage['context_estimate'] = high_water
+        usage['context_metric'] = 'owner_high_water:last_token_usage.total_tokens'
         state['usage'] = usage
         h.atomic_json(directory / 'state.json', state)
-        h.record_usage(directory, usage)
+        h.record_usage(directory, current)
     return owner, transcript, usage
 
 
