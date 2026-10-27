@@ -37,13 +37,23 @@ def _install(root, session, codex_home):
     changed = False
     for event in EVENTS:
         entries = groups.setdefault(event, [])
-        handler = {'type': 'command', 'command': command, 'timeout': 15,
-                   'statusMessage': MARKER, 'additionalContextLimit': 30000}
+        handler = {'type': 'command', 'command': command,
+                   'timeout': 3 if event == 'Interrupt' else 15, 'statusMessage': MARKER}
+        if event == 'SessionStart':
+            handler['additionalContextLimit'] = 30000
         owned = [group for group in entries if any(h.get('statusMessage') == MARKER and str(root / 'scripts/handoff.py') in h.get('command', '') for h in group.get('hooks', []))]
         if owned:
             # Do not overwrite unrecognized combinations or another project's hooks.
-            if len(owned) != 1 or owned[0].get('hooks') != [handler]:
+            if len(owned) != 1 or len(owned[0].get('hooks', [])) != 1:
                 raise ValueError('An existing observer definition requires manual review')
+            previous = owned[0]['hooks'][0]
+            legacy = {'type': 'command', 'command': command, 'timeout': 15,
+                      'statusMessage': MARKER, 'additionalContextLimit': 30000}
+            if previous != handler:
+                if previous != legacy:
+                    raise ValueError('An existing observer definition requires manual review')
+                owned[0]['hooks'] = [handler]
+                changed = True
         else:
             entries.append({'hooks': [handler]})
             changed = True
