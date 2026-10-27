@@ -1,5 +1,8 @@
 import io,base64,unittest,json
 from types import SimpleNamespace
+import tempfile
+from pathlib import Path
+from contextlib import contextmanager
 from unittest.mock import patch
 import numpy as np
 from PIL import Image,ImageDraw
@@ -12,6 +15,18 @@ def source():
     image=Image.new('RGBA',(100,120));draw=ImageDraw.Draw(image);draw.ellipse((15,10,85,110),fill=(180,50,80,255));return image
 
 class PreparationTests(unittest.TestCase):
+    @contextmanager
+    def background_fixture(self):
+        # The worker is mocked; no real runtime or model is needed for unit tests.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'trace-studio'
+            root.mkdir()
+            python = root.parent / 'drawing-simulator/.venv-background-gpu/Scripts/python.exe'
+            python.parent.mkdir(parents=True)
+            python.touch()
+            with patch.object(p, 'ROOT', root):
+                yield
+
     def setUp(self):p.CUTOUT_CACHE.clear();p.SUBJECT_CACHE.clear()
     def test_color_background_removal_keeps_source_rgb_and_original_untouched(self):
         image=source().convert('RGB');value=p.encoded(image.convert('RGBA'));cutout=source();pixels=np.asarray(image).copy()
@@ -25,17 +40,17 @@ class PreparationTests(unittest.TestCase):
         self.assertFalse(np.array_equal(np.asarray(mono)[:,:,:3],pixels))
     def test_direct_background_removal_reuses_identical_image(self):
         value=p.encoded(source());response=SimpleNamespace(returncode=0,stdout=json.dumps({'image':value,'device':'CUDA'}))
-        with patch.object(p,'run_bounded',return_value=response) as run:
+        with self.background_fixture(),patch.object(p,'run_bounded',return_value=response) as run:
             self.assertEqual(p.remove_subject(value),value);self.assertEqual(p.remove_subject(value),value)
         self.assertEqual(run.call_count,1)
     def test_empty_model_output_is_not_cached_or_accepted(self):
         value=p.encoded(source());empty=p.encoded(Image.new('RGBA',(100,120)))
         response=SimpleNamespace(returncode=0,stdout=json.dumps({'image':empty,'device':'CUDA'}))
-        with patch.object(p,'run_bounded',return_value=response),self.assertRaises(ValueError):p.remove_subject(value)
+        with self.background_fixture(),patch.object(p,'run_bounded',return_value=response),self.assertRaises(ValueError):p.remove_subject(value)
         self.assertEqual(len(p.SUBJECT_CACHE),0)
     def test_cpu_worker_result_is_rejected_instead_of_silent_fallback(self):
         value=p.encoded(source());response=SimpleNamespace(returncode=0,stdout=json.dumps({'image':value,'device':'CPU'}))
-        with patch.object(p,'run_bounded',return_value=response),self.assertRaisesRegex(ValueError,'CUDA'):p.remove_subject(value)
+        with self.background_fixture(),patch.object(p,'run_bounded',return_value=response),self.assertRaisesRegex(ValueError,'CUDA'):p.remove_subject(value)
         self.assertEqual(len(p.SUBJECT_CACHE),0)
     def test_import_common_formats_normalizes_without_color_loss(self):
         image=Image.new('RGB',(80,100),(180,50,80))

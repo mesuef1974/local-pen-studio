@@ -41,6 +41,19 @@ jobs:
           curl --fail --silent --show-error --location --retry 3 "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" --output "$archive"
           printf '%s  %s\n' "$GITLEAKS_SHA256" "$archive" | sha256sum --check --status
           tar -xzf "$archive" -C "$RUNNER_TEMP" gitleaks
+          python3 - <<'PY'
+          import os, secrets
+          from pathlib import Path
+          probe = Path(os.environ['RUNNER_TEMP']) / 'secret-scan-probe'
+          probe.mkdir()
+          (probe / 'probe.txt').write_text('api' + '_key = "' + secrets.token_hex(32) + '"')
+          PY
+          probe_status=0
+          "$RUNNER_TEMP/gitleaks" dir --redact=100 --no-banner --exit-code=42 "$RUNNER_TEMP/secret-scan-probe" || probe_status=$?
+          if [ "$probe_status" -ne 42 ]; then
+            echo 'Secret scanner failed its positive detection test.'
+            exit 1
+          fi
           status=0
           "$RUNNER_TEMP/gitleaks" git --redact=100 --no-banner --log-opts="--all" --report-format=json --report-path="$RUNNER_TEMP/gitleaks.json" . || status=$?
           python3 - <<'PY'

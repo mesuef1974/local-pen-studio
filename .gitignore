@@ -128,3 +128,4 @@
 !/scripts/
 !/CONTRIBUTING.md
 !/SECURITY.md
+!/.gitleaksignore
