@@ -150,6 +150,19 @@ class CoordinatorTests(unittest.TestCase):
         self.write_records(started, call, output, done)
         self.assertTrue(c.audit_transcript(self.transcript, OWNER)['safe'])
 
+    def test_delegation_delivery_without_call_id_is_passive_but_other_orphans_fail(self):
+        started = {'type': 'event_msg', 'payload': {'type': 'task_started', 'turn_id': 'turn-1'}}
+        delegated = {'type': 'response_item', 'payload': {'type': 'function_call_output',
+                     'id': 'fco_fixture', 'namespace': 'codex_app',
+                     'name': 'send_message_to_thread', 'output': '{}'}}
+        done = {'type': 'event_msg', 'payload': {'type': 'task_complete', 'turn_id': 'turn-1'}}
+        self.write_records(started, delegated, done)
+        audit = c.audit_transcript(self.transcript, OWNER)
+        self.assertTrue(audit['safe']); self.assertEqual(audit['passive_outputs'], 1)
+        delegated['payload']['name'] = 'unknown_tool'
+        self.write_records(started, delegated, done)
+        with self.assertRaises(ValueError): c.audit_transcript(self.transcript, OWNER)
+
     def test_reconciliation_closes_a_verified_background_session(self):
         started = {'type': 'event_msg', 'payload': {'type': 'task_started', 'turn_id': 'turn-1'}}
         launch = {'type': 'response_item', 'payload': {'type': 'function_call',
