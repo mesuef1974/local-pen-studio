@@ -202,7 +202,7 @@ class HandoffTests(unittest.TestCase):
         h.handle(self.root, event, self.sessions)
         receipt = json.loads((self.directory / 'foreign-dispatch.json').read_text())
         self.assertFalse(receipt['owner_match'])
-        self.assertEqual(set(receipt), {'observed_at', 'event', 'owner_match'})
+        self.assertEqual(set(receipt), {'observed_at', 'event', 'owner_match', 'transport'})
         self.assertNotIn(OTHER, json.dumps(receipt))
         self.assertNotIn('private command', json.dumps(receipt))
 

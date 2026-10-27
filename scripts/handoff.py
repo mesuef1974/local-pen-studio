@@ -319,9 +319,12 @@ def handle(root, event, sessions_root=None, idle_reader=probe_idle):
         known_events = {'SessionStart', 'UserPromptSubmit', 'PreToolUse', 'PostToolUse',
                         'PreCompact', 'PostCompact', 'Stop', 'Interrupt', 'SubagentStart', 'SubagentStop'}
         matched = bool(session and session == state.get('owner_session'))
+        transport = event.get('_transport', 'native')
+        if transport not in ('native', 'transcript_bridge'):
+            transport = 'unknown'
         atomic_json(directory / ('last-dispatch.json' if matched else 'foreign-dispatch.json'),
                     {'observed_at': now(), 'event': event_name if event_name in known_events else 'unknown',
-                     'owner_match': matched})
+                     'owner_match': matched, 'transport': transport})
         if not session or session != state.get('owner_session'):
             return {}  # A different session must never write this card or state.
         name = event_name
@@ -336,6 +339,8 @@ def handle(root, event, sessions_root=None, idle_reader=probe_idle):
                 state['untracked_tool'] = True
         elif name == 'PostToolUse':
             tools.pop(call, None)
+            if event.get('_background_unknown'):
+                state['untracked_tool'] = True
         elif name == 'UserPromptSubmit':
             state['turn_status'] = 'active'
             state.pop('checkpoint', None)
