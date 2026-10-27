@@ -1,9 +1,9 @@
 name: Repository checks
 on:
   pull_request:
-    branches: [main]
+    branches: [main, staging, production]
   push:
-    branches: [main]
+    branches: [main, staging, production]
   workflow_dispatch:
 permissions:
   contents: read
