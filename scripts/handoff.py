@@ -315,9 +315,16 @@ def handle(root, event, sessions_root=None, idle_reader=probe_idle):
     with lock(directory):
         state = read_state(directory)
         session = event.get('session_id')
+        event_name = event.get('hook_event_name')
+        known_events = {'SessionStart', 'UserPromptSubmit', 'PreToolUse', 'PostToolUse',
+                        'PreCompact', 'PostCompact', 'Stop', 'Interrupt', 'SubagentStart', 'SubagentStop'}
+        matched = bool(session and session == state.get('owner_session'))
+        atomic_json(directory / ('last-dispatch.json' if matched else 'foreign-dispatch.json'),
+                    {'observed_at': now(), 'event': event_name if event_name in known_events else 'unknown',
+                     'owner_match': matched})
         if not session or session != state.get('owner_session'):
             return {}  # A different session must never write this card or state.
-        name = event.get('hook_event_name')
+        name = event_name
         tools = state.setdefault('active_tools', {})
         agents = state.setdefault('active_subagents', {})
         call = event.get('tool_use_id')

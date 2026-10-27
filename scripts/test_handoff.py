@@ -196,6 +196,23 @@ class HandoffTests(unittest.TestCase):
         self.assertEqual(h.handle(self.root, event, self.sessions), {})
         self.assertEqual((self.directory / 'state.json').read_bytes(), before)
 
+    def test_entry_receipt_distinguishes_foreign_owner_without_logging_input(self):
+        event = self.event('PreToolUse', tool_input={'command': 'private command'})
+        event['session_id'] = OTHER
+        h.handle(self.root, event, self.sessions)
+        receipt = json.loads((self.directory / 'foreign-dispatch.json').read_text())
+        self.assertFalse(receipt['owner_match'])
+        self.assertEqual(set(receipt), {'observed_at', 'event', 'owner_match'})
+        self.assertNotIn(OTHER, json.dumps(receipt))
+        self.assertNotIn('private command', json.dumps(receipt))
+
+    def test_owner_receipt_is_separate_from_foreign_receipt(self):
+        self.handle('PreToolUse', tool_use_id='call-1')
+        receipt = (self.directory / 'last-dispatch.json').read_bytes()
+        event = self.event('PreToolUse');event['session_id'] = OTHER
+        h.handle(self.root, event, self.sessions)
+        self.assertEqual((self.directory / 'last-dispatch.json').read_bytes(), receipt)
+
     def test_tool_lifecycle_never_marks_running_work_idle(self):
         self.handle('PreToolUse', tool_use_id='call-1')
         self.handle('Stop')
