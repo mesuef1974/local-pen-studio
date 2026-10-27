@@ -4,15 +4,17 @@ import cv2
 import numpy as np
 from PIL import Image, ImageOps
 
-def decode(value):
+def decode(value,*,preserve_alpha=False):
     if not isinstance(value,str) or not value.startswith(('data:image/png;base64,','data:image/jpeg;base64,','data:image/webp;base64,')):raise ValueError('صيغة الصورة غير مناسبة.')
     try:raw=base64.b64decode(value.split(',',1)[1],validate=True)
     except (ValueError,binascii.Error):raise ValueError('بيانات الصورة غير صحيحة.')
-    if not 0<len(raw)<=5_000_000:raise ValueError('تجاوز حجم الصورة الحد.')
+    if not 0<len(raw)<=6_000_000:raise ValueError('تجاوز حجم الصورة الحد.')
     try:
         im=ImageOps.exif_transpose(Image.open(io.BytesIO(raw)))
         if im.width*im.height>4_000_000:raise ValueError('الصورة تتجاوز أربعة ملايين بكسل.')
-        rgba=im.convert('RGBA');bg=Image.new('RGBA',rgba.size,'white');bg.alpha_composite(rgba)
+        rgba=im.convert('RGBA')
+        if preserve_alpha:return np.array(rgba)
+        bg=Image.new('RGBA',rgba.size,'white');bg.alpha_composite(rgba)
         return np.array(bg.convert('RGB'))
     except OSError:raise ValueError('تعذر قراءة الصورة.')
 

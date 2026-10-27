@@ -1,0 +1,30 @@
+{
+  "grayExportAlphaExact": true,
+  "tools": [
+    {
+      "tool": "brush",
+      "changedPixels": 816,
+      "undoExact": true
+    },
+    {
+      "tool": "erase",
+      "changedPixels": 777,
+      "undoExact": true
+    },
+    {
+      "tool": "line",
+      "changedPixels": 826,
+      "undoExact": true
+    },
+    {
+      "tool": "rectangle",
+      "changedPixels": 1840,
+      "undoExact": true
+    },
+    {
+      "tool": "ellipse",
+      "changedPixels": 1632,
+      "undoExact": true
+    }
+  ]
+}

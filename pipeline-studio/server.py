@@ -10,6 +10,8 @@ DRAW=ROOT.parent/'drawing-simulator';TRACE=ROOT.parent/'trace-studio'
 sys.path[:0]=[str(TRACE),str(DRAW)]
 ASSETS={'/':ROOT/'index.html','/prepare':ROOT/'index.html','/model':ROOT/'index.html','/paths':ROOT/'index.html','/app.js':ROOT/'app.js','/styles.css':ROOT/'styles.css','/workflow.js':ROOT/'workflow.js','/geometry.js':ROOT/'geometry.js','/sample.png':DRAW/'photo-lineart-comparison/original.png','/sample-art.png':TRACE/'sample.png','/image-editor.js':DRAW/'image-editor.js','/image-editor.css':DRAW/'image-editor.css'}
 GATE=threading.Lock();MODEL_CACHE=OrderedDict()
+from generation import Jobs
+GENERATION=Jobs(GATE)
 
 def digest(image):return hashlib.sha256(image.encode()).hexdigest()
 
@@ -70,6 +72,7 @@ class Handler(SimpleHTTPRequestHandler):
         if not self.valid_host():self.reply(403,{'error':'عنوان المضيف غير مسموح.'});return
         path=urlsplit(self.path).path
         if path=='/api/status':self.reply(200,{'service':'pipeline-studio','stages':['preparation','precise-lineart','pen-paths']});return
+        if path=='/api/generation':self.reply(200,GENERATION.status());return
         if path=='/favicon.ico':self.send_response(204);self.end_headers();return
         file=ASSETS.get(path)
         if not file or not file.is_file():self.reply(404,{'error':'غير موجود.'});return
@@ -81,13 +84,18 @@ class Handler(SimpleHTTPRequestHandler):
         port=self.server.server_port
         if not self.valid_host() or self.headers.get('Origin') not in {f'http://localhost:{port}',f'http://127.0.0.1:{port}'}:self.reply(403,{'error':'افتح مساحة العمل المحلية.'});return
         path=urlsplit(self.path).path
-        if path not in ['/api/import','/api/prepare','/api/model','/api/post','/api/paths','/api/editor','/api/background']:self.reply(404,{'error':'غير موجود.'});return
+        if path not in ['/api/import','/api/prepare','/api/model','/api/post','/api/paths','/api/editor','/api/background','/api/generate']:self.reply(404,{'error':'غير موجود.'});return
         try:
             size=int(self.headers.get('Content-Length','0'))
             if self.headers.get_content_type()!='application/json' or not 0<size<=(22_000_000 if path=='/api/import' else 9_000_000):raise ValueError()
             data=json.loads(self.rfile.read(size))
             if not isinstance(data,dict):raise ValueError()
         except (ValueError,UnicodeError):self.reply(400,{'error':'بيانات الطلب غير صالحة أو أكبر من الحد.'});return
+        if path=='/api/generate':
+            try:self.reply(202,GENERATION.start(data))
+            except BlockingIOError as error:self.reply(429,{'error':str(error)})
+            except ValueError as error:self.reply(400,{'error':str(error)})
+            return
         locked=path in ['/api/prepare','/api/model','/api/paths','/api/background']
         if locked and not GATE.acquire(blocking=False):self.reply(429,{'error':'هناك معالجة محلية أخرى. أعد المحاولة بعد اكتمالها.'});return
         try:status,result=200,process(path,data)

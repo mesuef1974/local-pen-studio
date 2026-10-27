@@ -10,14 +10,16 @@ def extract_paths(data):
         raise ValueError('يلزم مصدر PNG.')
     try:raw=base64.b64decode(encoded.split(',',1)[1],validate=True)
     except (ValueError,binascii.Error):raise ValueError('بيانات الصورة غير صحيحة.')
-    if not 0<len(raw)<=5_000_000:raise ValueError('الصورة أكبر من الحد.')
+    if not 0<len(raw)<=6_000_000:raise ValueError('الصورة أكبر من الحد.')
     level=data.get('level',25)
     if isinstance(level,bool) or not isinstance(level,(int,float)) or not math.isfinite(level) or not 0<=level<=100:
         raise ValueError('درجة التفاصيل غير صحيحة.')
     try:
         with Image.open(io.BytesIO(raw)) as source:
             if source.width*source.height>4_000_000:raise ValueError('مصدر المسارات أكبر من أربعة ملايين بكسل.')
-            image=np.asarray(ImageOps.exif_transpose(source).convert('RGB'))
+            rgba=ImageOps.exif_transpose(source).convert('RGBA')
+            background=Image.new('RGBA',rgba.size,'white');background.alpha_composite(rgba)
+            image=np.asarray(background.convert('RGB'))
     except (OSError,UnidentifiedImageError):raise ValueError('تعذر قراءة المصدر.')
     if not hasattr(cv2,'ximgproc') or not hasattr(cv2.ximgproc,'createEdgeDrawing'):
         raise ValueError('توليد المسارات يتطلب OpenCV contrib مع EdgeDrawing.')

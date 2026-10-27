@@ -1,0 +1,6 @@
+# Reuses host PyTorch 2.6.0+cu124 / cuDNN 9 DLLs in a dedicated venv.
+onnxruntime-gpu==1.20.2
+rembg==2.0.86
+onnx==1.17.0
+onnxconverter-common==1.16.0
+protobuf==7.34.1

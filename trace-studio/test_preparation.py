@@ -1,4 +1,5 @@
-import io,base64,unittest
+import io,base64,unittest,json
+from types import SimpleNamespace
 from unittest.mock import patch
 import numpy as np
 from PIL import Image,ImageDraw
@@ -11,7 +12,31 @@ def source():
     image=Image.new('RGBA',(100,120));draw=ImageDraw.Draw(image);draw.ellipse((15,10,85,110),fill=(180,50,80,255));return image
 
 class PreparationTests(unittest.TestCase):
-    def setUp(self):p.CUTOUT_CACHE.clear()
+    def setUp(self):p.CUTOUT_CACHE.clear();p.SUBJECT_CACHE.clear()
+    def test_color_background_removal_keeps_source_rgb_and_original_untouched(self):
+        image=source().convert('RGB');value=p.encoded(image.convert('RGBA'));cutout=source();pixels=np.asarray(image).copy()
+        with patch.object(p,'remove_subject',return_value=p.encoded(cutout)):
+            result=p.prepare({'image':value,'settings':{'background':'subject','style':'color','denoise':0,'contrast':100,'brightness':0}},require_transparency=False)
+            gray=p.prepare({'image':value,'settings':{'background':'subject','style':'gray','denoise':0}},require_transparency=False)
+        actual,_=p.decode(result['image']);mono,_=p.decode(gray['image'])
+        self.assertTrue(np.array_equal(np.asarray(actual)[:,:,:3],pixels))
+        self.assertTrue(np.array_equal(np.asarray(actual)[:,:,3],np.asarray(cutout)[:,:,3]))
+        self.assertTrue(np.array_equal(np.asarray(image),pixels))
+        self.assertFalse(np.array_equal(np.asarray(mono)[:,:,:3],pixels))
+    def test_direct_background_removal_reuses_identical_image(self):
+        value=p.encoded(source());response=SimpleNamespace(returncode=0,stdout=json.dumps({'image':value,'device':'CUDA'}))
+        with patch.object(p,'run_bounded',return_value=response) as run:
+            self.assertEqual(p.remove_subject(value),value);self.assertEqual(p.remove_subject(value),value)
+        self.assertEqual(run.call_count,1)
+    def test_empty_model_output_is_not_cached_or_accepted(self):
+        value=p.encoded(source());empty=p.encoded(Image.new('RGBA',(100,120)))
+        response=SimpleNamespace(returncode=0,stdout=json.dumps({'image':empty,'device':'CUDA'}))
+        with patch.object(p,'run_bounded',return_value=response),self.assertRaises(ValueError):p.remove_subject(value)
+        self.assertEqual(len(p.SUBJECT_CACHE),0)
+    def test_cpu_worker_result_is_rejected_instead_of_silent_fallback(self):
+        value=p.encoded(source());response=SimpleNamespace(returncode=0,stdout=json.dumps({'image':value,'device':'CPU'}))
+        with patch.object(p,'run_bounded',return_value=response),self.assertRaisesRegex(ValueError,'CUDA'):p.remove_subject(value)
+        self.assertEqual(len(p.SUBJECT_CACHE),0)
     def test_import_common_formats_normalizes_without_color_loss(self):
         image=Image.new('RGB',(80,100),(180,50,80))
         for format in ['PNG','JPEG','WEBP','BMP','TIFF','GIF']:

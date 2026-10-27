@@ -6,3 +6,7 @@
 .ed-toolbox{overflow-x:hidden}.ed-surface{position:relative;line-height:0}.ed-paper>.model-progress{width:100%;height:6px;margin:8px 0 0;display:block}.ed-paper>.model-progress[hidden]{display:none}.ed-paper>.model-progress:indeterminate{background:linear-gradient(90deg,#d9e5fb 20%,#2563eb 50%,#d9e5fb 80%);background-size:200% 100%;animation:edWorking 1.5s linear infinite}@keyframes edWorking{to{background-position:-200% 0}}@media(prefers-reduced-motion:reduce){.ed-paper>.model-progress:indeterminate{animation:none}}
 
 .ed-inspector input:invalid{border-color:#b04747;background:#fff6f6}
+
+.pro-editor .ed-error{color:#b42318;max-width:42rem;line-height:1.6}.pro-editor .ed-error[hidden]{display:none}
+
+.pro-editor .ed-surface{background:repeating-conic-gradient(#e0e5eb 0% 25%,#fff 0% 50%) 0/16px 16px}
