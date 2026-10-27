@@ -379,6 +379,7 @@ def main():
     parser.add_argument('--root', type=Path, required=True)
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--nonce', default='direct')
+    parser.add_argument('--codex', type=Path)
     args = parser.parse_args()
     root = args.root.resolve()
     local = h.state_dir(root) / 'coordinator'
@@ -413,7 +414,8 @@ def main():
             time.sleep(.1)
         raise SystemExit('Coordinator startup not confirmed')
     try:
-        print(json.dumps(once(root, CodexCLI(), dry_run=args.dry_run), ensure_ascii=False, indent=2))
+        print(json.dumps(once(root, CodexCLI(str(args.codex) if args.codex else None),
+                              dry_run=args.dry_run), ensure_ascii=False, indent=2))
     except Exception as error:
         h.atomic_json(local / 'last-error.json', {'time': h.now(), 'type': type(error).__name__})
         print(json.dumps({'result': 'error', 'type': type(error).__name__}))

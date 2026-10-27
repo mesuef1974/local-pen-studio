@@ -75,7 +75,8 @@ last-dispatch.json للمالك وforeign-dispatch.json لغيره، ويحوي 
 
 يعيد المنسق اكتشاف سجل الجلسة من UUID المالك في كل دورة، فلا يعتمد على مسار سجل
 قديم محفوظ. تشغله مهمة Windows مرة كل دقيقة للمستخدم الحالي بواسطة `pythonw.exe`،
-وتمنع النسخ المتوازية ولا تستخدم صلاحيات إدارية.
+وتمرر المسار المطلق لـ`codex.exe` لأن بيئة Task Scheduler لا تضمن `PATH`. تمنع
+النسخ المتوازية ولا تستخدم صلاحيات إدارية.
 
 ```powershell
 .\scripts\install_handoff_runtime.ps1 -Root .
