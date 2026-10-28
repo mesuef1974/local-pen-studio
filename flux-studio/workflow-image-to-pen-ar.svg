@@ -100,8 +100,8 @@
       <text class="small" x="212" y="20" text-anchor="start" direction="rtl">BiRefNet · CUDA</text>
     </g>
     <path class="rule" d="M1328 615H1552"/>
-    <text class="small" x="1538" y="655" text-anchor="start" direction="rtl">اختر الأدوات التي تحتاجها فقط</text>
-    <text class="small" x="1538" y="680" text-anchor="start" direction="rtl">الصورة الأصلية محفوظة</text>
+    <text class="small" x="1538" y="655" text-anchor="start" direction="rtl">قالب FLUX المقترح: خطوط قلم نظيفة</text>
+    <text class="small" x="1538" y="680" text-anchor="start" direction="rtl">خلفية بيضاء · دون تظليل أو تهشير</text>
     <rect x="1328" y="731" width="224" height="101" rx="12" fill="#fff6e7"/>
     <text class="small" x="1538" y="762" text-anchor="start" fill="#815719" direction="rtl">أي تعديل لاحق يبطل</text>
     <text class="small" x="1538" y="786" text-anchor="start" fill="#815719" direction="rtl">الموافقة والمسارات التابعة</text>
@@ -150,8 +150,9 @@
     <path class="rule" d="M688 681H912"/>
     <text class="small" x="898" y="719" text-anchor="start" direction="rtl">Distance Transform · Sobel</text>
     <text class="small" x="898" y="744" text-anchor="start" direction="rtl">Contours · OpenCV على CPU</text>
-    <rect x="688" y="784" width="224" height="48" rx="12" fill="#eaf4f3"/>
-    <text class="tag" x="898" y="814" text-anchor="start" fill="#11635f" direction="rtl">الناتج: مسارات ونقاط x,y</text>
+    <text class="small" x="898" y="769" text-anchor="start" direction="rtl">وضع المرحلة: مطابقة الحبر</text>
+    <rect x="688" y="788" width="224" height="48" rx="12" fill="#eaf4f3"/>
+    <text class="tag" x="898" y="818" text-anchor="start" fill="#11635f" direction="rtl">الناتج: مسارات ونقاط x,y</text>
   </g>
 
   <g filter="url(#shadow)">
