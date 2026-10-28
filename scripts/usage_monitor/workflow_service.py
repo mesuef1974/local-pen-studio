@@ -19,6 +19,10 @@ def _card_rows(db: sqlite3.Connection, where: str = "", params: tuple = ()) -> l
     sql = """SELECT c.*, s.display_name AS status_label, a.display_name AS assigned_actor_name,
         co.display_name AS coordinator_name,
         (SELECT COUNT(*) FROM coordination_card_criteria x WHERE x.card_id=c.card_id) criteria_total,
+        (SELECT COUNT(DISTINCT passed_code) FROM (
+            SELECT v.criterion AS passed_code FROM coordination_validation_results v WHERE v.card_id=c.card_id AND v.outcome='pass'
+            UNION SELECT k.check_code FROM coordination_quality_checks k JOIN coordination_quality_runs q ON q.quality_run_id=k.quality_run_id WHERE q.card_id=c.card_id AND k.outcome='pass'
+        )) criteria_passed,
         (SELECT COUNT(*) FROM coordination_card_criteria x WHERE x.card_id=c.card_id AND x.required=0) optional_count,
         (SELECT COUNT(*) FROM coordination_issues i WHERE i.card_id=c.card_id AND i.resolved_at IS NULL) open_issue_count,
         (SELECT MAX(recorded_at) FROM coordination_events e WHERE e.card_id=c.card_id) latest_event_at,
@@ -40,7 +44,8 @@ def board(db: sqlite3.Connection, *, status: str = "", actor_id: str = "", q: st
     if status: cards = [c for c in cards if c["current_status_code"] == status]
     if actor_id: cards = [c for c in cards if c["assigned_actor_id"] == actor_id]
     if q:
-        term = q.casefold(); cards = [c for c in cards if term in (c["title"] + " " + c["owner_request"] + " " + c["scope"]).casefold()]
+        term = q.casefold(); cards = [c for c in cards if term in " ".join(str(c.get(k) or "") for k in ("card_id","title","owner_request","scope","branch_name")).casefold()]
+    for card in cards: card["status_code"] = card["current_status_code"]
     keys = ("queued", "assigned", "in_progress", "blocked", "delivered", "verifying", "completed")
     counts = {k: sum(c["current_status_code"] == k for c in _card_rows(db)) for k in keys}
     return {"version": 1, "generated_at": utc_now(), "counts": counts, "sessions": sessions, "cards": cards}
