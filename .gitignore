@@ -80,6 +80,8 @@
 !/flux-studio/*.mjs
 !/flux-studio/*.css
 !/flux-studio/*.html
+!/flux-studio/workflow-image-to-pen-ar.svg
+!/flux-studio/workflow-image-to-pen-ar.png
 !/flux-studio/requirements-flux.txt
 !/flux-studio/README.md
 !/flux-studio/gpu-cpu-measurement-2026-10-28/
