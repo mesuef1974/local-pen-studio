@@ -81,10 +81,13 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json(200,{"resolved":True})
             if len(parts)!=2: return self._json(404,{"error":{"code":"not_found","message":"Unknown route"}})
             card_id,action=parts
+            if action=="deliveries":
+                with db: attempt=workflow_service.add_delivery(db,card_id,body)
+                with db: verification=workflow_service.verify_delivery(db,card_id,attempt)
+                return self._json(201,{"attempt_id":attempt,"created":True,"verification":verification})
             with db:
                 if action=="events": result=workflow_service.add_event(db,card_id,body)
                 elif action=="blockers": result=workflow_service.add_blocker(db,card_id,body)
-                elif action=="deliveries": result=workflow_service.add_delivery(db,card_id,body)
                 elif action=="quality-runs": result=workflow_service.add_quality_run(db,card_id,body)
                 else: return self._json(404,{"error":{"code":"not_found","message":"Unknown route"}})
             return self._json(201,{"id":result,"created":True})

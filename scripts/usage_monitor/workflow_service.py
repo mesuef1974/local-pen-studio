@@ -5,6 +5,7 @@ import json
 import re
 import sqlite3
 import subprocess
+from datetime import datetime
 import uuid
 from statistics import median
 from typing import Any
@@ -39,7 +40,7 @@ def _card_rows(db: sqlite3.Connection, where: str = "", params: tuple = ()) -> l
 
 
 def board(db: sqlite3.Connection, *, status: str = "", actor_id: str = "", q: str = "") -> dict:
-    sessions = [dict(r) for r in db.execute("SELECT actor_id,display_name,charter,active FROM coordination_actors ORDER BY display_name COLLATE NOCASE")]
+    sessions = [dict(r) for r in db.execute("SELECT actor_id,display_name,charter,active FROM coordination_actors WHERE active=1 AND actor_id<>'owner' ORDER BY display_name COLLATE NOCASE")]
     cards = _card_rows(db, "ORDER BY c.updated_at DESC,c.card_id")
     if status: cards = [c for c in cards if c["current_status_code"] == status]
     if actor_id: cards = [c for c in cards if c["assigned_actor_id"] == actor_id]
@@ -69,32 +70,46 @@ def detail(db: sqlite3.Connection, card_id: str) -> dict:
 
 def metrics(db: sqlite3.Connection) -> dict:
     cards = _card_rows(db)
-    durations = []
+    durations = []; assignment_durations=[]
     for c in cards:
         if c["started_at"] and c["closed_at"]:
             try:
-                from datetime import datetime
                 durations.append((datetime.fromisoformat(c["closed_at"]) - datetime.fromisoformat(c["started_at"])).total_seconds())
             except ValueError: pass
-    runs = db.execute("SELECT outcome FROM coordination_quality_runs ORDER BY quality_run_id").fetchall()
+        if c["created_at"]:
+            first=db.execute("SELECT assigned_at FROM coordination_assignments WHERE card_id=? ORDER BY assigned_at LIMIT 1",(c["card_id"],)).fetchone()
+            if first:
+                try: assignment_durations.append((datetime.fromisoformat(first[0])-datetime.fromisoformat(c["created_at"])).total_seconds())
+                except ValueError: pass
+    runs = db.execute("SELECT card_id,outcome FROM coordination_quality_runs ORDER BY card_id,quality_run_id").fetchall()
     deliveries = db.execute("SELECT remote_commit_sha,commit_sha FROM coordination_delivery_attempts WHERE commit_sha IS NOT NULL").fetchall()
     by_session = []
-    for a in db.execute("SELECT actor_id,display_name FROM coordination_actors ORDER BY display_name"):
+    for a in db.execute("SELECT actor_id,display_name FROM coordination_actors WHERE active=1 AND actor_id<>'owner' ORDER BY display_name"):
         own = [c for c in cards if c["assigned_actor_id"] == a["actor_id"]]
+        own_cycles=[]
+        for c in own:
+            if c["started_at"] and c["closed_at"]:
+                try: own_cycles.append((datetime.fromisoformat(c["closed_at"])-datetime.fromisoformat(c["started_at"])).total_seconds())
+                except ValueError: pass
+        own_runs={}
+        for r in runs:
+            if any(c["card_id"]==r["card_id"] for c in own): own_runs.setdefault(r["card_id"],[]).append(r["outcome"])
         by_session.append({"actor_id": a["actor_id"], "display_name": a["display_name"],
             "active_cards": sum(not c["current_status_code"] in ("completed","failed","archived") for c in own),
             "completed_cards": sum(c["current_status_code"] == "completed" for c in own),
             "blocked_cards": sum(c["current_status_code"] == "blocked" for c in own),
-            "median_cycle_seconds": median([float(c["closed_at"] is not None) for c in own]) if False else None,
-            "first_pass_qa_rate": None})
+            "median_cycle_seconds": median(own_cycles) if own_cycles else None,
+            "first_pass_qa_rate": sum(outcomes[0]=="pass" for outcomes in own_runs.values())/len(own_runs) if own_runs else None})
+    first_by_card={}
+    for r in runs: first_by_card.setdefault(r["card_id"],r["outcome"])
     return {"version": 1,"generated_at": utc_now(),"summary": {
         "total": len(cards), "queued": sum(c["current_status_code"]=="queued" for c in cards),
         "in_progress": sum(c["current_status_code"]=="in_progress" for c in cards),
         "blocked": sum(c["current_status_code"]=="blocked" for c in cards),
         "verifying": sum(c["current_status_code"]=="verifying" for c in cards),
         "completed": sum(c["current_status_code"]=="completed" for c in cards),
-        "median_assignment_seconds": None,"median_cycle_seconds": median(durations) if durations else None,
-        "first_pass_qa_rate": sum(r["outcome"]=="pass" for r in runs)/len(runs) if runs else None,
+        "median_assignment_seconds": median(assignment_durations) if assignment_durations else None,"median_cycle_seconds": median(durations) if durations else None,
+        "first_pass_qa_rate": sum(outcome=="pass" for outcome in first_by_card.values())/len(first_by_card) if first_by_card else None,
         "push_verified_rate": sum(bool(r["remote_commit_sha"] and r["remote_commit_sha"]==r["commit_sha"]) for r in deliveries)/len(deliveries) if deliveries else None},"by_session": by_session}
 
 
@@ -106,7 +121,7 @@ def create_command(db: sqlite3.Connection, body: dict) -> tuple[dict, bool]:
         return {"root_card_id": prior[0],"child_card_ids": [x for x in ids if x != prior[0]],"created": False}, False
     root = str(uuid.uuid4()); now = utc_now(); targets = list(dict.fromkeys(body.get("target_actor_ids", [])))
     if not targets:
-        actors = db.execute("SELECT actor_id,display_name,COALESCE(charter,'') charter FROM coordination_actors WHERE active=1 ORDER BY actor_id").fetchall()
+        actors = db.execute("SELECT actor_id,display_name,COALESCE(charter,'') charter FROM coordination_actors WHERE active=1 AND actor_id<>'owner' ORDER BY actor_id").fetchall()
         if not actors: raise ValueError("No active session can be routed this command")
         terms = set((body["title"] + " " + body["scope"] + " " + body["owner_request"]).casefold().split())
         scored = [(sum(1 for term in set(a["charter"].casefold().split()) if len(term)>2 and term in terms),a["actor_id"]) for a in actors]

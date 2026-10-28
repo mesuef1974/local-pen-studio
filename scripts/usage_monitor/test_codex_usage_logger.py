@@ -250,6 +250,7 @@ class UsageLoggerTests(unittest.TestCase):
             self.assertEqual(first["root_card_id"],second["root_card_id"])
             self.assertEqual(len(first["child_card_ids"]),1)
             data=board(connection)
+            self.assertNotIn("owner", {session["actor_id"] for session in data["sessions"]})
             child=next(c for c in data["cards"] if c["card_id"]==first["child_card_ids"][0])
             self.assertEqual(child["assigned_actor_id"],"laser")
             self.assertEqual(connection.execute("SELECT state_code FROM coordination_outbox").fetchone()[0],"pending")
