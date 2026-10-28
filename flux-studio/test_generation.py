@@ -22,7 +22,8 @@ class FluxTests(unittest.TestCase):
             data = generation.validate({'image': image(), 'style': style, 'prompt': 'Use a white background.'})
             prompt = generation.prompts(data)
             self.assertIn('white background', prompt)
-            self.assertIn('subject\'s identity', prompt)
+            self.assertIn('Preserve facial identity only when a face is present there', prompt)
+            self.assertIn('Retain only clothing or accessories visible in the main reference', prompt)
         source = Path('generation_service.py').read_text()
         self.assertNotIn('import cv2', source)
         self.assertNotIn('StableDiffusion', source)
@@ -60,7 +61,7 @@ class FluxTests(unittest.TestCase):
         self.assertIn('omit small textures', prompt)
         self.assertIn('no tonal fills', prompt)
         self.assertNotIn("Keep the main reference's pose", prompt)
-        self.assertIn("subject's identity", prompt)
+        self.assertIn('Preserve facial identity only when a face is present there', prompt)
         for bad in [{'controls': {'detail': 'fake'}}, {'controls': {'strength': 99}}, {'preserve': {'pose': 1}}, {'aspect': '../x'}]:
             with self.assertRaises(ValueError):generation.validate({'image': image()} | bad)
 
