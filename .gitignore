@@ -87,6 +87,10 @@
 !/flux-studio/gpu-cpu-measurement-2026-10-28/path-profile/
 /flux-studio/gpu-cpu-measurement-2026-10-28/path-profile/*
 !/flux-studio/gpu-cpu-measurement-2026-10-28/path-profile/webgpu-direct-fixed-heldout-comparison.json
+!/flux-studio/gpu-cpu-measurement-2026-10-28/path-profile/visual-comparison/
+/flux-studio/gpu-cpu-measurement-2026-10-28/path-profile/visual-comparison/*
+!/flux-studio/gpu-cpu-measurement-2026-10-28/path-profile/visual-comparison/contact-sheet-1.png
+!/flux-studio/gpu-cpu-measurement-2026-10-28/path-profile/visual-comparison/contact-sheet-2.png
 !/flux-studio/flux-catalog.json
 !/flux-studio/*.ps1
 
