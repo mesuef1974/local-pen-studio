@@ -33,6 +33,7 @@
   let currentBoard = null;
   let currentCardId = null;
   let boardController = null;
+  let detailRequestId = 0;
   let searchTimer = 0;
   let boardLoaded = false;
   let commandIdempotencyKey = null;
@@ -278,8 +279,9 @@
       $('workflow-refresh').removeAttribute('aria-busy');
       renderBoard(board);
       await loadMetrics();
+      return true;
     } catch (error) {
-      if (error.name === 'AbortError') return;
+      if (error.name === 'AbortError') return false;
       $('workflow-loading').hidden = true;
       $('workflow-board-scroll').hidden = true;
       $('workflow-empty').hidden = true;
@@ -289,12 +291,19 @@
       $('workflow-refresh').disabled = false;
       $('workflow-refresh').removeAttribute('aria-busy');
       setConnection('error', 'الخدمة غير متاحة');
+      return false;
     }
   }
 
-  function section(title, items, renderItem, emptyText) {
+  async function refreshWorkflow({ showLoading = true } = {}) {
+    const loaded = await loadBoard({ showLoading });
+    if (loaded && currentCardId && $('workflow-detail-dialog').open) await loadCardDetails();
+  }
+
+  function section(title, items, renderItem, emptyText, note = '') {
     const wrapper = element('section', undefined, 'workflow-detail-section');
     wrapper.append(element('h3', title));
+    if (note) wrapper.append(element('p', note, 'workflow-detail-note'));
     if (!Array.isArray(items) || items.length === 0) {
       wrapper.append(element('p', emptyText || 'لا توجد سجلات بعد.', 'workflow-detail-empty'));
       return wrapper;
@@ -352,10 +361,16 @@
     const session = (currentBoard?.sessions || []).find(actor => actor.actor_id === item.target_actor_id);
     const target = session ? safeText(session.display_name, session.actor_id) : safeText(item.target_actor_id, 'جلسة غير محددة');
     const count = Number.isFinite(Number(item.attempt_count)) ? arabicNumber.format(Number(item.attempt_count)) : '—';
-    const timing = item.sent_at ? `وقت الإرسال: ${formatDate(item.sent_at)}` : item.available_at ? `متاح للإرسال: ${formatDate(item.available_at)}` : '';
+    const timing = item.sent_at
+      ? `وقت الإرسال: ${formatDate(item.sent_at)}`
+      : code === 'retry' && item.available_at
+        ? `موعد إعادة المحاولة: ${formatDate(item.available_at)}`
+        : code === 'pending' && item.available_at
+          ? `موعد الإتاحة: ${formatDate(item.available_at)}`
+          : '';
     const command = item.command_code === 'card_assignment' ? 'إسناد بطاقة' : safeText(item.command_code, 'إرسال تكليف');
     const detail = [`الجهة: ${target}`, `عدد المحاولات: ${count}`, timing, item.last_error_code && `رمز الخطأ: ${item.last_error_code}`].filter(Boolean).join(' · ');
-    const row = detailItem(command, detail, item.sent_at || item.available_at);
+    const row = detailItem(command, detail);
     row.insertBefore(element('span', label, `workflow-outbox-state is-${style}`), row.firstChild);
     return row;
   }
@@ -395,7 +410,7 @@
       return detailItem(`${item.branch_name || 'فرع غير محدد'} · المحاولة ${arabicNumber.format(item.attempt_number || item.attempt_id || 0)}`, detail, item.submitted_at);
     }, 'لا توجد تسليمات مسجلة.'));
     root.append(section('فحوص الجودة', data.validations, item => detailItem(`${item.criterion || item.check_code || 'فحص'} · ${outcomeLabels[item.outcome] || item.outcome || 'نتيجة غير محددة'}`, item.evidence_ref, item.recorded_at), 'لا توجد نتائج تحقق مسجلة.'));
-    root.append(section('طابور إرسال التكليفات', data.outbox, outboxItem, 'لا توجد تكليفات في طابور الإرسال.'));
+    root.append(section('طابور إرسال التكليفات', data.outbox, outboxItem, 'لا توجد تكليفات في طابور الإرسال.', 'حالة «وُضع في الجلسة» تعني أن Codex قبل إدراج التكليف في الجلسة؛ لا تعني اكتمال البطاقة.'));
     $('workflow-detail-loading').hidden = true;
     $('workflow-detail-error').hidden = true;
     root.hidden = false;
@@ -413,11 +428,12 @@
 
   async function loadCardDetails() {
     const cardId = currentCardId;
+    const requestId = ++detailRequestId;
     try {
       const data = await requestJSON(`/api/workflow/cards/${encodeURIComponent(cardId)}`);
-      if (cardId === currentCardId) renderCardDetails(data);
+      if (cardId === currentCardId && requestId === detailRequestId) renderCardDetails(data);
     } catch (error) {
-      if (cardId !== currentCardId) return;
+      if (cardId !== currentCardId || requestId !== detailRequestId) return;
       $('workflow-detail-loading').hidden = true;
       $('workflow-detail-content').hidden = true;
       $('workflow-detail-error').hidden = false;
@@ -520,8 +536,8 @@
       switchTab(next, true);
     });
   });
-  $('workflow-refresh').addEventListener('click', () => loadBoard());
-  $('workflow-retry').addEventListener('click', () => loadBoard());
+  $('workflow-refresh').addEventListener('click', () => refreshWorkflow());
+  $('workflow-retry').addEventListener('click', () => refreshWorkflow());
   $('workflow-filters').addEventListener('submit', event => { event.preventDefault(); loadBoard(); });
   $('workflow-status').addEventListener('change', () => loadBoard());
   $('workflow-actor').addEventListener('change', () => loadBoard());
@@ -552,9 +568,9 @@
   $('workflow-command-form').addEventListener('keydown', event => {
     if (event.key === 'Escape') $('workflow-command-dialog').close();
   });
-  $('workflow-detail-dialog').addEventListener('close', () => { currentCardId = null; });
+  $('workflow-detail-dialog').addEventListener('close', () => { currentCardId = null; detailRequestId += 1; });
 
   window.setInterval(() => {
-    if (!$('workflow-view').hidden) loadBoard({ showLoading: false });
+    if (!$('workflow-view').hidden && document.visibilityState === 'visible') refreshWorkflow({ showLoading: false });
   }, 60000);
 })();
