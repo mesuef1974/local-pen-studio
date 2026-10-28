@@ -78,7 +78,7 @@ class UsageLoggerTests(unittest.TestCase):
         self.assertEqual(data["sessions"][0]["model"], "gpt-6-luna")
         self.assertEqual(data["sessions"][0]["samples"][0]["context"]["used_percent"], 25)
         self.assertEqual(data["weekly"]["remaining_percent"], 82)
-        self.assertEqual(self.fetchone("PRAGMA user_version")[0], 4)
+        self.assertEqual(self.fetchone("PRAGMA user_version")[0], 5)
         connection = connect(self.database)
         try:
             tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
@@ -112,7 +112,7 @@ class UsageLoggerTests(unittest.TestCase):
 
         connection = connect(legacy_db)
         try:
-            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 4)
+            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 5)
             self.assertEqual(connection.execute("SELECT session_name FROM usage_sessions WHERE session_id='kept'").fetchone()[0],
                              "بيانات سابقة")
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM schema_migrations WHERE version=2").fetchone()[0], 1)
@@ -236,6 +236,34 @@ class UsageLoggerTests(unittest.TestCase):
             server.shutdown()
             server.server_close()
             thread.join(timeout=2)
+
+    def test_command_creates_routed_children_and_is_idempotent(self):
+        from workflow_service import create_command, board
+        connection=connect(self.database)
+        try:
+            upsert_actor(connection,"laser","ليزر","frontend interface ui")
+            upsert_actor(connection,"backend","باك اند","database api server")
+            body={"idempotency_key":"owner-command-1","title":"تنفيذ واجهة","owner_request":"إنشاء صفحة","scope":"frontend interface", "criteria":[{"criterion_code":"ui","title":"واجهة RTL"}],"target_actor_ids":[]}
+            first,created=create_command(connection,body)
+            second,replayed=create_command(connection,body)
+            self.assertTrue(created); self.assertFalse(replayed)
+            self.assertEqual(first["root_card_id"],second["root_card_id"])
+            self.assertEqual(len(first["child_card_ids"]),1)
+            data=board(connection)
+            child=next(c for c in data["cards"] if c["card_id"]==first["child_card_ids"][0])
+            self.assertEqual(child["assigned_actor_id"],"laser")
+            self.assertEqual(connection.execute("SELECT state_code FROM coordination_outbox").fetchone()[0],"pending")
+        finally: connection.close()
+
+    def test_workflow_command_api_rejects_cross_origin_posts(self):
+        server=ThreadingHTTPServer(("127.0.0.1",0),lambda *args,**kwargs: Handler(*args,database=self.database,**kwargs))
+        thread=threading.Thread(target=server.serve_forever,daemon=True); thread.start()
+        try:
+            request=urllib.request.Request(f"http://127.0.0.1:{server.server_port}/api/workflow/commands",data=b"{}",headers={"Content-Type":"application/json","Origin":"http://evil.test","X-Workflow-Request":"1"},method="POST")
+            with self.assertRaises(urllib.error.HTTPError) as error: urllib.request.urlopen(request)
+            self.assertEqual(error.exception.code,403)
+        finally:
+            server.shutdown(); server.server_close(); thread.join(timeout=2)
 
     def test_backup_api_produces_integral_copy(self):
         self.write_rows({"type": "session_meta", "payload": {"session_id": self.session}}, self.usage())
