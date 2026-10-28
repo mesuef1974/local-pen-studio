@@ -18,3 +18,5 @@ textarea{font:inherit;color:inherit;resize:vertical;max-width:100%}.generation-p
 .approval-guide{padding:8px 2px}.approval-guide h2{font-size:21px;line-height:1.6;margin-block:20px 14px}.approval-guide p{color:#465c77;font-size:15px;line-height:1.9}.approval-guide .local-badge{display:inline-block;white-space:normal}
 
 .plan-warning{margin:12px 0 0;padding:11px 14px;border-inline-start:4px solid #c58a2b;border-radius:6px;background:#fff8e9;color:#684b1d;font-size:12px;line-height:1.8}
+
+.error-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 0 12px;color:var(--muted);font-size:12px}
