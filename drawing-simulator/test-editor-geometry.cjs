@@ -16,13 +16,27 @@ for(const [start,end]of [[[30,40],[170,100]],[[170,100],[30,40]]]){
 assert.match(source,/\['circle','دائرة · O'/);assert.match(source,/\['circle','ellipse'\]\.includes\(tool\)/);
 console.log('PASS: circle tool stays round and participates in shape drawing');
 let compositeAtDraw='';
-const mergeContext=vm.createContext({hasSelection:false,tool:'erase',alphaMask:()=>null,
- layer:{width:10,height:10,getContext:()=>({globalCompositeOperation:'source-over',drawImage:()=>{},clearRect:()=>{}})},
- ctx:{globalCompositeOperation:'source-over',drawImage(){compositeAtDraw=this.globalCompositeOperation;}}});
+const targetContext={globalCompositeOperation:'source-over',drawImage(){compositeAtDraw=this.globalCompositeOperation;}};
+const mergeContext=vm.createContext({hasSelection:false,tool:'erase',activeDocument:()=>({canvas:{getContext:()=>targetContext}}),localSelection:()=>null,renderComposite:()=>{},
+ layer:{width:10,height:10,getContext:()=>({globalCompositeOperation:'source-over',drawImage:()=>{},clearRect:()=>{}})}});
 const mergeSource=source.slice(source.indexOf(' function mergeLayer(){'),source.indexOf(' function choose('));
 vm.runInContext(mergeSource+';mergeLayer();',mergeContext);
-assert.equal(compositeAtDraw,'destination-out');assert.equal(mergeContext.ctx.globalCompositeOperation,'source-over');
+assert.equal(compositeAtDraw,'destination-out');assert.equal(targetContext.globalCompositeOperation,'source-over');
 console.log('PASS: eraser removes pixels with destination-out and restores normal compositing');
+
+const resizeSource=source.slice(source.indexOf(' function resizeRect('),source.indexOf(' async function restore('));
+const resizeContext=vm.createContext({canvas:{width:800,height:600}});vm.runInContext(resizeSource+';globalThis.resizeRect=resizeRect;',resizeContext);
+const scaled=resizeContext.resizeRect({x:20,y:30,width:100,height:50},'se',[10000,10000]);
+assert.ok(scaled.width<=3200&&scaled.height<=3200);assert.ok(Math.abs(scaled.width/scaled.height-2)<0.001);
+console.log('PASS: layer resize preserves aspect ratio and caps raster size');
+
+const layerItems=[{id:'base'},{id:'one'},{id:'two'}],layerOps=[];
+const reorderSource=source.slice(source.indexOf(' function reorderDocument('),source.indexOf(' function moveDocument('));
+const reorderContext=vm.createContext({documents:layerItems,save:label=>layerOps.push(label),renderComposite:()=>{},renderLayers:()=>{}});
+vm.runInContext(reorderSource+';reorderDocument("base","two");',reorderContext);
+assert.deepEqual(layerItems.map(item=>item.id),['one','two','base']);assert.equal(layerOps.length,1);
+console.log('PASS: layer ordering moves the selected layer in front without merging');
+
 const pixels=new Uint8ClampedArray(10*8*4);let mask={width:10,height:8,getContext:()=>({getImageData:()=>({data:pixels})})};
 const boundSource=source.slice(source.indexOf(' function actualSelectionBounds(){'),source.indexOf(' function setSelection('));
 const boundsContext=vm.createContext({selection:mask});vm.runInContext(boundSource+';globalThis.bounds=actualSelectionBounds;',boundsContext);

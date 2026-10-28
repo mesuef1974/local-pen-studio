@@ -46,9 +46,9 @@ def run(data):
     transformer = Flux2Transformer2DModel.from_single_file(
         str(MODEL_DIR / QUANT_FILE), config=str(MODEL_DIR), subfolder='transformer',
         quantization_config=GGUFQuantizationConfig(compute_dtype=torch.bfloat16),
-        torch_dtype=torch.bfloat16, local_files_only=True)
+        dtype=torch.bfloat16, local_files_only=True)
     pipe = Flux2KleinPipeline.from_pretrained(str(MODEL_DIR), transformer=transformer, tokenizer=tokenizer,
-        torch_dtype=torch.bfloat16, local_files_only=True)
+        dtype=torch.bfloat16, local_files_only=True)
     # Accelerate's recursive meta hooks discard GGUF quantization metadata.
     # Offload only the unquantized text encoder, then free it before image inference.
     from accelerate import cpu_offload

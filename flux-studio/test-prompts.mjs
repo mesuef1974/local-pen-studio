@@ -24,3 +24,25 @@ test('editable prompt replaces preset text and text-only mode omits reference co
  const generated=composePrompt(catalog,settings({mode:'generate',prompt:'Draw a boat.'}));
  assert.equal(generated,'Draw a boat.');
 });
+
+test('object preset follows each reference role without assuming reference image 2 is the object',()=>{
+ const combined=composePrompt(catalog,settings({style:'reference-object',mode:'multi',references:[{role:'style'},{role:'object'}]}));
+ assert.ok(combined.includes('Integrate each reference assigned the object/product role'));
+ assert.ok(combined.includes('Reference image 2: Use this reference only to change rendering'));
+ assert.ok(combined.includes('Reference image 3: Use this reference for the appearance and geometry of the object'));
+ assert.ok(!combined.includes('reference image 2 as the reference object'));
+
+ const reordered=composePrompt(catalog,settings({style:'reference-object',mode:'multi',references:[{role:'object'},{role:'style'}]}));
+ assert.ok(reordered.includes('Reference image 2: Use this reference for the appearance and geometry of the object'));
+ assert.ok(reordered.includes('Reference image 3: Use this reference only to change rendering'));
+});
+
+test('style preset uses style references for rendering only and keeps source content',()=>{
+ const prompt=composePrompt(catalog,settings({style:'reference-style',mode:'multi',references:[{role:'style'},{role:'composition'}]}));
+ assert.ok(prompt.includes('exclusive source of all image content'));
+ assert.ok(prompt.includes('If image 1 contains no person or face, the result must contain no person, face, body or clothing'));
+ assert.ok(prompt.includes('Preserve facial identity only when a face is present there'));
+ assert.ok(prompt.includes('Reference image 2: Use this reference only to change rendering'));
+ assert.ok(prompt.includes('Reference image 3: Use this reference as guidance for scene layout'));
+ assert.ok(!prompt.includes('reference image 2 only as an artistic style guide'));
+});

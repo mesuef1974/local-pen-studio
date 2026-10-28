@@ -111,3 +111,31 @@ def audit(data):
     mask,threshold=ink_mask(gray,data.get('inkThreshold',0))
     return measure(rgb,gray,mask,paths,scale,pen)|{'threshold':threshold,
         'inputHash':hashlib.sha256(data['image'].encode()).hexdigest()}
+
+
+def webgpu_target(data):
+    """Prepare only the packed reference mask for the browser WebGPU audit."""
+    rgb,gray=decode_image(data.get('image'));scale,pen=validate_physics(data)
+    height,width=gray.shape
+    mask,threshold=ink_mask(gray,data.get('inkThreshold',0))
+    pen_pixels=pen/scale;pad=max(3,math.ceil(pen_pixels)+2)
+    if max(width+2*pad,height+2*pad)>8192 or (width+2*pad)*(height+2*pad)>40_000_000:
+        raise ValueError('أثر القلم بالنسبة إلى الصورة أكبر من مساحة التدقيق الآمنة؛ كبّر حجم الرسم أو قلّل سماكة القلم.')
+    upscale=min(8 if pen_pixels<1 else 4,max(1,int(min(8192/max(width+2*pad,height+2*pad),
+        math.sqrt(40_000_000/((width+2*pad)*(height+2*pad)))))))
+    scaled=cv2.resize(mask,(width*upscale,height*upscale),interpolation=cv2.INTER_NEAREST)
+    target=cv2.copyMakeBorder(scaled,pad*upscale,pad*upscale,pad*upscale,pad*upscale,
+        cv2.BORDER_CONSTANT,value=0)>0
+    packed=np.packbits(target.reshape(-1),bitorder='little')
+    packed=np.pad(packed,(0,(-packed.size)%4))
+    colored=np.max(rgb,axis=2).astype(np.int16)-np.min(rgb,axis=2).astype(np.int16)>16
+    edge_density=float(np.mean(cv2.Canny(gray,60,140)>0))
+    return {'width':int(target.shape[1]),'height':int(target.shape[0]),
+        'sourceWidth':width,'sourceHeight':height,'pad':pad*upscale,
+        'bitsBase64':base64.b64encode(packed.tobytes()).decode(),
+        'expected':int(np.count_nonzero(target)),'threshold':threshold,
+        'coloredPixelsPercent':round(float(colored.mean())*100,2),
+        'edgeDensity':round(edge_density,6),
+        'penMm':pen,'mmPerPixel':scale,'auditUpscale':upscale,
+        'auditIncludesOutsideImage':True,
+        'inputHash':hashlib.sha256(data['image'].encode()).hexdigest()}
