@@ -6,11 +6,12 @@ import argparse
 import json
 import os
 import sqlite3
+import threading
 from urllib.parse import parse_qs, urlsplit
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from usage_database import dashboard_data
+from usage_database import SCHEMA_VERSION, connect, dashboard_data
 import workflow_service
 
 
@@ -25,6 +26,18 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlsplit(self.path)
+        if parsed.path == "/api/health":
+            try:
+                db=self._connect()
+                routes=db.execute("SELECT COUNT(*) FROM coordination_actor_endpoints WHERE enabled=1").fetchone()[0]
+                pending=db.execute("SELECT COUNT(*) FROM coordination_outbox WHERE state_code IN ('pending','retry')").fetchone()[0]
+                data={"version":1,"schema_version":SCHEMA_VERSION,"dispatcher_enabled":True,
+                      "registered_sessions":routes,"queued_assignments":pending}
+                return self._json(200,data)
+            except (OSError,RuntimeError,sqlite3.Error) as exc:
+                return self._json(503,{"error":{"code":"database_unavailable","message":str(exc)}})
+            finally:
+                if 'db' in locals(): db.close()
         if parsed.path == "/api/dashboard":
             try:
                 payload = json.dumps(dashboard_data(self.database), ensure_ascii=False,
@@ -132,8 +145,18 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8769)
     args = parser.parse_args()
     os.chdir(ROOT)
+    # Apply schema migrations once before the dispatcher thread and HTTP workers start.
+    bootstrap=connect(args.database)
+    bootstrap.close()
     handler = lambda *a, **kw: Handler(*a, database=args.database, **kw)
-    ThreadingHTTPServer((args.host, args.port), handler).serve_forever()
+    server=ThreadingHTTPServer((args.host, args.port), handler)
+    stop=threading.Event()
+    from codex_session_dispatcher import dispatch_loop
+    worker=threading.Thread(target=dispatch_loop,args=(args.database,stop),daemon=True,name="codex-session-outbox")
+    worker.start()
+    try: server.serve_forever()
+    finally:
+        stop.set(); server.server_close(); worker.join(timeout=3)
 
 
 if __name__ == "__main__":

@@ -40,7 +40,9 @@ def _card_rows(db: sqlite3.Connection, where: str = "", params: tuple = ()) -> l
 
 
 def board(db: sqlite3.Connection, *, status: str = "", actor_id: str = "", q: str = "") -> dict:
-    sessions = [dict(r) for r in db.execute("SELECT actor_id,display_name,charter,active FROM coordination_actors WHERE active=1 AND actor_id<>'owner' ORDER BY display_name COLLATE NOCASE")]
+    sessions = [dict(r) for r in db.execute("""SELECT a.actor_id,a.display_name,a.charter,a.active
+        FROM coordination_actors a JOIN coordination_actor_endpoints e ON e.actor_id=a.actor_id
+        WHERE a.active=1 AND e.enabled=1 ORDER BY a.display_name COLLATE NOCASE""")]
     cards = _card_rows(db, "ORDER BY c.updated_at DESC,c.card_id")
     if status: cards = [c for c in cards if c["current_status_code"] == status]
     if actor_id: cards = [c for c in cards if c["assigned_actor_id"] == actor_id]
@@ -84,7 +86,9 @@ def metrics(db: sqlite3.Connection) -> dict:
     runs = db.execute("SELECT card_id,outcome FROM coordination_quality_runs ORDER BY card_id,quality_run_id").fetchall()
     deliveries = db.execute("SELECT remote_commit_sha,commit_sha FROM coordination_delivery_attempts WHERE commit_sha IS NOT NULL").fetchall()
     by_session = []
-    for a in db.execute("SELECT actor_id,display_name FROM coordination_actors WHERE active=1 AND actor_id<>'owner' ORDER BY display_name"):
+    for a in db.execute("""SELECT a.actor_id,a.display_name FROM coordination_actors a
+        JOIN coordination_actor_endpoints e ON e.actor_id=a.actor_id
+        WHERE a.active=1 AND e.enabled=1 ORDER BY a.display_name"""):
         own = [c for c in cards if c["assigned_actor_id"] == a["actor_id"]]
         own_cycles=[]
         for c in own:
@@ -114,20 +118,42 @@ def metrics(db: sqlite3.Connection) -> dict:
 
 
 def create_command(db: sqlite3.Connection, body: dict) -> tuple[dict, bool]:
+    db.execute("BEGIN IMMEDIATE")
     key = body["idempotency_key"]
     prior = db.execute("SELECT root_card_id FROM coordination_command_receipts WHERE idempotency_key=?", (key,)).fetchone()
     if prior:
         ids = [r[0] for r in db.execute("SELECT card_id FROM coordination_command_cards WHERE idempotency_key=? ORDER BY role_code DESC,card_id", (key,))]
+        db.commit()
         return {"root_card_id": prior[0],"child_card_ids": [x for x in ids if x != prior[0]],"created": False}, False
     root = str(uuid.uuid4()); now = utc_now(); targets = list(dict.fromkeys(body.get("target_actor_ids", [])))
     if not targets:
-        actors = db.execute("SELECT actor_id,display_name,COALESCE(charter,'') charter FROM coordination_actors WHERE active=1 AND actor_id<>'owner' ORDER BY actor_id").fetchall()
+        actors = db.execute("""SELECT a.actor_id,a.display_name,COALESCE(a.charter,'') charter
+            FROM coordination_actors a JOIN coordination_actor_endpoints e ON e.actor_id=a.actor_id
+            WHERE a.active=1 AND e.enabled=1 ORDER BY a.actor_id""").fetchall()
         if not actors: raise ValueError("No active session can be routed this command")
-        terms = set((body["title"] + " " + body["scope"] + " " + body["owner_request"]).casefold().split())
-        scored = [(sum(1 for term in set(a["charter"].casefold().split()) if len(term)>2 and term in terms),a["actor_id"]) for a in actors]
+        request_text = " ".join((body["title"], body["scope"], body["owner_request"])).casefold()
+        terms = set(request_text.split())
+        scored=[]
+        for actor in actors:
+            capabilities=[r[0] for r in db.execute("SELECT capability FROM coordination_actor_capabilities WHERE actor_id=?",(actor["actor_id"],))]
+            score=sum(1 for term in capabilities if term in request_text)
+            if score==0:
+                score=sum(1 for term in set(actor["charter"].casefold().split()) if len(term)>2 and term in terms)
+            scored.append((score,actor["actor_id"]))
         best = max(score for score,_ in scored)
-        targets = [actor for score,actor in scored if score==best] if best else [actors[0]["actor_id"]]
-    missing = [x for x in targets if not db.execute("SELECT 1 FROM coordination_actors WHERE actor_id=? AND active=1", (x,)).fetchone()]
+        if not best: raise ValueError("No registered session specialty matched this command; coordinator routing is required")
+        winners=[actor for score,actor in scored if score==best]
+        if len(winners)>1:
+            placeholders=",".join("?" for _ in winners)
+            load=db.execute(f"""SELECT assigned_actor_id,COUNT(*) FROM coordination_cards
+                WHERE assigned_actor_id IN ({placeholders}) AND current_status_code NOT IN ('completed','failed','archived')
+                GROUP BY assigned_actor_id""",tuple(winners)).fetchall()
+            counts={r[0]:r[1] for r in load}
+            winners.sort(key=lambda actor:(counts.get(actor,0),actor))
+        targets=[winners[0]]
+    missing = [x for x in targets if not db.execute("""SELECT 1 FROM coordination_actors a
+        JOIN coordination_actor_endpoints e ON e.actor_id=a.actor_id
+        WHERE a.actor_id=? AND a.active=1 AND e.enabled=1""", (x,)).fetchone()]
     if missing: raise ValueError("Unknown or inactive target actor")
     from coordination_repository import _event
     with db:

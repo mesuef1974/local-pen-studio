@@ -7,6 +7,15 @@
 - قاعدة البيانات: `%USERPROFILE%\.codex\usage-logs\usage.sqlite3`، ومخططها المرقم في `usage_database.py` و`migrations/`.
 - جداول الفلو تميز الحالة الحالية عن سجل الأحداث غير القابل للتعديل، وتحفظ الإسنادات والآراء وقرارات المالك ومحاولات التسليم والتحقق والتعثرات وقواميس الحالة/السبب المرقمة. واجهة الكتابة المعاملاتية في `coordination_repository.py`.
 - يمكن ربط عينة القياس ببطاقة ومرحلة، وربط الحدث بجلسة Codex، عبر معرّفات صريحة فقط؛ لا يستنتج النظام العلاقة من الوقت.
+- مصنع البطاقات يعمل عبر `dashboard_server.py` و`workflow_service.py`؛ أمر المالك يسجل بطاقة جذر وبطاقات الجلسات المختصة في SQLite بمفتاح يمنع تكرار الأمر.
+- يرسل خادم اللوحة المهام من Outbox إلى جلسات Codex المسجلة باستخدام `codex queue`. تعني `sent` قبول Codex وضع الرسالة في الجلسة فقط؛ إكمال البطاقة يتطلب إثبات الدفع وفحوص الجودة.
+- تُحفظ معرّفات الجلسات وقدراتها محليًا في جدولي `coordination_actor_endpoints` و`coordination_actor_capabilities`، ولا تحفظ في Git. اربط كل جلسة مرة واحدة:
+
+  ```powershell
+  python scripts/usage_monitor/codex_session_dispatcher.py register --actor-id laser --thread-id <CODEX-THREAD-UUID> --capability frontend --capability interface
+  ```
+
+- حالات Outbox هي `pending`, `processing`, `sent`, `retry`, و`dead_letter`. نتيجة الإرسال غير المحسومة تُعزل ولا تعاد تلقائيًا، لتجنب تكرار التكليف.
 - الاختبارات المركزة: `python -m unittest discover -s scripts/usage_monitor -p test_*.py`
 - تثبيت/تحديث المهمة المجدولة من جذر المشروع: `./scripts/install_codex_usage_logger.ps1`
 - تشغيل يدوي من جذر المشروع: `python scripts/usage_monitor/codex_usage_logger.py`
