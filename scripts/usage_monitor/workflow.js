@@ -9,8 +9,8 @@
     { code: 'in_progress', label: 'قيد التنفيذ' },
     { code: 'blocked', label: 'متعذرة' },
     { code: 'returned', label: 'معادة للتنفيذ' },
-    { code: 'delivered', label: 'تم التسليم' },
-    { code: 'verifying', label: 'قيد التحقق' },
+    { code: 'delivered', label: 'تم التحقق من الدفع' },
+    { code: 'verifying', label: 'قيد فحوص الجودة بعد الدفع' },
     { code: 'completed', label: 'مكتملة' },
     { code: 'failed', label: 'فشلت' },
     { code: 'archived', label: 'مؤرشفة' },
@@ -24,6 +24,12 @@
     quality_run: 'تشغيل فحوص الجودة', session_started: 'بدء التنفيذ', progress_update: 'تحديث التقدم',
   };
   const outcomeLabels = { pass: 'اجتاز', passed: 'اجتاز', fail: 'فشل', failed: 'فشل', pending: 'قيد الانتظار', accepted: 'مقبول', sent: 'أُرسل', unresolved: 'غير محلول', resolved: 'تم الحل' };
+  const outboxStates = {
+    pending: ['بانتظار الإرسال', 'pending'], queued: ['في الطابور', 'pending'],
+    processing: ['قيد الإرسال', 'processing'], sent: ['وُضع في الجلسة', 'sent'],
+    retry: ['ستُعاد المحاولة', 'retry'], dead_letter: ['تعذر الإرسال آليًا', 'failed'],
+    failure: ['فشل الإرسال', 'failed'], failed: ['فشل الإرسال', 'failed'],
+  };
   let currentBoard = null;
   let currentCardId = null;
   let boardController = null;
@@ -164,7 +170,7 @@
     meta.append(status, element('span', progress));
     const foot = [];
     if (card.branch_name) foot.push(card.branch_name);
-    if (card.commit_sha) foot.push(`SHA ${String(card.commit_sha).slice(0, 8)}`);
+    if (card.commit_sha) foot.push(`Commit مسجل · SHA ${String(card.commit_sha).slice(0, 8)}`);
     if (card.qa_outcome) foot.push(`QA ${card.qa_outcome}`);
     button.append(id, title, meta);
     if (foot.length) button.append(element('span', foot.join(' · '), 'workflow-card-meta'));
@@ -312,13 +318,13 @@
     return item;
   }
 
-  function appendFacts(root, card) {
+  function appendFacts(root, card, deliveries = []) {
     const facts = element('div', undefined, 'workflow-detail-facts');
     const pairs = [
       ['الحالة', statusLabel(card)], ['الجلسة المسؤولة', safeText(card.assigned_actor_name)],
       ['النطاق', safeText(card.scope)], ['الأولوية', priorityLabels[card.priority_code] || safeText(card.priority_code)],
       ['الفرع', safeText(card.branch_name)], ['Commit', safeText(card.commit_sha)],
-      ['نتيجة التسليم', safeText(card.delivery_outcome)], ['نتيجة QA', safeText(card.qa_outcome)],
+      ['التحقق من الدفع', deliverySummary(deliveries)], ['نتيجة QA', outcomeLabels[card.qa_outcome] || safeText(card.qa_outcome)],
       ['تاريخ الإنشاء', formatDate(card.created_at)], ['آخر تحديث', formatDate(card.updated_at)],
     ];
     for (const [label, value] of pairs) {
@@ -329,6 +335,31 @@
     root.append(facts);
   }
 
+  function deliverySummary(deliveries) {
+    const latest = deliveries[deliveries.length - 1];
+    if (!latest) return 'لا توجد محاولة تسليم مسجلة';
+    const verified = Boolean(latest.verified_at && latest.remote_commit_sha && latest.commit_sha
+      && latest.remote_commit_sha.toLowerCase() === latest.commit_sha.toLowerCase());
+    if (verified) return 'تم التحقق من تطابق SHA مع origin';
+    if (latest.outcome === 'failed') return 'فشل التحقق من الدفع';
+    if (latest.outcome) return 'محاولة مسجلة؛ لم يثبت الدفع بعد';
+    return 'لا توجد محاولة تسليم مسجلة';
+  }
+
+  function outboxItem(item) {
+    const code = String(item.state_code || '').toLowerCase();
+    const [label, style] = outboxStates[code] || [safeText(item.state_code, 'حالة غير معروفة'), 'pending'];
+    const session = (currentBoard?.sessions || []).find(actor => actor.actor_id === item.target_actor_id);
+    const target = session ? safeText(session.display_name, session.actor_id) : safeText(item.target_actor_id, 'جلسة غير محددة');
+    const count = Number.isFinite(Number(item.attempt_count)) ? arabicNumber.format(Number(item.attempt_count)) : '—';
+    const timing = item.sent_at ? `وقت الإرسال: ${formatDate(item.sent_at)}` : item.available_at ? `متاح للإرسال: ${formatDate(item.available_at)}` : '';
+    const command = item.command_code === 'card_assignment' ? 'إسناد بطاقة' : safeText(item.command_code, 'إرسال تكليف');
+    const detail = [`الجهة: ${target}`, `عدد المحاولات: ${count}`, timing, item.last_error_code && `رمز الخطأ: ${item.last_error_code}`].filter(Boolean).join(' · ');
+    const row = detailItem(command, detail, item.sent_at || item.available_at);
+    row.insertBefore(element('span', label, `workflow-outbox-state is-${style}`), row.firstChild);
+    return row;
+  }
+
   function renderCardDetails(data) {
     const card = data.card || {};
     $('workflow-detail-title').textContent = `${safeText(card.card_id, currentCardId)} · ${safeText(card.title, 'بطاقة')}`;
@@ -337,7 +368,7 @@
     const lead = element('div', undefined, 'workflow-detail-lead');
     lead.append(element('strong', 'طلب المالك'), element('p', safeText(card.owner_request, 'لا يوجد نص لطلب المالك.')));
     root.append(lead);
-    appendFacts(root, card);
+    appendFacts(root, card, data.deliveries || []);
     const children = (currentBoard?.cards || []).filter(item => item.parent_card_id === card.card_id);
     if (children.length) {
       root.append(section('بطاقات الجلسات المسندة', children, item => {
@@ -364,7 +395,7 @@
       return detailItem(`${item.branch_name || 'فرع غير محدد'} · المحاولة ${arabicNumber.format(item.attempt_number || item.attempt_id || 0)}`, detail, item.submitted_at);
     }, 'لا توجد تسليمات مسجلة.'));
     root.append(section('فحوص الجودة', data.validations, item => detailItem(`${item.criterion || item.check_code || 'فحص'} · ${outcomeLabels[item.outcome] || item.outcome || 'نتيجة غير محددة'}`, item.evidence_ref, item.recorded_at), 'لا توجد نتائج تحقق مسجلة.'));
-    root.append(section('محاولات الإرسال', data.outbox, item => detailItem(`${item.command_code || 'إرسال'} · ${outcomeLabels[item.state_code] || item.state_code || 'حالة غير محددة'}`, item.last_error_code, item.updated_at || item.created_at), 'لا توجد محاولات إرسال.'));
+    root.append(section('طابور إرسال التكليفات', data.outbox, outboxItem, 'لا توجد تكليفات في طابور الإرسال.'));
     $('workflow-detail-loading').hidden = true;
     $('workflow-detail-error').hidden = true;
     root.hidden = false;
