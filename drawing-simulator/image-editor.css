@@ -10,3 +10,6 @@
 .pro-editor .ed-error{color:#b42318;max-width:42rem;line-height:1.6}.pro-editor .ed-error[hidden]{display:none}
 
 .pro-editor .ed-surface{background:repeating-conic-gradient(#e0e5eb 0% 25%,#fff 0% 50%) 0/16px 16px}
+.ed-layers{direction:rtl}.ed-layers>p{margin:8px 0 10px}.ed-inspector #edLayerList{display:grid;gap:5px;list-style:none;margin:0;padding:0;max-height:230px;overflow:auto}.ed-layer-row{display:grid;grid-template-columns:30px minmax(0,1fr) 30px 30px 30px;gap:3px;align-items:center;padding:3px;border:1px solid var(--ed-line);border-radius:7px;background:#fff}.ed-layer-row[data-drop=true]{border-color:var(--ed-blue);background:#eef4ff}.ed-layer-row button{min-width:0;min-height:34px;height:34px;padding:3px}.ed-layer-row .ed-layer-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}.ed-layer-row .ed-layer-name[aria-pressed=true]{background:#e7efff;border-color:#a9c3f3;color:#194ca8;font-weight:600}.ed-layer-row .ed-layer-visibility{font-size:17px;line-height:1}
+
+.ed-project-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.ed-project-actions button{min-height:42px}@media(max-width:760px){.ed-project-actions{grid-template-columns:1fr}}

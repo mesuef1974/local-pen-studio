@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="مراجعة تقنية لمسار الصورة إلى SVG في تريس قبل مسار القلم، مع تقييم العتاد والمخاطر وخطوات الجاهزية لـ xTool P2S.">
+<meta name="color-scheme" content="light">
+<title>من الصورة إلى SVG | مراجعة تريس</title>
+<style>
+:root {
+  color-scheme: light;
+  --ink: #18343c;
+  --muted: #526c70;
+  --paper: #fbfcfa;
+  --canvas: #edf2ef;
+  --line: #d5dfdb;
+  --teal: #126d68;
+  --teal-dark: #0b514e;
+  --teal-pale: #e4f1ed;
+  --copper: #a75e36;
+  --copper-pale: #f7ece4;
+  --blue: #28536b;
+  --blue-pale: #eaf0f4;
+  --red: #8d4034;
+  --red-pale: #f7eae7;
+  --shadow: 0 20px 56px rgb(24 52 60 / 8%);
+  font-family: "Tajawal", "Segoe UI", Tahoma, Arial, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse at 12% 4%, rgb(18 109 104 / 8%), transparent 29rem),
+    var(--canvas);
+  font-size: 16px;
+  line-height: 1.85;
+}
+a { color: var(--teal-dark); text-decoration-thickness: .08em; text-underline-offset: .2em; }
+a:hover { color: var(--copper); }
+a:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--copper);
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+.skip-link {
+  position: fixed;
+  z-index: 10;
+  inset-block-start: 12px;
+  inset-inline-start: 12px;
+  transform: translateY(-160%);
+  padding: 8px 14px;
+  color: #fff;
+  background: var(--teal-dark);
+  border-radius: 5px;
+}
+.skip-link:focus { transform: none; }
+.page { width: min(1320px, 100% - 48px); margin: 32px auto 54px; }
+.hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr);
+  gap: 32px;
+  align-items: center;
+  min-height: 330px;
+  padding: clamp(28px, 5vw, 64px);
+  color: #f5f8f5;
+  background: var(--teal-dark);
+  border-radius: 8px 38px 8px 8px;
+  box-shadow: var(--shadow);
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: -96px;
+  inset-block-end: -140px;
+  width: 330px;
+  height: 330px;
+  border: 1px solid rgb(222 238 230 / 13%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 28px rgb(222 238 230 / 4%), 0 0 0 58px rgb(222 238 230 / 3%);
+  pointer-events: none;
+}
+.hero-copy { position: relative; z-index: 1; max-width: 760px; }
+.eyebrow { margin: 0 0 12px; color: #acd7cf; font-size: .91rem; font-weight: 700; }
+h1, h2, h3, p { margin-block-start: 0; }
+h1 { max-width: 18ch; margin-block-end: 14px; font-size: clamp(2.25rem, 5.4vw, 4.2rem); line-height: 1.2; letter-spacing: -.035em; }
+.hero-lede { max-width: 60ch; margin: 0; color: #d7e8e3; font-size: clamp(1.02rem, 1.7vw, 1.2rem); }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-block-start: 22px; color: #b9d2cd; font-size: .88rem; }
+.hero-meta span { display: inline-flex; align-items: center; gap: 8px; }
+.hero-meta span::before { content: ""; width: 7px; height: 7px; background: #d7a27c; border-radius: 50%; }
+.contour { width: min(100%, 390px); justify-self: center; color: #b6d9d0; }
+.contour svg { display: block; width: 100%; height: auto; }
+.contour figcaption { margin-block-start: 4px; color: #b9d2cd; text-align: center; font-size: .8rem; }
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 18px 0 30px;
+  overflow: hidden;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.summary-item { padding: 18px 22px; background: var(--paper); }
+.summary-item strong { display: block; margin-block-end: 4px; color: var(--teal-dark); font-size: 1rem; }
+.summary-item span { color: var(--muted); font-size: .91rem; }
+.layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 24px; align-items: start; }
+.toc {
+  position: sticky;
+  inset-block-start: 20px;
+  padding: 19px 18px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--copper);
+  border-radius: 5px;
+}
+.toc h2 { margin: 0 0 10px; color: var(--blue); font-size: 1rem; }
+.toc ol { margin: 0; padding-inline-start: 1.25rem; color: var(--muted); font-size: .9rem; }
+.toc li { padding-inline-start: 3px; margin-block: 4px; }
+.toc a { text-decoration: none; }
+main { min-width: 0; }
+.section {
+  margin-block-end: 18px;
+  padding: clamp(22px, 3.2vw, 36px);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.section h2 { margin-block-end: 13px; color: var(--blue); font-size: clamp(1.3rem, 2.5vw, 1.7rem); line-height: 1.35; }
+.section h3 { margin-block: 24px 8px; color: var(--teal-dark); font-size: 1.1rem; }
+.section p { max-width: 78ch; margin-block-end: 11px; }
+.section p:last-child { margin-block-end: 0; }
+.callout {
+  margin-block: 16px;
+  padding: 13px 17px;
+  background: var(--teal-pale);
+  border-inline-start: 4px solid var(--teal);
+  border-radius: 3px;
+}
+.callout.warning { background: var(--copper-pale); border-color: var(--copper); }
+.callout.limit { background: var(--red-pale); border-color: var(--red); }
+.flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-block: 20px 5px;
+  counter-reset: stage;
+}
+.flow-step {
+  position: relative;
+  padding: 18px 16px 16px;
+  background: #f1f5f2;
+  border-block-start: 2px solid var(--teal);
+  counter-increment: stage;
+}
+.flow-step::before {
+  content: "0" counter(stage);
+  display: block;
+  margin-block-end: 9px;
+  color: var(--copper);
+  font: 700 .78rem/1.3 Consolas, "Segoe UI", sans-serif;
+  direction: ltr;
+  text-align: right;
+}
+.flow-step strong { display: block; margin-block-end: 5px; color: var(--teal-dark); }
+.flow-step p { margin: 0; color: var(--muted); font-size: .89rem; }
+.table-wrap { margin-block: 16px 5px; overflow-x: auto; border: 1px solid var(--line); border-radius: 4px; }
+table { width: 100%; border-collapse: collapse; text-align: right; }
+caption { padding: 11px 14px; color: var(--muted); background: #f3f6f4; text-align: right; font-size: .9rem; }
+th, td { padding: 13px 14px; border-block-start: 1px solid var(--line); vertical-align: top; }
+thead th { color: #fff; background: var(--blue); font-size: .9rem; }
+tbody th { min-width: 96px; color: var(--teal-dark); background: #f1f5f2; }
+tbody tr:nth-child(even) td { background: #f8faf8; }
+.finding-table { min-width: 790px; }
+.priority { display: inline-block; min-width: 2.5rem; padding: 1px 7px; border-radius: 3px; color: #fff; text-align: center; font-size: .78rem; font-weight: 700; }
+.p1 { background: var(--red); }
+.p2 { background: #8b5a20; }
+.p3 { background: var(--blue); }
+code, .ltr { direction: ltr; unicode-bidi: isolate; font-family: Consolas, "Courier New", monospace; font-size: .9em; }
+code { padding: 1px 5px; color: #204856; background: #eaf0f1; border-radius: 3px; }
+.small { color: var(--muted); font-size: .9rem; }
+.sources { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px; margin: 0; padding-inline-start: 1.3rem; }
+.sources li { padding-inline-start: 3px; }
+.verdict {
+  padding: 22px 24px;
+  color: #fff;
+  background: var(--blue);
+  border-inline-start: 5px solid #d1a17c;
+  border-radius: 4px;
+}
+.verdict strong { color: #f2d4ba; }
+footer { padding: 16px 4px 0; color: var(--muted); font-size: .84rem; }
+@media (max-width: 950px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; }
+  .toc ol { columns: 2; column-gap: 26px; }
+  .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 680px) {
+  .page { width: min(100% - 24px, 1320px); margin-block: 12px 28px; }
+  .hero { grid-template-columns: 1fr; gap: 18px; min-height: auto; padding: 26px 22px; border-radius: 5px 24px 5px 5px; }
+  .contour { width: min(76%, 300px); }
+  .summary { grid-template-columns: 1fr; }
+  .summary-item { padding: 14px 17px; }
+  .toc ol { columns: 1; }
+  .section { padding: 21px 17px; }
+  .flow { grid-template-columns: 1fr; }
+  .sources { grid-template-columns: 1fr; }
+  body { font-size: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+@media print {
+  @page { size: A4; margin: 14mm; }
+  body { background: #fff; color: #111; font-size: 10.5pt; }
+  .page { width: 100%; margin: 0; }
+  .hero { min-height: 0; padding: 22px; box-shadow: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .contour { width: 240px; }
+  .summary, .section, .toc, .verdict { break-inside: avoid; box-shadow: none; }
+  .layout { display: block; }
+  .toc { position: static; margin-block-end: 12px; }
+  .toc ol { columns: 2; }
+  .table-wrap { overflow: visible; }
+  .finding-table { min-width: 0; font-size: 8pt; }
+  th, td { padding: 6px; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#report">انتقل إلى التقرير</a>
+<div class="page">
+<header class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">مراجعة تقنية · تريس · قبل مسار القلم</p>
+    <h1>من الصورة المعتمدة إلى ملف SVG</h1>
+    <p class="hero-lede">تقييم لمسار التحضير والتحويل والحفظ، مع فصل ما يثبته الكود عن جاهزية الملف لاستيراد xTool P2S.</p>
+    <div class="hero-meta" aria-label="بيانات المراجعة">
+      <span>28 أكتوبر 2026</span>
+      <span>قراءة ساكنة للكود والتوثيق</span>
+      <span>لم تُشغّل اختبارات أو فحص عتاد جديد</span>
+    </div>
+  </div>
+  <figure class="contour">
+    <svg viewBox="0 0 390 230" role="img" aria-labelledby="contour-title contour-desc" xmlns="http://www.w3.org/2000/svg">
+      <title id="contour-title">تحول حدود صورة إلى منحنيات متجهة</title>
+      <desc id="contour-desc">طبقات خطوط منحنية متداخلة ترمز إلى استخراج حدود المساحات في ملف SVG.</desc>
+      <g fill="none" stroke="currentColor" stroke-width="1.4" opacity=".85">
+        <path d="M28 124c19-47 54-76 96-76 35 0 48 24 79 24 32 0 45-35 83-35 33 0 57 21 76 57"/>
+        <path d="M39 139c18-38 48-61 84-61 31 0 48 21 79 21 34 0 49-32 81-32 30 0 51 18 69 45"/>
+        <path d="M52 153c16-28 39-45 69-45 28 0 47 17 77 17 37 0 51-27 80-27 25 0 43 14 58 34"/>
+        <path d="M68 166c13-19 30-30 52-30 26 0 44 13 73 13 40 0 55-21 79-21 20 0 34 10 46 24"/>
+        <path d="M90 178c11-10 21-15 35-15 24 0 42 9 68 9 40 0 57-15 77-15 13 0 23 5 32 13"/>
+      </g>
+      <g fill="var(--copper-pale)" stroke="var(--copper)" stroke-width="1.2">
+        <circle cx="53" cy="65" r="4"/><circle cx="320" cy="166" r="4"/><circle cx="256" cy="39" r="4"/>
+      </g>
+      <path d="M45 199h300" stroke="#b6d9d0" stroke-width="1" stroke-dasharray="4 6"/>
+      <text x="195" y="220" fill="#b9d2cd" font-size="11" text-anchor="middle" font-family="Segoe UI,Arial">VECTOR CONTOURS · NOT PEN STROKES</text>
+    </svg>
+    <figcaption>مساحات وحدود متجهة؛ ليست ضربات قلم مفتوحة.</figcaption>
+  </figure>
+</header>
+
+<div class="summary" aria-label="خلاصة التقييم">
+  <div class="summary-item"><strong>المسار منظم</strong><span>حفظ الأصل، شفافية فعلية، مراجعة واعتماد قبل التحويل.</span></div>
+  <div class="summary-item"><strong>المخرج متجهي</strong><span>SVG نهائي بلا صور نقطية وفق الفحص الحالي في التطبيق.</span></div>
+  <div class="summary-item"><strong>جاهزية P2S غير مثبتة</strong><span>الأبعاد بالبكسل؛ لم يُقَس الاستيراد في برنامج CAM.</span></div>
+</div>
+
+<div class="layout">
+<nav class="toc" aria-label="محتويات التقرير">
+  <h2>محتويات التقرير</h2>
+  <ol>
+    <li><a href="#verdict">الحكم التنفيذي</a></li>
+    <li><a href="#pipeline">مسار البيانات</a></li>
+    <li><a href="#findings">المشكلات والإصلاحات</a></li>
+    <li><a href="#hardware">العتاد والاستفادة</a></li>
+    <li><a href="#evidence">التحقق والأدلة</a></li>
+    <li><a href="#next">خطوات الجاهزية</a></li>
+    <li><a href="#sources">المراجع</a></li>
+  </ol>
+</nav>
+
+<main id="report" tabindex="-1">
+<section class="section" id="verdict" aria-labelledby="verdict-title">
+  <h2 id="verdict-title">الحكم التنفيذي</h2>
+  <p>«تريس» مسار مستقل عن خوارزميات «مسار القلم». يبدأ بصورة شفافة معتمدة، ويستخدم مهارة محلية لتحويل حدود المساحات إلى منحنيات Bézier، ثم يحفظ SVG نهائيًا ونسخة طبقات وملفات معاينة وتحقق. هو نموذج محلي جيد لتحويل الرسومات إلى SVG تجريبيًا، لكنه لا يثبت وحده أن الملف مضبوط المقاس أو جاهز للاستيراد الإنتاجي إلى xTool P2S.</p>
+  <div class="verdict"><strong>الخلاصة:</strong> جودة تدفق الصورة والحفظ جيدة مبدئيًا؛ أما جاهزية CAM فتظل مشروطة بتحديد الوحدة والحجم الفعلي وقياس الاستيراد في برنامج وإصدار معروفين. ملف تريس الحالي يكتب العرض والارتفاع بالبكسل. لا يوجد إثبات من هذه المراجعة أن برنامج CAM سيحوّل هذه الأبعاد إلى مقاس فيزيائي محدد.</div>
+  <p class="small">التقييم مبني على قراءة الملفات الحالية ومراجعة الاختبارات الموجودة، لا على تشغيلها. لم أجر فحصًا جديدًا للجهاز أو تجربة استيراد/نقش.</p>
+</section>
+
+<section class="section" id="pipeline" aria-labelledby="pipeline-title">
+  <h2 id="pipeline-title">المسار من الصورة إلى SVG</h2>
+  <div class="flow" aria-label="مراحل التحويل بالترتيب">
+    <article class="flow-step"><strong>استيراد الصورة</strong><p>قراءة صيغ متعددة، تصحيح EXIF، تحديد الحجم، وإنشاء نسخة عمل دون الكتابة على الأصل.</p></article>
+    <article class="flow-step"><strong>تجهيز الخلفية والدرجات</strong><p>الحفاظ على Alpha أو إزالة الخلفية محليًا، ثم تجهيز رمادي/حبر/درجات مع مراجعة المستخدم.</p></article>
+    <article class="flow-step"><strong>تحويل حدود المساحات</strong><p>تشغيل مهارة محلية مثبتة، بإصدار 0.1.0، عبر WSL وPotrace/SciPy.</p></article>
+    <article class="flow-step"><strong>التحقق والحفظ</strong><p>إنشاء SVG متجهي ورندر معاينة وJSON، وحفظها في مجلد محلي خاص بالطلب.</p></article>
+  </div>
+  <p>يمنع التدفق دخول مرحلة التتبع قبل اعتماد الصورة المجهزة. إعدادات التحويل تتيح الموازنة بين تنعيم الحدود، حذف المكونات الصغيرة، تدوير الزوايا، وسماحية اختصار المنحنيات.</p>
+  <div class="callout warning"><strong>تمييز مهم:</strong> SVG تريس يحتوي مساحات مغلقة ومملوءة على هيئة طبقات رمادية. مخرج «مسار القلم» مختلف: خطوط/ضربات قلم، ترتيب حركة، ومحاكاة. لا ينبغي وصف أحدهما بأنه بديل مباشر عن الآخر.</div>
+</section>
+
+<section class="section" id="findings" aria-labelledby="findings-title">
+  <h2 id="findings-title">المشكلات والإصلاحات المقترحة</h2>
+  <div class="table-wrap" role="region" aria-label="جدول نتائج المراجعة؛ يمكن تمريره أفقيًا على الشاشة الصغيرة" tabindex="0">
+  <table class="finding-table">
+    <caption>الحقائق المثبتة من الكود منفصلة عن الاستنتاجات والتوصيات أدناه.</caption>
+    <thead><tr><th scope="col">الأولوية</th><th scope="col">المشكلة والدليل</th><th scope="col">الإصلاح أو شرط الإغلاق</th><th scope="col">الملف</th></tr></thead>
+    <tbody>
+      <tr>
+        <th scope="row"><span class="priority p1">P1</span></th>
+        <td><strong>الحجم الفيزيائي غير محدد.</strong> المصدّر يكتب أبعاد SVG بالبكسل و`viewBox` بالبكسل؛ لذلك لا يوجد عقد mm ثابت لمخرج تريس.</td>
+        <td>اتفقوا على سياسة تحويل موثقة من البكسل إلى mm، وحد أقصى للوحة P2S، ثم قيسوا حجم الاستيراد في CAM. لا تفترضوا سلوك برنامج لم يُختبر.</td>
+        <td>مهارة التتبع المثبتة خارج المستودع؛ موصلها المحلي في <a href="../../../../../trace-studio/processing.py">processing.py</a> ووصف البيئة في <a href="../../../../../trace-studio/README.md">README تريس</a>.</td>
+      </tr>
+      <tr>
+        <th scope="row"><span class="priority p1">P1</span></th>
+        <td><strong>اعتماد على بيئة خارج المستودع.</strong> يُحمّل التطبيق مهارة محلية محددة بالإصدار والمسار، ويشغلها داخل WSL؛ ملفات المهارة واعتمادياتها ليست ضمن المشروع.</td>
+        <td>وثّقوا بصمة وإصدار المهارة واعتماديات Potrace/Inkscape وWSL، وأضيفوا فحص جاهزية واضحًا قبل استقبال صورة. لا تدّعوا قابلية إعادة البناء على جهاز آخر دون هذه البيئة.</td>
+        <td><a href="../../../../../trace-studio/processing.py">processing.py</a> · <a href="../../../../../trace-studio/README.md">README تريس</a></td>
+      </tr>
+      <tr>
+        <th scope="row"><span class="priority p2">P2</span></th>
+        <td><strong>مدقق SVG محدود.</strong> يفحص XML ووجود مسار، ويمنع `<image>` في SVG النهائي، ويتحقق من مرجع PNG المخفي والمقفل في نسخة الطبقات؛ لا يثبت بذاته وحدة الملف أو حدود الإحداثيات أو قبول عناصر CAM.</td>
+        <td>أضيفوا عقد فحص لأبعاد اللوحة والوحدات و`viewBox` وحدود الرسم وعناصر SVG المدعومة. سجّلوا عدد المسارات والنقاط وحدود الـbounding box، ثم افحصوا الملف في CAM منفصلًا.</td>
+        <td><a href="../../../../../trace-studio/processing.py">processing.py</a> · <a href="../../../../../trace-studio/server.py">server.py</a></td>
+      </tr>
+      <tr>
+        <th scope="row"><span class="priority p2">P2</span></th>
+        <td><strong>معيار silhouette لا يمثل جودة التفاصيل.</strong> IoU يقيس تداخل قناع الحد الخارجي في الرندر، ولا يثبت دقة ملامح أو حفظ التفاصيل والدرجات.</td>
+        <td>احتفظوا بمعاينة مرجعية وتراكب بصري، واختبروا عينات ممثلة تشمل التفاصيل الدقيقة والشفافية والدرجات. وثّقوا أن IoU وحده لا يكفي لقبول شكل فني.</td>
+        <td><a href="../../../../../trace-studio/README.md">README تريس</a> · <a href="../../../../../trace-studio/test_processing.py">اختبارات تريس الموجودة</a></td>
+      </tr>
+      <tr>
+        <th scope="row"><span class="priority p2">P2</span></th>
+        <td><strong>وصف CPU/GPU متعارض.</strong> نص الواجهة وREADME يصفان إزالة الخلفية على CPU، بينما كود التجهيز يشترط بيئة GPU ويرفض نتيجة لا تؤكد CUDA.</td>
+        <td>وحّدوا الوصف مع التنفيذ الفعلي، وميّزوا نسخة Python العامة عن البيئة المعزولة المستخدمة للعامل. تقرير العتاد لا يثبت تلقائيًا أن كل بيئة ONNX تستخدم CUDA.</td>
+        <td><a href="../../../../../trace-studio/index.html">index.html</a> · <a href="../../../../../trace-studio/README.md">README</a> · <a href="../../../../../trace-studio/preparation.py">preparation.py</a></td>
+      </tr>
+      <tr>
+        <th scope="row"><span class="priority p3">P3</span></th>
+        <td><strong>المخرجات المحلية لا يظهر لها تنظيف تلقائي.</strong> كل تحويل ينشئ مجلدًا مستقلًا ويحفظ الصورة المعتمدة والنتائج.</td>
+        <td>حددوا سياسة احتفاظ وحذف واضحة للمخرجات المحلية، مع الحفاظ على إمكان إعادة فحص تسليم اختاره المستخدم. لا تنقلوا الصور أو JSON إلى خدمة خارجية تلقائيًا.</td>
+        <td><a href="../../../../../trace-studio/processing.py">processing.py</a> · <a href="../../../../../trace-studio/server.py">server.py</a></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="small">P1 هنا يعني شرطًا يمنع وصف المخرج بأنه جاهز إنتاجيًا لـP2S؛ لا يعني أن التحويل المحلي كله متعطل.</p>
+</section>
+
+<section class="section" id="hardware" aria-labelledby="hardware-title">
+  <h2 id="hardware-title">العتاد: ما نعرفه وما يعنيه لتريس</h2>
+  <p>وصل تقرير «مسار القلم» بعد المراجعة الأولية. يذكر جهازًا بمعالج i7‑13650HX، وذاكرة RAM مقدارها 31.7 GiB، وRTX 4060 Laptop مع 8 GiB VRAM؛ ويذكر أن PyTorch CUDA وCuPy يعملان. لم أعد فحص الجهاز.</p>
+  <div class="table-wrap" role="region" aria-label="جدول تطبيق نتائج العتاد على مراحل تريس" tabindex="0">
+  <table>
+    <caption>نتائج قياس «مسار القلم» لا تُنسب إلى «تريس» دون قياس مستقل.</caption>
+    <thead><tr><th scope="col">المكوّن</th><th scope="col">ما يثبته الكود/التقرير</th><th scope="col">التوصية لتريس</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">GPU</th><td>عامل إزالة الخلفية في تريس يستهدف CUDA داخل بيئة `.venv-background-gpu`؛ أما التتبع نفسه عبر Potrace/SciPy داخل WSL ولا يظهر في الكود أنه يستخدم GPU.</td><td>استخدم GPU لإزالة الخلفية حيث تتطلب الصورة ذلك. لا تنقل خوارزمية التتبع إلى GPU قبل قياس مراحل تريس منفصلة وإثبات تحسن كامل المسار.</td></tr>
+      <tr><th scope="row">CPU وRAM</th><td>فك الصور وتجهيز OpenCV/Pillow وتشغيل SciPy/Potrace مراحل CPU. تطبيق تريس يضع حدًا للدقة وحجم الإدخال، ويقفل طلب المعالجة الثقيل بالتزامن.</td><td>أبقِ CPU المسار الافتراضي الآن. قس زمن التحضير والتتبع والرندر واستهلاك الذاكرة قبل توسيع الحدود أو إضافة توازٍ.</td></tr>
+      <tr><th scope="row">نتيجة مسار القلم</th><td>نقل EDT/Sobel إلى CUDA لم يسرع قياسه الكامل؛ وعنق CairoSVG البالغ نحو 74% يخص ذلك القياس.</td><td>لا تنقل نسبة 74% إلى تريس؛ تريس يستخدم Potrace وInkscape، لا CairoSVG في مسار SVG هذا. اختبر عنق الزجاجة في تريس نفسه.</td></tr>
+      <tr><th scope="row">بيئة ONNX</th><td>الكود يستدعي بيئة GPU معزولة للعامل؛ التقرير يورد أيضًا نتائج لمكتبات Python أخرى. لا أستنتج من إحداها حالة الأخرى.</td><td>سجلوا إصدار ONNX Runtime ومزوّد التنفيذ من البيئة المعزولة نفسها عند التحقق المقبل، دون إعادة تثبيت أو فحص غير مطلوب الآن.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout"><strong>خطة قياس آمنة:</strong> لعدة صور ممثلة، سجّلوا الزمن المنفصل للتحضير وإزالة الخلفية والتتبع وInkscape render، مع قياس RAM/VRAM وعدد الطبقات/المقاطع وحجم SVG. لا تشغلوا FLUX أو Qwen بالتوازي أثناء benchmark GPU، ولا تجعلوا خفض الدقة أو تغيير الشكل صامتًا.</div>
+</section>
+
+<section class="section" id="evidence" aria-labelledby="evidence-title">
+  <h2 id="evidence-title">التحقق والأدلة وحدود المراجعة</h2>
+  <ul>
+    <li>توجد اختبارات لمدخل PNG والشفافية والألوان وحدود الإعدادات، واختبار تكامل للمحوّل/الرندر عند توفر WSL وNode، واختبارات تجهيز الصور.</li>
+    <li>اختبارات التكامل تقرأ قائمة الوصفات وتفحص المخرجات لكل وصفة، منها عدم وجود صور نقطية في المخرج النهائي وحفظ مرجع PNG في نسخة الطبقات.</li>
+    <li>توجد عينة تدقيق مستقلة لمسار القلم تُظهر SVG بأبعاد mm؛ لا تعتبر دليلًا على وحدة SVG تريس أو استيراده في CAM.</li>
+    <li>لم تُشغّل هذه الاختبارات في هذه المراجعة، ولم أفتح xTool Studio/LightBurn لاستيراد ملف أو قياسه. لذلك لا أصف نتيجة CAM بأنها مجتازة.</li>
+  </ul>
+  <div class="callout limit"><strong>حد الاستنتاج:</strong> بعض تفاصيل توليد SVG تقع في مهارة محلية خارج المستودع. راجعت نسخة المهارة الموجودة على هذا الجهاز، لكن لا يضمن ذلك تطابقها أو توفرها على جهاز آخر.</div>
+</section>
+
+<section class="section" id="next" aria-labelledby="next-title">
+  <h2 id="next-title">خطوات الإغلاق قبل وصف SVG بأنه إنتاجي</h2>
+  <ol>
+    <li>اعتماد المقصود من SVG تريس: رسم تعبئة/درجات رمادية أم ملف CAM آخر، وتعريف علاقته بمسار القلم.</li>
+    <li>تحديد تحويل pixel-to-mm ومجال العمل للوحة، وإظهار الحجم الفيزيائي المتوقع قبل الحفظ.</li>
+    <li>توسيع فحص المصدّر ليشمل الوحدة والأبعاد والحدود والعناصر التي يستوردها CAM.</li>
+    <li>تحديد برنامج وإصدار CAM، ثم قياس استيراد عينات ثابتة وتسجيل فرق الأبعاد وملف المصدر وبصمته.</li>
+    <li>توحيد وصف متطلبات GPU وإصدار بيئة العامل، ثم قياس أداء تريس نفسه قبل أي نقل حسابي أو توسيع لحدود الصورة.</li>
+  </ol>
+  <p>هذه الخطوات مقترحات مراجعة، وليست تغييرات نُفذت. ويظل إعداد المادة والقدرة والسرعة وتشغيل الليزر خارج نطاق هذه المراجعة.</p>
+</section>
+
+<section class="section" id="sources" aria-labelledby="sources-title">
+  <h2 id="sources-title">ملفات ومراجع المشروع</h2>
+  <ul class="sources">
+    <li><a href="../../../../../trace-studio/README.md">توثيق تريس</a></li>
+    <li><a href="../../../../../trace-studio/processing.py">ربط تريس بمهارة التحويل</a></li>
+    <li><a href="../../../../../trace-studio/preparation.py">استيراد وتجهيز الصور</a></li>
+    <li><a href="../../../../../trace-studio/server.py">خادم localhost والتنزيل</a></li>
+    <li><a href="../../../../../trace-studio/preparation-ui.js">اعتماد الصورة المجهزة</a></li>
+    <li><a href="../../../../../trace-studio/test_processing.py">اختبارات موصل تريس</a></li>
+    <li><a href="../../../../../trace-studio/test_preparation.py">اختبارات تجهيز الصور</a></li>
+    <li><a href="../../../../../docs/path-pencil-hardware-swot-ar.html">تقرير العتاد ومسار القلم</a></li>
+    <li><a href="../../../../../docs/laser-integration-implementation-plan-ar.html">خطة xTool P2S وقياس SVG</a></li>
+    <li><a href="../../../../../flux-studio/pipeline-audit/export-check.json">دليل تصدير منفصل لمسار القلم</a></li>
+  </ul>
+</section>
+<footer>مراجعة ساكنة للكود والتوثيق الموجودين في المستودع. لا تتضمن تشغيلًا فعليًا للعتاد أو قبولًا نهائيًا من مالك المشروع.</footer>
+</main>
+</div>
+</body>
+</html>

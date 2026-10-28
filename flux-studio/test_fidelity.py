@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from PIL import Image
 from faithful_paths import extract
-from path_fidelity import audit,validate_paths,decode_image,ink_mask,measure
+from path_fidelity import audit,webgpu_target,validate_paths,decode_image,ink_mask,measure
 
 
 def encoded(array):
@@ -86,6 +86,18 @@ class FidelityTests(unittest.TestCase):
         repeated=audit(data|{'image':initial['reconstruction'],'paths':paths})
         self.assertEqual(repeated['grayErrorInkRegion'],0)
 
+    def test_webgpu_reference_mask_matches_cairo_audit_dimensions_and_counts(self):
+        image=np.full((60,75),255,np.uint8);cv2.line(image,(8,10),(62,49),0,3)
+        data=settings(image);paths=[[[8,10],[62,49]]]
+        target=webgpu_target(data|{'paths':paths})
+        full=audit(data|{'paths':paths})
+        packed=np.frombuffer(base64.b64decode(target['bitsBase64']),dtype=np.uint8)
+        bits=np.unpackbits(packed,bitorder='little')[:target['width']*target['height']]
+        expected_dims=((75+6)*full['auditUpscale'],(60+6)*full['auditUpscale'])
+        self.assertEqual((target['width'],target['height']),expected_dims)
+        self.assertEqual(int(bits.sum()),target['expected'])
+        self.assertEqual(target['auditUpscale'],full['auditUpscale'])
+
     def test_server_routes_new_and_legacy_paths_without_mutating_reference(self):
         import importlib.util
         from pathlib import Path
@@ -98,6 +110,8 @@ class FidelityTests(unittest.TestCase):
         self.assertIn('fidelity',result);self.assertEqual(data['image'],original)
         check=process('/api/path-audit',data|{'paths':result['paths']})
         self.assertEqual(check['inkIoU'],result['fidelity']['inkIoU'])
+        target=process('/api/path-audit-target',data)
+        self.assertEqual(target['expected'],int(np.count_nonzero(np.unpackbits(np.frombuffer(base64.b64decode(target['bitsBase64']),dtype=np.uint8),bitorder='little')[:target['width']*target['height']])))
         legacy=process('/api/paths',data|{'lineMode':'centerline','minLength':2,'tolerance':0})
         self.assertIn('paths',legacy);self.assertNotIn('fidelity',legacy)
         for retired in ['/api/model','/api/post']:
