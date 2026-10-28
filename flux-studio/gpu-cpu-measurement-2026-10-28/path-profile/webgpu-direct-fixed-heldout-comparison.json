@@ -1,0 +1,1308 @@
+{
+  "date": "2026-10-28",
+  "browser": "Microsoft Edge; high-performance GPU requested and adapter captured per run",
+  "selection": [
+    "fresh-animal-ink",
+    "fresh-front-portrait-ink",
+    "fresh-full-portrait-ink",
+    "fresh-horse-outline-contour",
+    "fresh-object-ink",
+    "fresh-pen-nib-outline-contour",
+    "fresh-plant-outline-contour",
+    "fresh-side-portrait-ink",
+    "heldout-clean-portrait-lineart",
+    "heldout-puppy-colored-lineart"
+  ],
+  "models": {
+    "baseline-4x4": {
+      "radiusScale": 1.0,
+      "coverageThreshold": 8
+    },
+    "dense-edge-4x4": {
+      "radiusScale": 0.975,
+      "coverageThreshold": 9
+    }
+  },
+  "summary": {
+    "caseCount": 10,
+    "runsPerModelPerCase": 3,
+    "gpuRuns": 60,
+    "gpuErrors": 0,
+    "deviceLosses": 0,
+    "winsByCloserCpuIoU": {
+      "baseline-4x4": 10,
+      "dense-edge-4x4": 0
+    },
+    "meanAbsoluteDeltaVsCpuPP": {
+      "baseline-4x4": 0.0670164861582208,
+      "dense-edge-4x4": 0.43519161972108833
+    },
+    "maxAbsoluteDeltaVsCpuPP": {
+      "baseline-4x4": 0.1752833125313913,
+      "dense-edge-4x4": 1.4393234574871059
+    },
+    "caveat": "CPU Cairo raster IoU is the reference proxy; this paired run compares both fixed GPU settings on the same extracted paths and held-out image sources."
+  },
+  "cases": [
+    {
+      "case": "heldout-puppy-colored-lineart",
+      "sourceSize": [
+        1018,
+        762
+      ],
+      "paths": 4144,
+      "points": 178508,
+      "pathExtractionWallMs": 18274.25,
+      "cpuInkIoU": 98.72469079497945,
+      "models": {
+        "baseline-4x4": {
+          "radiusScale": 1.0,
+          "coverageThreshold": 8,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 1373.699999988079,
+              "gpuRasterAndScoreMs": 135.5,
+              "inkIoU": 98.63560819614311,
+              "inkRecall": 98.8523304597675,
+              "inkPrecision": 99.77822190466844,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 946.6999999880791,
+              "gpuRasterAndScoreMs": 111.5,
+              "inkIoU": 98.63560819614311,
+              "inkRecall": 98.8523304597675,
+              "inkPrecision": 99.77822190466844,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 752.0999999940395,
+              "gpuRasterAndScoreMs": 95.69999998807907,
+              "inkIoU": 98.63560819614311,
+              "inkRecall": 98.8523304597675,
+              "inkPrecision": 99.77822190466844,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 98.63560819614311,
+          "absoluteDeltaVsCpuPP": 0.08908259883634173
+        },
+        "dense-edge-4x4": {
+          "radiusScale": 0.975,
+          "coverageThreshold": 9,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 923.1999999880791,
+              "gpuRasterAndScoreMs": 156.7999999821186,
+              "inkIoU": 98.32207371596387,
+              "inkRecall": 98.53810708129372,
+              "inkPrecision": 99.77751626072738,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 1002.3000000119209,
+              "gpuRasterAndScoreMs": 207,
+              "inkIoU": 98.32207371596387,
+              "inkRecall": 98.53810708129372,
+              "inkPrecision": 99.77751626072738,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 762.7999999821186,
+              "gpuRasterAndScoreMs": 102.89999997615814,
+              "inkIoU": 98.32207371596387,
+              "inkRecall": 98.53810708129372,
+              "inkPrecision": 99.77751626072738,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 98.32207371596387,
+          "absoluteDeltaVsCpuPP": 0.4026170790155845
+        }
+      },
+      "betterByCpuReference": "baseline-4x4"
+    },
+    {
+      "case": "heldout-clean-portrait-lineart",
+      "sourceSize": [
+        576,
+        768
+      ],
+      "paths": 2680,
+      "points": 89580,
+      "pathExtractionWallMs": 18188.72,
+      "cpuInkIoU": 98.10128760866571,
+      "models": {
+        "baseline-4x4": {
+          "radiusScale": 1.0,
+          "coverageThreshold": 8,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 643.2000000178814,
+              "gpuRasterAndScoreMs": 161.19999998807907,
+              "inkIoU": 98.00004035646629,
+              "inkRecall": 98.61385157086073,
+              "inkPrecision": 99.36886686689458,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 539.2000000178814,
+              "gpuRasterAndScoreMs": 73,
+              "inkIoU": 98.00004035646629,
+              "inkRecall": 98.61385157086073,
+              "inkPrecision": 99.36886686689458,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 580.7999999821186,
+              "gpuRasterAndScoreMs": 74.7999999821186,
+              "inkIoU": 98.00004035646629,
+              "inkRecall": 98.61385157086073,
+              "inkPrecision": 99.36886686689458,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 98.00004035646629,
+          "absoluteDeltaVsCpuPP": 0.10124725219942832
+        },
+        "dense-edge-4x4": {
+          "radiusScale": 0.975,
+          "coverageThreshold": 9,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 514.5999999940395,
+              "gpuRasterAndScoreMs": 88.69999998807907,
+              "inkIoU": 97.9044904877435,
+              "inkRecall": 98.51770323727258,
+              "inkPrecision": 99.36825480389577,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 696.9000000059605,
+              "gpuRasterAndScoreMs": 76.60000002384186,
+              "inkIoU": 97.9044904877435,
+              "inkRecall": 98.51770323727258,
+              "inkPrecision": 99.36825480389577,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 681.4000000059605,
+              "gpuRasterAndScoreMs": 70.7000000178814,
+              "inkIoU": 97.9044904877435,
+              "inkRecall": 98.51770323727258,
+              "inkPrecision": 99.36825480389577,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 97.9044904877435,
+          "absoluteDeltaVsCpuPP": 0.1967971209222128
+        }
+      },
+      "betterByCpuReference": "baseline-4x4"
+    },
+    {
+      "case": "fresh-animal-ink",
+      "sourceSize": [
+        768,
+        512
+      ],
+      "paths": 3729,
+      "points": 111792,
+      "pathExtractionWallMs": 21758.32,
+      "cpuInkIoU": 98.03625511626431,
+      "models": {
+        "baseline-4x4": {
+          "radiusScale": 1.0,
+          "coverageThreshold": 8,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 596,
+              "gpuRasterAndScoreMs": 110.80000001192093,
+              "inkIoU": 98.09267986155128,
+              "inkRecall": 98.8483730088885,
+              "inkPrecision": 99.22666484461864,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 534.8000000119209,
+              "gpuRasterAndScoreMs": 64.69999998807907,
+              "inkIoU": 98.09267986155128,
+              "inkRecall": 98.8483730088885,
+              "inkPrecision": 99.22666484461864,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 571.1999999880791,
+              "gpuRasterAndScoreMs": 58.79999998211861,
+              "inkIoU": 98.09267986155128,
+              "inkRecall": 98.8483730088885,
+              "inkPrecision": 99.22666484461864,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 98.09267986155128,
+          "absoluteDeltaVsCpuPP": 0.05642474528696084
+        },
+        "dense-edge-4x4": {
+          "radiusScale": 0.975,
+          "coverageThreshold": 9,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 574.6999999880791,
+              "gpuRasterAndScoreMs": 102.69999998807907,
+              "inkIoU": 97.6038928298272,
+              "inkRecall": 98.35582042594385,
+              "inkPrecision": 99.22282218546147,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 600,
+              "gpuRasterAndScoreMs": 151.59999999403954,
+              "inkIoU": 97.6038928298272,
+              "inkRecall": 98.35582042594385,
+              "inkPrecision": 99.22282218546147,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 403.69999998807907,
+              "gpuRasterAndScoreMs": 64.80000001192093,
+              "inkIoU": 97.6038928298272,
+              "inkRecall": 98.35582042594385,
+              "inkPrecision": 99.22282218546147,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 97.6038928298272,
+          "absoluteDeltaVsCpuPP": 0.4323622864371117
+        }
+      },
+      "betterByCpuReference": "baseline-4x4"
+    },
+    {
+      "case": "fresh-front-portrait-ink",
+      "sourceSize": [
+        768,
+        768
+      ],
+      "paths": 2241,
+      "points": 62783,
+      "pathExtractionWallMs": 11432.92,
+      "cpuInkIoU": 98.8489749803894,
+      "models": {
+        "baseline-4x4": {
+          "radiusScale": 1.0,
+          "coverageThreshold": 8,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 519.1999999880791,
+              "gpuRasterAndScoreMs": 117.7999999821186,
+              "inkIoU": 98.8189005186564,
+              "inkRecall": 99.03804972777621,
+              "inkPrecision": 99.77657775337997,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 458.30000001192093,
+              "gpuRasterAndScoreMs": 88.90000000596046,
+              "inkIoU": 98.8189005186564,
+              "inkRecall": 99.03804972777621,
+              "inkPrecision": 99.77657775337997,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 490.59999999403954,
+              "gpuRasterAndScoreMs": 87.39999997615814,
+              "inkIoU": 98.8189005186564,
+              "inkRecall": 99.03804972777621,
+              "inkPrecision": 99.77657775337997,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 98.8189005186564,
+          "absoluteDeltaVsCpuPP": 0.030074461732993996
+        },
+        "dense-edge-4x4": {
+          "radiusScale": 0.975,
+          "coverageThreshold": 9,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 501,
+              "gpuRasterAndScoreMs": 114.90000000596046,
+              "inkIoU": 98.75084881692483,
+              "inkRecall": 98.96984710879565,
+              "inkPrecision": 99.77642413170275,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 590.0999999940395,
+              "gpuRasterAndScoreMs": 176.69999998807907,
+              "inkIoU": 98.75084881692483,
+              "inkRecall": 98.96984710879565,
+              "inkPrecision": 99.77642413170275,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 523.4000000059605,
+              "gpuRasterAndScoreMs": 144.59999999403954,
+              "inkIoU": 98.75084881692483,
+              "inkRecall": 98.96984710879565,
+              "inkPrecision": 99.77642413170275,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 98.75084881692483,
+          "absoluteDeltaVsCpuPP": 0.09812616346457048
+        }
+      },
+      "betterByCpuReference": "baseline-4x4"
+    },
+    {
+      "case": "fresh-full-portrait-ink",
+      "sourceSize": [
+        448,
+        768
+      ],
+      "paths": 1607,
+      "points": 52561,
+      "pathExtractionWallMs": 10068.75,
+      "cpuInkIoU": 98.96669686395197,
+      "models": {
+        "baseline-4x4": {
+          "radiusScale": 1.0,
+          "coverageThreshold": 8,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 320.40000000596046,
+              "gpuRasterAndScoreMs": 94.40000000596046,
+              "inkIoU": 98.9215644592124,
+              "inkRecall": 99.12092989723155,
+              "inkPrecision": 99.79708629111683,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 301.90000000596046,
+              "gpuRasterAndScoreMs": 57.099999994039536,
+              "inkIoU": 98.9215644592124,
+              "inkRecall": 99.12092989723155,
+              "inkPrecision": 99.79708629111683,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 273.69999998807907,
+              "gpuRasterAndScoreMs": 50.69999998807907,
+              "inkIoU": 98.9215644592124,
+              "inkRecall": 99.12092989723155,
+              "inkPrecision": 99.79708629111683,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 98.9215644592124,
+          "absoluteDeltaVsCpuPP": 0.045132404739561593
+        },
+        "dense-edge-4x4": {
+          "radiusScale": 0.975,
+          "coverageThreshold": 9,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 319.19999998807907,
+              "gpuRasterAndScoreMs": 81.69999998807907,
+              "inkIoU": 98.83849467077873,
+              "inkRecall": 99.0376926908557,
+              "inkPrecision": 99.79691609662831,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 290,
+              "gpuRasterAndScoreMs": 57.400000005960464,
+              "inkIoU": 98.83849467077873,
+              "inkRecall": 99.0376926908557,
+              "inkPrecision": 99.79691609662831,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 294.5,
+              "gpuRasterAndScoreMs": 53,
+              "inkIoU": 98.83849467077873,
+              "inkRecall": 99.0376926908557,
+              "inkPrecision": 99.79691609662831,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 98.83849467077873,
+          "absoluteDeltaVsCpuPP": 0.12820219317323733
+        }
+      },
+      "betterByCpuReference": "baseline-4x4"
+    },
+    {
+      "case": "fresh-object-ink",
+      "sourceSize": [
+        768,
+        512
+      ],
+      "paths": 1543,
+      "points": 55165,
+      "pathExtractionWallMs": 11217.23,
+      "cpuInkIoU": 98.20676469271964,
+      "models": {
+        "baseline-4x4": {
+          "radiusScale": 1.0,
+          "coverageThreshold": 8,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 308.60000002384186,
+              "gpuRasterAndScoreMs": 60.30000001192093,
+              "inkIoU": 98.38204800525104,
+              "inkRecall": 98.9008887866912,
+              "inkPrecision": 99.46959403833755,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 310.40000000596046,
+              "gpuRasterAndScoreMs": 58.900000005960464,
+              "inkIoU": 98.38204800525104,
+              "inkRecall": 98.9008887866912,
+              "inkPrecision": 99.46959403833755,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 329.69999998807907,
+              "gpuRasterAndScoreMs": 76.39999997615814,
+              "inkIoU": 98.38204800525104,
+              "inkRecall": 98.9008887866912,
+              "inkPrecision": 99.46959403833755,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 98.38204800525104,
+          "absoluteDeltaVsCpuPP": 0.1752833125313913
+        },
+        "dense-edge-4x4": {
+          "radiusScale": 0.975,
+          "coverageThreshold": 9,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 307.2999999821186,
+              "gpuRasterAndScoreMs": 60.099999994039536,
+              "inkIoU": 97.37410680099252,
+              "inkRecall": 97.8876319683276,
+              "inkPrecision": 99.46413310832003,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 323.09999999403954,
+              "gpuRasterAndScoreMs": 62.400000005960464,
+              "inkIoU": 97.37410680099252,
+              "inkRecall": 97.8876319683276,
+              "inkPrecision": 99.46413310832003,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 323.19999998807907,
+              "gpuRasterAndScoreMs": 59.39999997615814,
+              "inkIoU": 97.37410680099252,
+              "inkRecall": 97.8876319683276,
+              "inkPrecision": 99.46413310832003,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 97.37410680099252,
+          "absoluteDeltaVsCpuPP": 0.8326578917271235
+        }
+      },
+      "betterByCpuReference": "baseline-4x4"
+    },
+    {
+      "case": "fresh-side-portrait-ink",
+      "sourceSize": [
+        320,
+        768
+      ],
+      "paths": 1518,
+      "points": 49227,
+      "pathExtractionWallMs": 3988.86,
+      "cpuInkIoU": 98.62034552924557,
+      "models": {
+        "baseline-4x4": {
+          "radiusScale": 1.0,
+          "coverageThreshold": 8,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 272.90000000596046,
+              "gpuRasterAndScoreMs": 73.40000000596046,
+              "inkIoU": 98.58211179802221,
+              "inkRecall": 98.91671868497711,
+              "inkPrecision": 99.6580367905246,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 201.40000000596046,
+              "gpuRasterAndScoreMs": 42.70000001788139,
+              "inkIoU": 98.58211179802221,
+              "inkRecall": 98.91671868497711,
+              "inkPrecision": 99.6580367905246,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 205,
+              "gpuRasterAndScoreMs": 42.5,
+              "inkIoU": 98.58211179802221,
+              "inkRecall": 98.91671868497711,
+              "inkPrecision": 99.6580367905246,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 98.58211179802221,
+          "absoluteDeltaVsCpuPP": 0.03823373122335738
+        },
+        "dense-edge-4x4": {
+          "radiusScale": 0.975,
+          "coverageThreshold": 9,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 216.5,
+              "gpuRasterAndScoreMs": 72.7999999821186,
+              "inkIoU": 98.50046010083337,
+              "inkRecall": 98.8347898460258,
+              "inkPrecision": 99.65775429118422,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 212.19999998807907,
+              "gpuRasterAndScoreMs": 38.69999998807907,
+              "inkIoU": 98.50046010083337,
+              "inkRecall": 98.8347898460258,
+              "inkPrecision": 99.65775429118422,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 226.2000000178814,
+              "gpuRasterAndScoreMs": 41.30000001192093,
+              "inkIoU": 98.50046010083337,
+              "inkRecall": 98.8347898460258,
+              "inkPrecision": 99.65775429118422,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 98.50046010083337,
+          "absoluteDeltaVsCpuPP": 0.11988542841220351
+        }
+      },
+      "betterByCpuReference": "baseline-4x4"
+    },
+    {
+      "case": "fresh-horse-outline-contour",
+      "sourceSize": [
+        512,
+        416
+      ],
+      "paths": 630,
+      "points": 45550,
+      "pathExtractionWallMs": 15992.6,
+      "cpuInkIoU": 99.41342202051278,
+      "models": {
+        "baseline-4x4": {
+          "radiusScale": 1.0,
+          "coverageThreshold": 8,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 258.5,
+              "gpuRasterAndScoreMs": 64.59999999403954,
+              "inkIoU": 99.39963386636454,
+              "inkRecall": 99.40723019670388,
+              "inkPrecision": 99.99231280853212,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 241.40000000596046,
+              "gpuRasterAndScoreMs": 28.700000017881393,
+              "inkIoU": 99.39963386636454,
+              "inkRecall": 99.40723019670388,
+              "inkPrecision": 99.99231280853212,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 239.59999999403954,
+              "gpuRasterAndScoreMs": 35.79999998211861,
+              "inkIoU": 99.39963386636454,
+              "inkRecall": 99.40723019670388,
+              "inkPrecision": 99.99231280853212,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 99.39963386636454,
+          "absoluteDeltaVsCpuPP": 0.013788154148244303
+        },
+        "dense-edge-4x4": {
+          "radiusScale": 0.975,
+          "coverageThreshold": 9,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 292.80000001192093,
+              "gpuRasterAndScoreMs": 69.59999999403954,
+              "inkIoU": 99.09214141662486,
+              "inkRecall": 99.09971424774056,
+              "inkPrecision": 99.99228895627671,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 290.30000001192093,
+              "gpuRasterAndScoreMs": 46.400000005960464,
+              "inkIoU": 99.09214141662486,
+              "inkRecall": 99.09971424774056,
+              "inkPrecision": 99.99228895627671,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 268.80000001192093,
+              "gpuRasterAndScoreMs": 32.099999994039536,
+              "inkIoU": 99.09214141662486,
+              "inkRecall": 99.09971424774056,
+              "inkPrecision": 99.99228895627671,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 99.09214141662486,
+          "absoluteDeltaVsCpuPP": 0.3212806038879279
+        }
+      },
+      "betterByCpuReference": "baseline-4x4"
+    },
+    {
+      "case": "fresh-pen-nib-outline-contour",
+      "sourceSize": [
+        416,
+        512
+      ],
+      "paths": 602,
+      "points": 37032,
+      "pathExtractionWallMs": 10082.13,
+      "cpuInkIoU": 98.27739164748817,
+      "models": {
+        "baseline-4x4": {
+          "radiusScale": 1.0,
+          "coverageThreshold": 8,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 337.7999999821186,
+              "gpuRasterAndScoreMs": 77.09999999403954,
+              "inkIoU": 98.35717803886779,
+              "inkRecall": 98.61423967285833,
+              "inkPrecision": 99.73567265467896,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 240.30000001192093,
+              "gpuRasterAndScoreMs": 35.19999998807907,
+              "inkIoU": 98.35717803886779,
+              "inkRecall": 98.61423967285833,
+              "inkPrecision": 99.73567265467896,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 273.5,
+              "gpuRasterAndScoreMs": 29.69999998807907,
+              "inkIoU": 98.35717803886779,
+              "inkRecall": 98.61423967285833,
+              "inkPrecision": 99.73567265467896,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 98.35717803886779,
+          "absoluteDeltaVsCpuPP": 0.07978639137961352
+        },
+        "dense-edge-4x4": {
+          "radiusScale": 0.975,
+          "coverageThreshold": 9,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 342.2999999821186,
+              "gpuRasterAndScoreMs": 95.40000000596046,
+              "inkIoU": 96.83806819000107,
+              "inkRecall": 97.0911595508733,
+              "inkPrecision": 99.73153725328496,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 223.40000000596046,
+              "gpuRasterAndScoreMs": 34.099999994039536,
+              "inkIoU": 96.83806819000107,
+              "inkRecall": 97.0911595508733,
+              "inkPrecision": 99.73153725328496,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 304.5,
+              "gpuRasterAndScoreMs": 45.60000002384186,
+              "inkIoU": 96.83806819000107,
+              "inkRecall": 97.0911595508733,
+              "inkPrecision": 99.73153725328496,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 96.83806819000107,
+          "absoluteDeltaVsCpuPP": 1.4393234574871059
+        }
+      },
+      "betterByCpuReference": "baseline-4x4"
+    },
+    {
+      "case": "fresh-plant-outline-contour",
+      "sourceSize": [
+        480,
+        480
+      ],
+      "paths": 927,
+      "points": 51637,
+      "pathExtractionWallMs": 13599.76,
+      "cpuInkIoU": 98.80958471590826,
+      "models": {
+        "baseline-4x4": {
+          "radiusScale": 1.0,
+          "coverageThreshold": 8,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 404.5,
+              "gpuRasterAndScoreMs": 83.69999998807907,
+              "inkIoU": 98.85069652541257,
+              "inkRecall": 99.09840269636577,
+              "inkPrecision": 99.74777179985472,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 353.90000000596046,
+              "gpuRasterAndScoreMs": 38.400000005960464,
+              "inkIoU": 98.85069652541257,
+              "inkRecall": 99.09840269636577,
+              "inkPrecision": 99.74777179985472,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 369.90000000596046,
+              "gpuRasterAndScoreMs": 35.599999994039536,
+              "inkIoU": 98.85069652541257,
+              "inkRecall": 99.09840269636577,
+              "inkPrecision": 99.74777179985472,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 98.85069652541257,
+          "absoluteDeltaVsCpuPP": 0.04111180950431503
+        },
+        "dense-edge-4x4": {
+          "radiusScale": 0.975,
+          "coverageThreshold": 9,
+          "runs": [
+            {
+              "run": 1,
+              "browserTotalMs": 384.90000000596046,
+              "gpuRasterAndScoreMs": 110.60000002384186,
+              "inkIoU": 98.42892074322445,
+              "inkRecall": 98.51113716295428,
+              "inkPrecision": 99.91528068845588,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 2,
+              "browserTotalMs": 348.80000001192093,
+              "gpuRasterAndScoreMs": 39.89999997615814,
+              "inkIoU": 98.42892074322445,
+              "inkRecall": 98.51113716295428,
+              "inkPrecision": 99.91528068845588,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            },
+            {
+              "run": 3,
+              "browserTotalMs": 315.5,
+              "gpuRasterAndScoreMs": 35.80000001192093,
+              "inkIoU": 98.42892074322445,
+              "inkRecall": 98.51113716295428,
+              "inkPrecision": 99.91528068845588,
+              "gpuErrors": [],
+              "deviceLost": null,
+              "adapter": {
+                "vendor": "nvidia",
+                "architecture": "lovelace",
+                "device": "",
+                "description": ""
+              }
+            }
+          ],
+          "medianInkIoU": 98.42892074322445,
+          "absoluteDeltaVsCpuPP": 0.3806639726838057
+        }
+      },
+      "betterByCpuReference": "baseline-4x4"
+    }
+  ]
+}

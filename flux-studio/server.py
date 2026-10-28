@@ -18,6 +18,7 @@ ASSETS['/gpu-cpu-measurement-2026-10-28/filter-comparison/cuda-bilateral.png']=R
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/results.json']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'results.json'
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/largest-case-cprofile.txt']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'largest-case-cprofile.txt'
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/cuda-results.json']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'cuda-results.json'
+ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/webgpu-direct-fixed-heldout-comparison.json']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'webgpu-direct-fixed-heldout-comparison.json'
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/benchmark_cuda_path.py']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'benchmark_cuda_path.py'
 GATE=threading.Lock()
 ASSETS['/api-client.js']=ROOT/'api-client.js'

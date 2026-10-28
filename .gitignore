@@ -82,6 +82,10 @@
 !/flux-studio/*.html
 !/flux-studio/requirements-flux.txt
 !/flux-studio/README.md
+!/flux-studio/gpu-cpu-measurement-2026-10-28/
+!/flux-studio/gpu-cpu-measurement-2026-10-28/path-profile/
+/flux-studio/gpu-cpu-measurement-2026-10-28/path-profile/*
+!/flux-studio/gpu-cpu-measurement-2026-10-28/path-profile/webgpu-direct-fixed-heldout-comparison.json
 !/flux-studio/flux-catalog.json
 !/flux-studio/*.ps1
 
