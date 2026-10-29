@@ -21,6 +21,11 @@ def main() -> None:
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "dashboard_project.settings")
     os.environ["USAGE_DATABASE"] = str(args.database.expanduser().resolve())
 
+    # Apply additive usage/workflow schema migrations before the admin or API starts.
+    from usage_database import connect
+    database = connect(args.database.expanduser().resolve())
+    database.close()
+
     from django.core.management import execute_from_command_line
 
     execute_from_command_line([

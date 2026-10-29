@@ -455,7 +455,6 @@
         required: $('criterion-required').checked,
         check_method: $('criterion-method').value.trim(),
       }],
-      target_actor_ids: [],
     };
     const signature = JSON.stringify(commandPayload);
     if (!commandIdempotencyKey || commandPayloadSignature !== signature) {
@@ -481,7 +480,7 @@
       const cardId = result.root_card_id || result.card_id;
       if (cardId) openCard(cardId);
       const targetNames = (currentBoard?.cards || [])
-        .filter(card => (result.child_card_ids || []).includes(card.card_id))
+        .filter(card => (result.child_card_ids || result.session_card_ids || []).includes(card.card_id))
         .map(card => card.assigned_actor_name).filter(Boolean);
       const routed = targetNames.length ? ` إلى ${targetNames.join('، ')}` : '';
       $('workflow-connection').querySelector('span').textContent = result.created === false

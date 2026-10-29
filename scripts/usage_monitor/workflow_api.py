@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 import sqlite3
 import statistics
 import uuid
@@ -11,6 +12,53 @@ from pathlib import Path
 from typing import Any
 
 from usage_database import utc_now
+
+
+_ROUTING_HINTS = {
+    "frontend": ("frontend", "front end", "interface", "ui", "dashboard", "css", "html", "javascript", "الواجهة", "الفرونت", "الصفحة", "التصميم"),
+    "backend": ("backend", "back end", "django", "api", "server", "database", "sql", "migration", "باك اند", "الخلفية", "قاعدة البيانات", "الجدول", "api"),
+    "svg": ("svg", "vector", "vectorization", "تنسيق svg", "متجه", "فيكتور"),
+    "geometry": ("flux", "geometry", "path", "shape", "رسم هندسي", "مسار", "هندسة"),
+    "architecture": ("architecture", "brainstorm", "planning", "strategy", "عصف ذهني", "بنية", "معمارية", "تخطيط", "استراتيجية"),
+}
+
+
+def _normalize_text(value: str) -> str:
+    return " ".join(re.sub(r"[^\w\u0600-\u06ff]+", " ", value.casefold()).split())
+
+
+def _route_targets(connection: sqlite3.Connection, payload: dict[str, Any]) -> list[sqlite3.Row]:
+    """Choose one active, dispatchable specialist using explicit charter capabilities."""
+    actors = connection.execute("""SELECT a.actor_id,a.display_name,COALESCE(a.charter,'') charter
+        FROM coordination_actors a JOIN coordination_actor_endpoints e ON e.actor_id=a.actor_id
+        WHERE a.active=1 AND e.enabled=1 AND a.actor_id<>'owner' ORDER BY a.actor_id""").fetchall()
+    if not actors:
+        raise ValueError("لا توجد جلسة مختصة نشطة ومتصلة لاستلام البطاقة.")
+    text = _normalize_text(" ".join(str(payload.get(k) or "") for k in ("title", "owner_request", "scope", "card_type_code")))
+    hints = {name for name, terms in _ROUTING_HINTS.items() if any(_normalize_text(term) in text for term in terms)}
+    if not hints:
+        raise ValueError("لم تتضح تخصصات البطاقة من وصفها؛ أضف نوع المهمة أو كلمات تخصصية قبل إصدار الأمر.")
+    scored = []
+    for actor in actors:
+        capabilities = [_normalize_text(row[0]) for row in connection.execute(
+            "SELECT capability FROM coordination_actor_capabilities WHERE actor_id=?", (actor["actor_id"],))]
+        charter = _normalize_text(actor["charter"])
+        score = 0
+        for hint in hints:
+            terms = _ROUTING_HINTS[hint]
+            if any(cap and (cap in terms or any(term in cap or cap in term for term in terms)) for cap in capabilities):
+                score += 3
+            elif any(_normalize_text(term) in charter for term in terms):
+                score += 1
+        if score:
+            load = connection.execute("""SELECT COUNT(*) FROM coordination_cards
+                WHERE assigned_actor_id=? AND current_status_code NOT IN ('completed','failed','archived')""",
+                (actor["actor_id"],)).fetchone()[0]
+            scored.append((score, load, actor["actor_id"], actor))
+    if not scored:
+        raise ValueError("لا توجد جلسة نشطة يتوافق ميثاقها وقدراتها مع نوع هذه البطاقة.")
+    scored.sort(key=lambda item: (-item[0], item[1], item[2]))
+    return [scored[0][3]]
 
 
 def _connect(path: Path, *, write: bool = False) -> sqlite3.Connection:
@@ -146,6 +194,8 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
     requested_targets = payload.get("target_actor_ids", [])
     if not isinstance(requested_targets, list) or len(requested_targets) > 20:
         raise ValueError("قائمة الجلسات المستهدفة غير صالحة.")
+    if requested_targets:
+        raise ValueError("يحدد المصنع الجلسة المختصة تلقائيًا؛ لا يقبل اختيار جهة الإسناد من المتصفح.")
 
     criteria = payload.get("criteria", [])
     if not isinstance(criteria, list) or len(criteria) > 50:
@@ -159,12 +209,10 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
             children = [row["card_id"] for row in connection.execute(
                 "SELECT card_id FROM coordination_command_cards WHERE idempotency_key=? AND role_code='session' ORDER BY card_id", (key,))]
             connection.commit()
-            return {"created": False, "root_card_id": prior["root_card_id"], "session_card_ids": children}
+            return {"created": False, "root_card_id": prior["root_card_id"], "child_card_ids": children,
+                    "session_card_ids": children}
 
-        targets = list(dict.fromkeys(str(item) for item in requested_targets))
-        active = {row[0] for row in connection.execute("SELECT actor_id FROM coordination_actors WHERE active=1 AND actor_id<>'owner'")}
-        if any(target not in active for target in targets):
-            raise ValueError("تتضمن قائمة الإسناد جلسة غير نشطة أو غير معروفة.")
+        targets = [row["actor_id"] for row in _route_targets(connection, payload)]
 
         now = utc_now()
         date = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d")
@@ -230,7 +278,8 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
                     f"{key}:{target}", now, now, now))
             children.append(child_id)
         connection.commit()
-        return {"created": True, "root_card_id": root_id, "session_card_ids": children, "event_id": root_event}
+        return {"created": True, "root_card_id": root_id, "child_card_ids": children,
+                "session_card_ids": children, "event_id": root_event}
     except Exception:
         connection.rollback()
         raise
