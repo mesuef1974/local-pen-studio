@@ -129,16 +129,17 @@
     <dialog id="workflow-command-dialog" class="workflow-dialog workflow-command-dialog" aria-labelledby="workflow-command-title">
       <form id="workflow-command-form" method="dialog">
         <div class="workflow-dialog-head"><div><div class="eyebrow">أمر المالك</div><h2 id="workflow-command-title">إضافة أمر إلى المصنع</h2></div><button class="icon-button" id="workflow-command-close" type="button" aria-label="إغلاق نموذج الأمر">×</button></div>
-        <p class="workflow-form-note">اكتب المهمة والنتيجة المطلوبة بالعربية. يمكن إبقاء أسماء الملفات والأكواد التقنية بلغتها؛ المصنع يحدد الجلسة ويجهز العنوان ومعيار الفحص.</p>
+        <p class="workflow-form-note">اختر الجلسة التي ستتولى التنفيذ، ثم اكتب المهمة والنتيجة المطلوبة بالعربية. تعرض القائمة الجلسات النشطة الجاهزة لاستلام البطاقات.</p>
+        <label for="command-target-actor">الجلسة المسؤولة عن التنفيذ<select id="command-target-actor" name="target_actor_id" required><option value="">اختر الجلسة</option></select></label>
         <label for="command-owner-request">ما المهمة المطلوبة؟<textarea id="command-owner-request" name="owner_request" required rows="6" maxlength="12000" placeholder="اكتب المطلوب والنتيجة بالعربية…"></textarea></label>
         <div id="workflow-command-error" class="workflow-feedback is-error" role="alert" tabindex="-1" hidden></div>
-        <div class="workflow-dialog-actions"><button class="btn" id="workflow-command-cancel" type="button">إلغاء</button><button class="btn workflow-primary" id="workflow-command-submit" type="submit">إنشاء وتوجيه</button></div>
+        <div class="workflow-dialog-actions"><button class="btn" id="workflow-command-cancel" type="button">إلغاء</button><button class="btn workflow-primary" id="workflow-command-submit" type="submit">إصدار الأمر وإسناده</button></div>
       </form>
     </dialog>
   </section>
 </main>
 <span id="chart-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
 <script src="dashboard.js?v=time-minute-4" defer></script>
-<script src="workflow.js?v=owner-lane-1" defer></script>
+<script src="workflow.js?v=owner-session-1" defer></script>
 </body>
 </html>

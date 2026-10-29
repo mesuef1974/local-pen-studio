@@ -14,15 +14,6 @@ from typing import Any
 from usage_database import utc_now
 
 
-_ROUTING_HINTS = {
-    "frontend": ("frontend", "front end", "interface", "ui", "dashboard", "css", "html", "javascript", "الواجهة", "الفرونت", "الصفحة", "التصميم"),
-    "backend": ("backend", "back end", "django", "api", "server", "database", "sql", "migration", "باك اند", "الخلفية", "قاعدة البيانات", "الجدول", "api"),
-    "svg": ("svg", "vector", "vectorization", "تنسيق svg", "متجه", "فيكتور"),
-    "geometry": ("flux", "geometry", "path", "shape", "رسم هندسي", "مسار", "هندسة"),
-    "architecture": ("architecture", "brainstorm", "planning", "strategy", "عصف ذهني", "بنية", "معمارية", "تخطيط", "استراتيجية"),
-}
-
-
 def _normalize_text(value: str) -> str:
     return " ".join(re.sub(r"[^\w\u0600-\u06ff]+", " ", value.casefold()).split())
 
@@ -53,40 +44,6 @@ def _display_title(title: str, owner_request: str) -> str:
     if _normalize_text(title) in {"نص المهمة لبطاقة التنفيذ", "نص المهمة", "بطاقة جديدة", "مهمة جديدة", "المهمة المطلوبة"}:
         return _derive_title(owner_request) or title
     return title
-
-
-def _route_targets(connection: sqlite3.Connection, payload: dict[str, Any]) -> list[sqlite3.Row]:
-    """Choose one active, dispatchable specialist using explicit charter capabilities."""
-    actors = connection.execute("""SELECT a.actor_id,a.display_name,COALESCE(a.charter,'') charter
-        FROM coordination_actors a JOIN coordination_actor_endpoints e ON e.actor_id=a.actor_id
-        WHERE a.active=1 AND e.enabled=1 AND a.actor_id<>'owner' ORDER BY a.actor_id""").fetchall()
-    if not actors:
-        raise ValueError("لا توجد جلسة مختصة نشطة ومتصلة لاستلام البطاقة.")
-    text = _normalize_text(" ".join(str(payload.get(k) or "") for k in ("title", "owner_request", "scope", "card_type_code")))
-    hints = {name for name, terms in _ROUTING_HINTS.items() if any(_normalize_text(term) in text for term in terms)}
-    if not hints:
-        raise ValueError("لم تتضح تخصصات البطاقة من وصفها؛ أضف نوع المهمة أو كلمات تخصصية قبل إصدار الأمر.")
-    scored = []
-    for actor in actors:
-        capabilities = [_normalize_text(row[0]) for row in connection.execute(
-            "SELECT capability FROM coordination_actor_capabilities WHERE actor_id=?", (actor["actor_id"],))]
-        charter = _normalize_text(actor["charter"])
-        score = 0
-        for hint in hints:
-            terms = _ROUTING_HINTS[hint]
-            if any(cap and (cap in terms or any(term in cap or cap in term for term in terms)) for cap in capabilities):
-                score += 3
-            elif any(_normalize_text(term) in charter for term in terms):
-                score += 1
-        if score:
-            load = connection.execute("""SELECT COUNT(*) FROM coordination_cards
-                WHERE assigned_actor_id=? AND current_status_code NOT IN ('completed','failed','archived')""",
-                (actor["actor_id"],)).fetchone()[0]
-            scored.append((score, load, actor["actor_id"], actor))
-    if not scored:
-        raise ValueError("لا توجد جلسة نشطة يتوافق ميثاقها وقدراتها مع نوع هذه البطاقة.")
-    scored.sort(key=lambda item: (-item[0], item[1], item[2]))
-    return [scored[0][3]]
 
 
 def _connect(path: Path, *, write: bool = False) -> sqlite3.Connection:
@@ -168,8 +125,11 @@ def board(path: Path, *, status: str = "", actor_id: str = "", query: str = "") 
         cards = [card for card in cards if card["card_id"] not in command_roots and card["assigned_actor_id"] != "owner"]
         for card in [*owner_cards, *cards]:
             card["display_title"] = _display_title(card["title"], card["owner_request"])
-        sessions = _rows(connection, """SELECT actor_id,display_name,charter,active
-            FROM coordination_actors WHERE active=1 AND actor_id<>'owner' ORDER BY display_name,actor_id""")
+        sessions = _rows(connection, """SELECT a.actor_id,a.display_name,a.charter,a.active,
+            CASE WHEN EXISTS (SELECT 1 FROM coordination_actor_endpoints e
+                              WHERE e.actor_id=a.actor_id AND e.enabled=1) THEN 1 ELSE 0 END AS dispatchable
+            FROM coordination_actors a WHERE a.active=1 AND a.actor_id<>'owner'
+            ORDER BY a.display_name,a.actor_id""")
         completed_owner_commands = _rows(connection, """
             SELECT c.card_id,c.title,c.updated_at
             FROM coordination_command_receipts r
@@ -346,11 +306,12 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("اكتب عنوان البطاقة ومحتواها باللغة العربية.")
     if len(title) > 240 or len(owner_request) > 12000 or len(scope) > 12000 or len(key) > 200:
         raise ValueError("تجاوز أحد الحقول الحد المسموح به.")
-    requested_targets = payload.get("target_actor_ids", [])
-    if not isinstance(requested_targets, list) or len(requested_targets) > 20:
-        raise ValueError("قائمة الجلسات المستهدفة غير صالحة.")
-    if requested_targets:
-        raise ValueError("يحدد المصنع الجلسة المختصة تلقائيًا؛ لا يقبل اختيار جهة الإسناد من المتصفح.")
+    requested_targets = payload.get("target_actor_ids")
+    if not isinstance(requested_targets, list) or len(requested_targets) != 1:
+        raise ValueError("اختر جلسة واحدة من قائمة أمر المالك.")
+    selected_actor_id = str(requested_targets[0] or "").strip()
+    if not selected_actor_id or len(selected_actor_id) > 120:
+        raise ValueError("اختيار الجلسة غير صالح.")
 
     criteria = payload.get("criteria", [])
     if not isinstance(criteria, list) or len(criteria) > 50:
@@ -374,6 +335,15 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
     connection = _connect(path, write=True)
     try:
         connection.execute("BEGIN IMMEDIATE")
+        selected_actor = connection.execute("""SELECT a.actor_id FROM coordination_actors a
+            WHERE a.actor_id=? AND a.active=1 AND a.actor_id<>'owner'
+              AND EXISTS (SELECT 1 FROM coordination_actor_endpoints e
+                          WHERE e.actor_id=a.actor_id AND e.enabled=1)""",
+            (selected_actor_id,)).fetchone()
+        if not selected_actor:
+            raise ValueError("الجلسة المختارة غير نشطة أو غير مهيأة لاستلام البطاقة.")
+        targets = [selected_actor["actor_id"]]
+
         prior = connection.execute("SELECT root_card_id FROM coordination_command_receipts WHERE idempotency_key=?", (key,)).fetchone()
         if prior:
             children = [row["card_id"] for row in connection.execute(
@@ -381,8 +351,6 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
             connection.commit()
             return {"created": False, "root_card_id": prior["root_card_id"], "child_card_ids": children,
                     "session_card_ids": children}
-
-        targets = [row["actor_id"] for row in _route_targets(connection, payload)]
 
         now = utc_now()
         date = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d")
@@ -411,7 +379,7 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
             if target:
                 assignment = connection.execute("""INSERT INTO coordination_events
                     (card_id,actor_id,event_type,details,recorded_at,stage_code,next_status,owner_actor_id,source_type,source_id,sensitivity)
-                    VALUES(?,'owner','card_assigned','أُنشئت البطاقة وأُسندت إلى الجلسة',?,'assignment',?,'owner','assignment',?,'internal')""",
+                    VALUES(?,'owner','card_assigned','حدد المالك الجلسة في أمر المالك وأُسندت إليها بطاقة التنفيذ',?,'assignment',?,'owner','assignment',?,'internal')""",
                     (card_id,now,status_code,target))
                 connection.execute("""INSERT INTO coordination_assignments
                     (card_id,assigned_actor_id,assigned_by_actor_id,assigned_at,source_event_id)
