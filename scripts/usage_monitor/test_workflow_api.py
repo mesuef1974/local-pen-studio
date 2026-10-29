@@ -26,7 +26,7 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
         self.temp.cleanup()
 
     def payload(self):
-        return {"title": "Improve dashboard frontend interface", "owner_request": "Fix the dashboard UI", "scope": "HTML and CSS", "idempotency_key": "cmd-routing-1", "criteria": []}
+        return {"title": "إصلاح واجهة لوحة المتابعة frontend", "owner_request": "إصلاح واجهة dashboard وتحسين العرض frontend", "scope": "تعديل CSS وHTML", "idempotency_key": "cmd-routing-1", "criteria": []}
 
     def test_routes_and_returns_compatible_child_id_fields(self):
         result = create_command(self.path, self.payload())
@@ -46,8 +46,14 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
 
     def test_rejects_task_without_specialty_signal(self):
         payload = self.payload()
-        payload.update(title="Work on something", owner_request="Please do it", scope="General", idempotency_key="cmd-routing-2")
+        payload.update(title="عمل عام", owner_request="القيام بالمهمة المطلوبة", scope="عمل عام", idempotency_key="cmd-routing-2")
         with self.assertRaisesRegex(ValueError, "لم تتضح تخصصات"):
+            create_command(self.path, payload)
+
+    def test_rejects_english_card_content(self):
+        payload = self.payload()
+        payload["title"] = "Fix dashboard interface"
+        with self.assertRaisesRegex(ValueError, "باللغة العربية"):
             create_command(self.path, payload)
 
     def test_browser_cannot_override_backend_routing(self):
@@ -134,9 +140,9 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
     def test_owner_review_is_not_a_card_completion_criterion(self):
         payload = self.payload()
         payload["criteria"] = [
-            {"criterion_code": "automated_check", "title": "Automated check", "check_method": "automated_quality_gate"},
-            {"criterion_code": "owner_review", "title": "Owner review", "check_method": "owner_acceptance"},
-            {"criterion_code": "manual_owner_step", "title": "Owner step", "check_method": "owner_acceptance"},
+            {"criterion_code": "automated_check", "title": "الفحص الآلي", "check_method": "automated_quality_gate"},
+            {"criterion_code": "owner_review", "title": "مراجعة المالك", "check_method": "owner_acceptance"},
+            {"criterion_code": "manual_owner_step", "title": "خطوة المالك", "check_method": "owner_acceptance"},
         ]
         result = create_command(self.path, payload)
         db = connect(self.path)
@@ -150,7 +156,7 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
     def test_admin_audit_schema_is_created_by_migration(self):
         db = connect(self.path)
         try:
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 8)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 9)
             self.assertIsNotNone(db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='workflow_admin_audit'").fetchone())
         finally:
             db.close()
@@ -190,7 +196,6 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
                 )
         finally:
             db.close()
-
         next_payload = self.payload()
         next_payload["idempotency_key"] = "cmd-next-after-completion"
         newer = create_command(self.path, next_payload)
@@ -208,6 +213,35 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
         self.assertEqual(len(filtered["cards"]), 1)
         self.assertEqual(filtered["completion_summary"]["owner_commands_completed"], 1)
         self.assertEqual(len(filtered["completion_summary"]["completed_owner_commands"]), 1)
+
+    def test_completed_and_terminal_groups_are_returned_independently_of_board_filters(self):
+        db = connect(self.path)
+        try:
+            cards_by_status = {}
+            for status in ("completed", "failed", "blocked", "archived"):
+                payload = self.payload()
+                payload["idempotency_key"] = f"terminal-{status}"
+                result = create_command(self.path, payload)
+                card_id = result["child_card_ids"][0]
+                if status == "failed":
+                    transition_card(db, card_id, "in_progress", actor_id="laser", stage_code="execution")
+                transition_card(db, card_id, status, actor_id="owner", stage_code="owner_decision",
+                                note="تحديث اختبار البطاقة", source_type="unittest")
+                cards_by_status[status] = card_id
+        finally:
+            db.close()
+        terminal_board = board(self.path, status="queued", actor_id="laser")
+        group = next(item for item in terminal_board["session_history_groups"] if item["actor_id"] == "laser")
+        self.assertEqual([item["card_id"] for item in group["cards"]], [cards_by_status["completed"]])
+        for status, card_id in cards_by_status.items():
+            if status == "completed":
+                continue
+            self.assertIn(card_id, {item["card_id"] for item in terminal_board["status_groups"][status]})
+
+    def test_rejects_english_session_summary(self):
+        result = create_command(self.path, self.payload())
+        with self.assertRaisesRegex(ValueError, "باللغة العربية"):
+            transition_assigned_card(self.path, result["child_card_ids"][0], "laser", "in_progress", "Starting implementation")
 
 
 if __name__ == "__main__":

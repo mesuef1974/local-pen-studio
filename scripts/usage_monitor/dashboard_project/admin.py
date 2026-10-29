@@ -5,6 +5,7 @@ from django.contrib.admin import AllValuesFieldListFilter
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from django.db import connections, transaction
 
 from .models import ADMIN_MODELS, DISPLAY_COLUMNS, FILTER_FIELDS, SEARCH_FIELDS
@@ -87,6 +88,8 @@ READ_ONLY_WORKFLOW_TABLES = {
     "coordination_validation_results",
     "schema_migrations",
     "workflow_admin_audit",
+    "workflow_text_originals",
+    "workflow_text_localizations",
 }
 
 WORKFLOW_ADMIN_GROUPS = (
@@ -108,6 +111,7 @@ WORKFLOW_ADMIN_GROUPS = (
     ("القياس والسجلات والإعدادات", "records", (
         "coordination_events", "workflow_admin_audit", "usage_samples", "usage_sources", "database_metadata",
         "schema_migrations", "workflow_reason_definitions", "workflow_status_definitions", "workflow_transition_rules",
+        "workflow_text_originals", "workflow_text_localizations",
     )),
 )
 
@@ -220,6 +224,30 @@ class WorkflowTableAdmin(admin.ModelAdmin):
         # changelist available instead of rendering a fragile date drilldown.
         self.date_hierarchy = None
         self.ordering = (model._meta.pk.name,)
+
+    def get_form(self, request, obj=None, **kwargs):
+        base_form = super().get_form(request, obj, **kwargs)
+        content_fields = {
+            "coordination_cards": ("title", "owner_request", "scope"),
+            "coordination_card_criteria": ("title", "description"),
+            "coordination_issues": ("impact_summary",),
+            "coordination_opinions": ("opinion", "recommendation"),
+            "owner_decisions": ("notes",),
+        }.get(self.model._meta.db_table, ())
+        if not content_fields:
+            return base_form
+
+        class ArabicWorkflowContentForm(base_form):
+            def clean(self):
+                import re
+                cleaned = super().clean()
+                for field in content_fields:
+                    value = str(cleaned.get(field) or "").strip()
+                    if value and not re.search(r"[\u0600-\u06ff]", value):
+                        self.add_error(field, "اكتب هذا المحتوى باللغة العربية.")
+                return cleaned
+
+        return ArabicWorkflowContentForm
 
     def get_queryset(self, request):
         return super().get_queryset(request).using("workflow")

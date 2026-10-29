@@ -14,6 +14,8 @@
     { code: 'failed', label: 'فشلت' },
     { code: 'archived', label: 'مؤرشفة' },
   ];
+  const boardStages = stages.filter(stage => !['completed', 'failed', 'blocked', 'archived'].includes(stage.code));
+  const terminalLabels = { completed: 'مكتملة', failed: 'فشلت', blocked: 'متعذرة', archived: 'مؤرشفة' };
   const arabicNumber = new Intl.NumberFormat('ar-QA', { maximumFractionDigits: 1, numberingSystem: 'latn' });
   const dateTime = new Intl.DateTimeFormat('ar-QA', {
     year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -24,6 +26,30 @@
     card_created: 'إنشاء البطاقة', card_assigned: 'إسناد إلى جلسة', blocker_observed: 'تسجيل عائق',
     status_transition: 'تغيير الحالة', delivery_attempt: 'محاولة تسليم', validation_result: 'نتيجة تحقق',
     quality_run: 'تشغيل فحوص الجودة', session_started: 'بدء التنفيذ', progress_update: 'تحديث التقدم',
+    acceptance_criteria_imported: 'تسجيل معايير الإنجاز', card_queued_to_session: 'إرسال البطاقة للجلسة',
+    card_reassigned: 'إعادة إسناد البطاقة', completion_policy_corrected: 'تحديث سياسة الإكمال',
+    deliverable_registered: 'تسجيل مخرج', delivery_verification_recorded: 'تسجيل التحقق من التسليم',
+    git_commit: 'تسجيل الالتزام', git_push: 'تسجيل الدفع إلى Git', owner_decision_recorded: 'تسجيل قرار المالك',
+    review_finding: 'نتيجة المراجعة', session_opinion_recorded: 'تسجيل رأي الجلسة',
+    terminal_assignment_closed: 'إغلاق إسناد منتهٍ',
+  };
+  const issueLabels = {
+    path_limit_mismatch: 'اختلاف حد المسارات', cpu_bound_centerline: 'بطء استخراج الخط المركزي',
+    routing_test_fixture_missing: 'ملف اختبار توجيه مفقود',
+  };
+  const criterionLabels = {
+    automated_delivery_qa: 'فحوص جودة التسليم الآلية', path_limit_contract: 'توحيد حد المسارات',
+    centerline_profile_fidelity: 'قياس أداء الخط المركزي ومطابقة المخرجات', routing_fixture_ci: 'اختبار التوجيه في CI',
+    fresh_main_delivery: 'تسليم من main حديث', 'API loopback': 'واجهة API المحلية',
+    'SQLite v4 migration': 'ترحيل SQLite v4',
+  };
+  const checkMethodLabels = {
+    automated_quality_gate: 'بوابة جودة آلية', automated_tests: 'اختبارات آلية',
+    benchmark_and_fidelity_report: 'قياس أداء ومطابقة', ci_test: 'اختبار التكامل المستمر',
+    git_remote_ref: 'التحقق من الفرع البعيد', git_remote_sha_match: 'مطابقة الالتزام مع الفرع البعيد',
+    migration_tests_and_integrity: 'اختبارات الترحيل وسلامة البيانات',
+    unit_tests_and_backup_integrity: 'اختبارات الوحدات وسلامة النسخة الاحتياطية',
+    unit_tests_and_live_api: 'اختبارات الوحدات وواجهة API',
   };
   const outcomeLabels = { pass: 'اجتاز', passed: 'اجتاز', fail: 'فشل', failed: 'فشل', pending: 'قيد الانتظار', accepted: 'مقبول', sent: 'أُرسل', unresolved: 'غير محلول', resolved: 'تم الحل' };
   const outboxStates = {
@@ -128,7 +154,7 @@
   function statusLabel(card) {
     const code = card.status_code || card.current_status_code || '';
     const stage = stages.find(item => item.code === code);
-    return safeText(card.status_label, stage?.label || code || 'حالة غير معروفة');
+    return safeText(card.status_label, terminalLabels[code] || stage?.label || code || 'حالة غير معروفة');
   }
 
   function statusCode(card) {
@@ -151,8 +177,8 @@
     const status = $('workflow-status');
     const current = status.value;
     status.replaceChildren(new Option('كل الحالات', ''));
-    stages.forEach(stage => status.add(new Option(stage.label, stage.code)));
-    if (stages.some(stage => stage.code === current)) status.value = current;
+    boardStages.forEach(stage => status.add(new Option(stage.label, stage.code)));
+    if (boardStages.some(stage => stage.code === current)) status.value = current;
   }
 
   function cardButton(card) {
@@ -184,7 +210,8 @@
   function renderBoard(board) {
     const allCards = Array.isArray(board.cards) ? board.cards : [];
     const commandRootIds = new Set(allCards.filter(card => allCards.some(child => child.parent_card_id === card.card_id)).map(card => card.card_id));
-    const cards = allCards.filter(card => !commandRootIds.has(card.card_id));
+    const cards = allCards.filter(card => !commandRootIds.has(card.card_id)
+      && !['completed', 'failed', 'blocked', 'archived'].includes(statusCode(card)));
     const sessions = Array.isArray(board.sessions) ? board.sessions : [];
     fillFilters(sessions);
     $('workflow-card-count').textContent = `${arabicNumber.format(cards.length)} بطاقة`;
@@ -192,13 +219,13 @@
     root.replaceChildren();
     const header = element('div', undefined, 'workflow-grid-header');
     header.append(element('div', 'الجلسة / الاختصاص'));
-    stages.forEach(stage => header.append(element('div', stage.label)));
+    boardStages.forEach(stage => header.append(element('div', stage.label)));
     root.append(header);
 
     const lanes = sessions.filter(isSessionActor).map(session => ({ session, cards: cards.filter(card => card.assigned_actor_id === session.actor_id) }));
     const knownActors = new Set(lanes.map(lane => lane.session.actor_id));
     const unassigned = cards.filter(card => !card.assigned_actor_id || !knownActors.has(card.assigned_actor_id));
-    const terminalStatuses = new Set(['completed', 'failed', 'archived']);
+    const terminalStatuses = new Set(['completed', 'failed', 'blocked', 'archived']);
     const awaitingRouting = unassigned.filter(card => !terminalStatuses.has(statusCode(card)));
     const terminalUnassigned = unassigned.filter(card => terminalStatuses.has(statusCode(card)));
     if (terminalUnassigned.length) lanes.unshift({
@@ -218,7 +245,7 @@
       const label = element('div', undefined, 'workflow-lane-title');
       label.append(name, charter);
       row.append(label);
-      stages.forEach(stage => {
+      boardStages.forEach(stage => {
         const cell = element('div', undefined, 'workflow-stage-cell');
         const items = lane.cards.filter(card => card.status_code === stage.code);
         if (!items.length) cell.setAttribute('aria-label', `لا توجد بطاقات في مرحلة ${stage.label}`);
@@ -241,6 +268,44 @@
     setConnection('ready', `متصل · آخر تحديث ${formatDate(board.generated_at)}`);
     renderKPIs(board);
     renderCompletionSummary(board.completion_summary);
+    renderArchive(board.session_history_groups, board.status_groups);
+  }
+
+  function renderArchive(groups, statuses) {
+    const root = $('wf-archive-groups');
+    root.replaceChildren();
+    const records = [
+      ...(Array.isArray(groups) ? groups : []).map(group => ({ ...group, kind: 'session' })),
+      { actor_id: '__failed__', display_name: 'فشلت', kind: 'failed', cards: statuses?.failed || [] },
+      { actor_id: '__blocked__', display_name: 'متعذرة', kind: 'blocked', cards: statuses?.blocked || [] },
+      { actor_id: '__archived__', display_name: 'مؤرشفة', kind: 'archived', cards: statuses?.archived || [] },
+    ];
+    records.forEach(group => {
+      const panel = element('section', undefined, 'workflow-archive-session');
+      if (group.kind === 'failed') panel.classList.add('is-failed');
+      if (group.kind === 'blocked') panel.classList.add('is-blocked');
+      panel.setAttribute('aria-label', group.kind === 'session'
+        ? `البطاقات المكتملة لجلسة ${safeText(group.display_name)}` : `البطاقات ${safeText(group.display_name)}`);
+      panel.append(element('h4', safeText(group.display_name, 'جلسة سابقة')));
+      const list = element('div', undefined, 'workflow-archive-list');
+      const cards = Array.isArray(group.cards) ? group.cards : [];
+      if (!cards.length) {
+        const emptyLabel = { session: 'لا توجد بطاقات مكتملة.', failed: 'لا توجد بطاقات فاشلة.',
+          blocked: 'لا توجد بطاقات متعذرة.', archived: 'لا توجد بطاقات مؤرشفة.' }[group.kind];
+        list.append(element('p', emptyLabel, 'workflow-archive-empty'));
+      } else {
+        cards.forEach(card => {
+          const button = element('button', safeText(card.title, 'بطاقة بلا عنوان'), 'workflow-archive-card');
+          button.type = 'button';
+          const context = group.kind === 'session' ? `في جلسة ${safeText(group.display_name)}` : `ضمن حالة ${safeText(group.display_name)}`;
+          button.setAttribute('aria-label', `فتح بطاقة ${safeText(card.title)} ${context}`);
+          button.addEventListener('click', () => openCard(card.card_id));
+          list.append(button);
+        });
+      }
+      panel.append(list);
+      root.append(panel);
+    });
   }
 
   function renderCompletionSummary(summary) {
@@ -280,11 +345,12 @@
   }
 
   function renderKPIs(board) {
-    const cards = Array.isArray(board.cards) ? board.cards : [];
+    const allCards = Array.isArray(board.cards) ? board.cards : [];
+    const cards = allCards.filter(card => !['completed', 'failed', 'blocked', 'archived'].includes(statusCode(card)));
     const count = (...codes) => cards.filter(card => codes.includes(statusCode(card))).length;
     $('wf-kpi-total').textContent = arabicNumber.format(cards.length);
     $('wf-kpi-active').textContent = arabicNumber.format(count('assigned', 'in_progress', 'returned'));
-    $('wf-kpi-blocked').textContent = arabicNumber.format(count('blocked'));
+    $('wf-kpi-blocked').textContent = arabicNumber.format(allCards.filter(card => statusCode(card) === 'blocked').length);
     $('wf-kpi-push-verified').textContent = arabicNumber.format(count('delivered'));
     $('wf-kpi-qa-in-progress').textContent = arabicNumber.format(count('verifying'));
   }
@@ -405,10 +471,10 @@
     const code = String(item.state_code || '').toLowerCase();
     const [label, style] = outboxStates[code] || [safeText(item.state_code, 'حالة غير معروفة'), 'pending'];
     const session = (currentBoard?.sessions || []).find(actor => actor.actor_id === item.target_actor_id);
-    const target = session ? safeText(session.display_name, session.actor_id) : safeText(item.target_actor_id, 'جلسة غير محددة');
+    const target = safeText(item.target_actor_name || session?.display_name, 'جلسة سابقة');
     const count = Number.isFinite(Number(item.attempt_count)) ? arabicNumber.format(Number(item.attempt_count)) : '—';
     const timing = item.sent_at ? `وقت الإرسال: ${formatDate(item.sent_at)}` : item.available_at ? `متاح للإرسال: ${formatDate(item.available_at)}` : '';
-    const command = item.command_code === 'card_assignment' ? 'إسناد بطاقة' : safeText(item.command_code, 'إرسال تكليف');
+    const command = item.command_code === 'card_assignment' ? 'إسناد بطاقة' : 'إرسال تكليف';
     const detail = [`الجهة: ${target}`, `عدد المحاولات: ${count}`, timing, item.last_error_code && `رمز الخطأ: ${item.last_error_code}`].filter(Boolean).join(' · ');
     const row = detailItem(command, detail, item.sent_at || item.available_at);
     row.insertBefore(element('span', label, `workflow-outbox-state is-${style}`), row.firstChild);
@@ -439,11 +505,11 @@
       }, 'لا توجد بطاقات فرعية.'));
     }
     const criteria = (data.criteria || []).slice().sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
-    root.append(section('معايير الإنجاز', criteria, item => detailItem(`${item.title}${item.required ? ' · مطلوب' : ''}`, [item.description, item.check_method].filter(Boolean).join(' · ')), 'لا توجد معايير مسجلة.'));
+    root.append(section('معايير الإنجاز', criteria, item => detailItem(`${criterionLabels[item.criterion_code] || item.title}${item.required ? ' · مطلوب' : ''}`, [item.description, checkMethodLabels[item.check_method] || (item.check_method ? 'فحص مسجل' : '')].filter(Boolean).join(' · ')), 'لا توجد معايير مسجلة.'));
     const events = (data.events || []).slice().sort((a, b) => Date.parse(a.recorded_at || '') - Date.parse(b.recorded_at || ''));
-    root.append(section('الخط الزمني', events, item => detailItem(`${eventLabels[item.event_type] || item.event_type || 'حدث'}${item.actor_id ? ` · ${item.actor_id}` : ''}`, item.details, item.recorded_at), 'لا توجد أحداث مسجلة.'));
-    root.append(section('سجل الإسناد', data.assignments, item => detailItem(`${item.assigned_actor_id || 'جلسة غير محددة'}${item.reason_code ? ` · ${item.reason_code}` : ''}`, item.assigned_by_actor_id ? `أُسندت بواسطة ${item.assigned_by_actor_id}` : '', item.assigned_at), 'لا يوجد سجل إسناد.'));
-    root.append(section('العوائق', data.issues, item => detailItem(`${item.cause_code || item.stage_code || 'عائق'}${item.cause_resolution ? ` · ${outcomeLabels[item.cause_resolution] || item.cause_resolution}` : ''}`, item.impact_summary, item.observed_at), 'لا توجد عوائق مسجلة.'));
+    root.append(section('الخط الزمني', events, item => detailItem(`${eventLabels[item.event_type] || 'حدث'}${item.actor_name ? ` · ${item.actor_name}` : ''}`, item.localized_details || item.details, item.recorded_at), 'لا توجد أحداث مسجلة.'));
+    root.append(section('سجل الإسناد', data.assignments, item => detailItem(`${item.assigned_actor_name || 'جلسة سابقة'}${item.reason_code ? ` · ${item.reason_label || 'سبب مسجل'}` : ''}`, item.assigned_by_actor_name ? `أُسندت بواسطة ${item.assigned_by_actor_name}` : '', item.assigned_at), 'لا يوجد سجل إسناد.'));
+    root.append(section('العوائق', data.issues, item => detailItem(`${issueLabels[item.cause_code] || 'عائق مسجل'}${item.cause_resolution ? ` · ${outcomeLabels[item.cause_resolution] || 'حالة مسجلة'}` : ''}`, item.localized_impact_summary || item.impact_summary, item.observed_at), 'لا توجد عوائق مسجلة.'));
     root.append(section('Git والتسليمات', data.deliveries, item => {
       const verified = Boolean(item.verified_at && item.remote_commit_sha && item.remote_commit_sha.toLowerCase() === String(item.commit_sha || '').toLowerCase());
       const proof = verified
@@ -454,7 +520,7 @@
       const detail = [item.commit_sha && `Commit ${item.commit_sha}`, item.summary, (item.changed_paths || []).join('، '), proof].filter(Boolean).join(' · ');
       return detailItem(`${item.branch_name || 'فرع غير محدد'} · المحاولة ${arabicNumber.format(item.attempt_number || item.attempt_id || 0)}`, detail, item.submitted_at);
     }, 'لا توجد تسليمات مسجلة.'));
-    root.append(section('فحوص الجودة', data.validations, item => detailItem(`${item.criterion || item.check_code || 'فحص'} · ${outcomeLabels[item.outcome] || item.outcome || 'نتيجة غير محددة'}`, item.evidence_ref, item.recorded_at), 'لا توجد نتائج تحقق مسجلة.'));
+    root.append(section('فحوص الجودة', data.validations, item => detailItem(`${criterionLabels[item.criterion || item.check_code] || 'فحص مسجل'} · ${outcomeLabels[item.outcome] || 'نتيجة غير محددة'}`, item.evidence_ref, item.recorded_at), 'لا توجد نتائج تحقق مسجلة.'));
     root.append(section('طابور إرسال التكليفات', data.outbox, outboxItem, 'لا توجد تكليفات في طابور الإرسال.'));
     $('workflow-detail-loading').hidden = true;
     $('workflow-detail-error').hidden = true;

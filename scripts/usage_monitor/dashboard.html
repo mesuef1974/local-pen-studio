@@ -116,6 +116,10 @@
       </div>
       <p class="workflow-footnote">المصدر: واجهة JSON المحلية. لا تعرض هذه اللوحة بيانات تجريبية عند تعذر الخادم.</p>
     </section>
+    <section id="workflow-archive" class="workflow-archive panel" aria-labelledby="wf-archive-title">
+      <div class="panel-head"><div><h3 id="wf-archive-title">سجل البطاقات</h3><div class="sub">أربعة مربعات للبطاقات المكتملة حسب الجلسة، وثلاثة للحالات: فشلت، متعذرة، ومؤرشفة.</div></div></div>
+      <div id="wf-archive-groups" class="workflow-archive-groups" aria-live="polite"></div>
+    </section>
     <dialog id="workflow-detail-dialog" class="workflow-dialog" aria-labelledby="workflow-detail-title">
       <div class="workflow-dialog-head"><div><div class="eyebrow">تفاصيل البطاقة</div><h2 id="workflow-detail-title">تحميل البطاقة…</h2></div><button class="icon-button" id="workflow-detail-close" type="button" aria-label="إغلاق تفاصيل البطاقة">×</button></div>
       <div id="workflow-detail-loading" class="workflow-loading" role="status"><span class="workflow-spinner" aria-hidden="true"></span>جار تحميل السجل…</div>
@@ -125,8 +129,8 @@
     <dialog id="workflow-command-dialog" class="workflow-dialog workflow-command-dialog" aria-labelledby="workflow-command-title">
       <form id="workflow-command-form" method="dialog">
         <div class="workflow-dialog-head"><div><div class="eyebrow">أمر المالك</div><h2 id="workflow-command-title">إضافة أمر إلى المصنع</h2></div><button class="icon-button" id="workflow-command-close" type="button" aria-label="إغلاق نموذج الأمر">×</button></div>
-        <p class="workflow-form-note">اكتب المهمة والنتيجة المطلوبة فقط. المصنع يحدد الجلسة ويجهز العنوان ومعيار الفحص تلقائيًا.</p>
-        <label for="command-owner-request">ما المهمة المطلوبة؟<textarea id="command-owner-request" name="owner_request" required rows="6" maxlength="12000" placeholder="اكتب المطلوب والنتيجة التي تريدها…"></textarea></label>
+        <p class="workflow-form-note">اكتب المهمة والنتيجة المطلوبة بالعربية. يمكن إبقاء أسماء الملفات والأكواد التقنية بلغتها؛ المصنع يحدد الجلسة ويجهز العنوان ومعيار الفحص.</p>
+        <label for="command-owner-request">ما المهمة المطلوبة؟<textarea id="command-owner-request" name="owner_request" required rows="6" maxlength="12000" placeholder="اكتب المطلوب والنتيجة بالعربية…"></textarea></label>
         <div id="workflow-command-error" class="workflow-feedback is-error" role="alert" tabindex="-1" hidden></div>
         <div class="workflow-dialog-actions"><button class="btn" id="workflow-command-cancel" type="button">إلغاء</button><button class="btn workflow-primary" id="workflow-command-submit" type="submit">إنشاء وتوجيه</button></div>
       </form>
@@ -135,6 +139,6 @@
 </main>
 <span id="chart-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
 <script src="dashboard.js?v=time-minute-4" defer></script>
-<script src="workflow.js?v=workflow-completion-history-1" defer></script>
+<script src="workflow.js?v=workflow-arabic-archive-2" defer></script>
 </body>
 </html>

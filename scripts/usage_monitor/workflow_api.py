@@ -27,6 +27,10 @@ def _normalize_text(value: str) -> str:
     return " ".join(re.sub(r"[^\w\u0600-\u06ff]+", " ", value.casefold()).split())
 
 
+def _contains_arabic(value: str) -> bool:
+    return bool(re.search(r"[\u0600-\u06ff]", value or ""))
+
+
 def _route_targets(connection: sqlite3.Connection, payload: dict[str, Any]) -> list[sqlite3.Row]:
     """Choose one active, dispatchable specialist using explicit charter capabilities."""
     actors = connection.execute("""SELECT a.actor_id,a.display_name,COALESCE(a.charter,'') charter
@@ -130,6 +134,33 @@ def board(path: Path, *, status: str = "", actor_id: str = "", query: str = "") 
             WHERE c.current_status_code='completed'
             ORDER BY c.updated_at DESC,c.card_id
         """)
+        completed_session_cards = _rows(connection, """SELECT c.card_id,c.title,c.assigned_actor_id,a.display_name AS assigned_actor_name
+            FROM coordination_cards c LEFT JOIN coordination_actors a ON a.actor_id=c.assigned_actor_id
+            WHERE c.current_status_code='completed'
+              AND NOT EXISTS (
+                SELECT 1 FROM coordination_command_cards root
+                WHERE root.card_id=c.card_id AND root.role_code='root'
+                  AND EXISTS (SELECT 1 FROM coordination_command_cards child
+                    WHERE child.idempotency_key=root.idempotency_key AND child.role_code='session')
+              )
+            ORDER BY a.active DESC,a.display_name,c.updated_at DESC,c.card_id""")
+        cards_by_actor: dict[str, list[dict[str, Any]]] = {}
+        for card in completed_session_cards:
+            cards_by_actor.setdefault(card["assigned_actor_id"] or "", []).append(card)
+        session_history_groups = [{"actor_id": session["actor_id"], "display_name": session["display_name"],
+                                   "cards": cards_by_actor.get(session["actor_id"], [])}
+                                  for session in sessions]
+        status_groups = {code: _rows(connection, """SELECT c.card_id,c.title,c.assigned_actor_id,a.display_name AS assigned_actor_name
+            FROM coordination_cards c LEFT JOIN coordination_actors a ON a.actor_id=c.assigned_actor_id
+            WHERE c.current_status_code=?
+              AND NOT EXISTS (
+                SELECT 1 FROM coordination_command_cards root
+                WHERE root.card_id=c.card_id AND root.role_code='root'
+                  AND EXISTS (SELECT 1 FROM coordination_command_cards child
+                    WHERE child.idempotency_key=root.idempotency_key AND child.role_code='session')
+              )
+            ORDER BY a.active DESC,a.display_name,c.updated_at DESC,c.card_id""", (code,))
+                        for code in ("failed", "blocked", "archived")}
         session_completions = _rows(connection, """
             SELECT a.actor_id,a.display_name,a.active,COUNT(c.card_id) AS completed_count
             FROM coordination_actors a
@@ -149,6 +180,8 @@ def board(path: Path, *, status: str = "", actor_id: str = "", query: str = "") 
                 "session_completions": session_completions,
                 "session_cards_completed": sum(row["completed_count"] for row in session_completions),
             },
+            "session_history_groups": session_history_groups,
+            "status_groups": status_groups,
             "generated_at": utc_now(),
         }
     finally:
@@ -204,6 +237,8 @@ def card_details(path: Path, card_id: str) -> dict[str, Any] | None:
             LEFT JOIN coordination_actors a ON a.actor_id=c.assigned_actor_id WHERE c.card_id=?""", (card_id,)).fetchone()
         if not card:
             return None
+        actor_names = {row["actor_id"]: row["display_name"] for row in connection.execute(
+            "SELECT actor_id,display_name FROM coordination_actors")}
         result = {"card": dict(card)}
         if card["parent_card_id"]:
             result["owner_command"] = _rows(connection, """SELECT card_id,title,owner_request,scope,created_at
@@ -212,8 +247,24 @@ def card_details(path: Path, card_id: str) -> dict[str, Any] | None:
         result["events"] = _rows(connection, """SELECT event_id,card_id,actor_id,event_type,details,recorded_at,stage_code,
             previous_status,next_status,reason_code,reason_resolution FROM coordination_events
             WHERE card_id=? AND sensitivity<>'confidential' ORDER BY event_id""", (card_id,))
+        for event in result["events"]:
+            event["actor_name"] = actor_names.get(event.get("actor_id"), "")
+            localized = connection.execute("""SELECT localized_text FROM workflow_text_localizations
+                WHERE table_name='coordination_events' AND record_key=? AND field_name='details'""",
+                (str(event["event_id"]),)).fetchone()
+            if localized:
+                event["localized_details"] = localized["localized_text"]
         result["assignments"] = _rows(connection, "SELECT * FROM coordination_assignments WHERE card_id=? ORDER BY assigned_at,assignment_id", (card_id,))
+        for assignment in result["assignments"]:
+            assignment["assigned_actor_name"] = actor_names.get(assignment.get("assigned_actor_id"), "")
+            assignment["assigned_by_actor_name"] = actor_names.get(assignment.get("assigned_by_actor_id"), "")
         result["issues"] = _rows(connection, "SELECT * FROM coordination_issues WHERE card_id=? ORDER BY observed_at,issue_id", (card_id,))
+        for issue in result["issues"]:
+            localized = connection.execute("""SELECT localized_text FROM workflow_text_localizations
+                WHERE table_name='coordination_issues' AND record_key=? AND field_name='impact_summary'""",
+                (str(issue["issue_id"]),)).fetchone()
+            if localized:
+                issue["localized_impact_summary"] = localized["localized_text"]
         deliveries = _rows(connection, """SELECT * FROM coordination_delivery_attempts
             WHERE card_id=? ORDER BY attempt_number,attempt_id""", (card_id,))
         for delivery in deliveries:
@@ -227,6 +278,8 @@ def card_details(path: Path, card_id: str) -> dict[str, Any] | None:
             JOIN coordination_quality_runs r ON r.quality_run_id=c.quality_run_id
             WHERE r.card_id=? ORDER BY r.finished_at,c.check_id""", (card_id,)))
         result["outbox"] = _rows(connection, "SELECT * FROM coordination_outbox WHERE card_id=? ORDER BY outbox_id", (card_id,))
+        for item in result["outbox"]:
+            item["target_actor_name"] = actor_names.get(item.get("target_actor_id"), "جلسة سابقة")
         return result
     finally:
         connection.close()
@@ -241,6 +294,8 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
     key = str(payload.get("idempotency_key", "")).strip()
     if not owner_request or not key:
         raise ValueError("اكتب وصف المهمة أولًا.")
+    if not all(_contains_arabic(value) for value in (owner_request, title, scope)):
+        raise ValueError("اكتب عنوان البطاقة ومحتواها باللغة العربية.")
     if len(title) > 240 or len(owner_request) > 12000 or len(scope) > 12000 or len(key) > 200:
         raise ValueError("تجاوز أحد الحقول الحد المسموح به.")
     requested_targets = payload.get("target_actor_ids", [])
@@ -252,6 +307,11 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
     criteria = payload.get("criteria", [])
     if not isinstance(criteria, list) or len(criteria) > 50:
         raise ValueError("معايير الإنجاز غير صالحة.")
+    for item in criteria:
+        if isinstance(item, dict) and str(item.get("title", "")).strip() and not _contains_arabic(str(item["title"])):
+            raise ValueError("اكتب عناوين معايير البطاقة باللغة العربية.")
+        if isinstance(item, dict) and str(item.get("description", "")).strip() and not _contains_arabic(str(item["description"])):
+            raise ValueError("اكتب أوصاف معايير البطاقة باللغة العربية.")
     criteria = [
         item for item in criteria
         if isinstance(item, dict)
@@ -362,6 +422,8 @@ def transition_assigned_card(path: Path, card_id: str, actor_id: str,
     summary = str(summary or "").strip()
     if len(summary) > 4000:
         raise ValueError("ملخص النتيجة أطول من الحد المسموح.")
+    if summary and not _contains_arabic(summary):
+        raise ValueError("اكتب ملخص التقدم والتسليم باللغة العربية.")
     if status_code not in {"in_progress", "blocked", "delivered", "returned", "completed"}:
         raise ValueError("حالة الجلسة المطلوبة غير مدعومة.")
     connection = _connect(path, write=True)
