@@ -182,6 +182,17 @@
     if (boardStages.some(stage => stage.code === current)) status.value = current;
   }
 
+  function fillCommandSessions(sessions) {
+    const select = $('command-target-actor');
+    const selected = select.value;
+    const available = sessions.filter(session => isSessionActor(session) && Number(session.dispatchable) === 1);
+    select.replaceChildren(new Option(available.length ? 'اختر الجلسة' : 'لا توجد جلسات جاهزة للاستلام', ''));
+    for (const session of available) {
+      select.add(new Option(safeText(session.display_name, session.actor_id), session.actor_id));
+    }
+    if (available.some(session => session.actor_id === selected)) select.value = selected;
+  }
+
   function cardButton(card) {
     const titleText = safeText(card.display_title || card.title, 'بطاقة بلا عنوان');
     const button = element('button', undefined, 'workflow-card');
@@ -220,6 +231,7 @@
       .filter(card => !['completed', 'failed', 'blocked', 'archived'].includes(statusCode(card)));
     const sessions = Array.isArray(board.sessions) ? board.sessions : [];
     fillFilters(sessions);
+    fillCommandSessions(sessions);
     $('workflow-card-count').textContent = `${arabicNumber.format(cards.length)} تنفيذ · ${arabicNumber.format(ownerCards.length)} للمالك`;
     const root = $('workflow-board-grid');
     root.replaceChildren();
@@ -563,7 +575,7 @@
   function openCommandDialog() {
     $('workflow-command-error').hidden = true;
     $('workflow-command-dialog').showModal();
-    $('command-owner-request').focus();
+    $('command-target-actor').focus();
   }
 
   async function submitCommand(event) {
@@ -573,10 +585,11 @@
     const submit = $('workflow-command-submit');
     const errorBox = $('workflow-command-error');
     submit.disabled = true;
-    submit.textContent = 'جارٍ الإنشاء والتوجيه…';
+    submit.textContent = 'جارٍ إصدار الأمر وإسناده…';
     errorBox.hidden = true;
     const commandPayload = {
       owner_request: $('command-owner-request').value.trim(),
+      target_actor_ids: [$('command-target-actor').value],
     };
     const signature = JSON.stringify(commandPayload);
     if (!commandIdempotencyKey || commandPayloadSignature !== signature) {
@@ -609,7 +622,7 @@
       errorBox.focus();
     } finally {
       submit.disabled = false;
-      submit.textContent = 'إنشاء وتوجيه';
+      submit.textContent = 'إصدار الأمر وإسناده';
     }
   }
 
