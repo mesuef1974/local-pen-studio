@@ -13,6 +13,7 @@ django.setup()
 from django.test import Client, override_settings
 
 import codex_usage_logger as logger
+import usage_database
 from usage_database import SCHEMA_V1, connect, dashboard_data, insert_sample
 from backup_usage_database import backup
 from coordination_repository import (assign_card, create_card, record_delivery_attempt,
@@ -81,7 +82,12 @@ class UsageLoggerTests(unittest.TestCase):
         self.assertEqual(data["sessions"][0]["model"], "gpt-6-luna")
         self.assertEqual(data["sessions"][0]["samples"][0]["context"]["used_percent"], 25)
         self.assertEqual(data["weekly"]["remaining_percent"], 82)
-        self.assertEqual(self.fetchone("PRAGMA user_version")[0], 9)
+        self.assertIsNotNone(data["freshness"]["context"]["observed_at"])
+        self.assertIsNotNone(data["freshness"]["context"]["recorded_at"])
+        self.assertEqual(data["freshness"]["weekly"]["observed_at"], data["weekly"]["timestamp"])
+        self.assertIsNotNone(data["freshness"]["weekly"]["recorded_at"])
+        self.assertEqual(data["freshness"]["collector"]["latest_run"]["status"], "success")
+        self.assertEqual(self.fetchone("PRAGMA user_version")[0], 12)
         connection = connect(self.database)
         try:
             tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
@@ -115,7 +121,7 @@ class UsageLoggerTests(unittest.TestCase):
 
         connection = connect(legacy_db)
         try:
-            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 9)
+            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 12)
             self.assertEqual(connection.execute("SELECT session_name FROM usage_sessions WHERE session_id='kept'").fetchone()[0],
                              "بيانات سابقة")
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM schema_migrations WHERE version=2").fetchone()[0], 1)
@@ -230,12 +236,130 @@ class UsageLoggerTests(unittest.TestCase):
         self.run_logger()
         self.assertEqual(self.fetchone("SELECT COUNT(*) FROM usage_samples")[0], 1)
 
+    def test_initial_scan_captures_early_event_in_large_transcript_and_reports_invalid_lines(self):
+        self.write_rows({"type": "session_meta", "payload": {"session_id": self.session}}, self.usage())
+        with self.transcript.open("ab") as stream:
+            stream.write(b"x" * (9 * 1024 * 1024) + b"\n")
+        self.assertGreater(self.transcript.stat().st_size, 8 * 1024 * 1024)
+        result = self.run_logger()
+        self.assertEqual(self.fetchone("SELECT COUNT(*) FROM usage_samples")[0], 1)
+        self.assertEqual(result["samples_inserted"], 1)
+        self.assertEqual(result["malformed_lines"], 1)
+        run = self.fetchone("SELECT status,malformed_lines FROM usage_collector_runs ORDER BY run_id DESC LIMIT 1")
+        self.assertEqual(tuple(run), ("success", 1))
+
+    def test_older_collector_refuses_newer_database_schema_without_writing(self):
+        connection = connect(self.database)
+        connection.close()
+        supported = usage_database.SCHEMA_VERSION
+        try:
+            usage_database.SCHEMA_VERSION = supported - 1
+            with self.assertRaises(RuntimeError) as raised:
+                connect(self.database)
+            self.assertIn("11", str(raised.exception))
+            self.assertIn("12", str(raised.exception))
+        finally:
+            usage_database.SCHEMA_VERSION = supported
+        self.assertEqual(self.fetchone("PRAGMA user_version")[0], 12)
+        self.assertEqual(self.fetchone("SELECT COUNT(*) FROM usage_collector_runs")[0], 0)
+
+    def test_schema_nine_upgrade_preserves_quota_and_marks_old_record_time_unknown(self):
+        older = self.root / "schema-nine.sqlite3"
+        connection = sqlite3.connect(older)
+        connection.executescript("""
+            CREATE TABLE schema_migrations(version INTEGER PRIMARY KEY,name TEXT NOT NULL,
+                checksum_sha256 TEXT NOT NULL,applied_at TEXT NOT NULL);
+            CREATE TABLE usage_samples(sample_id INTEGER PRIMARY KEY,sampled_at TEXT NOT NULL,
+                weekly_used_percent REAL,weekly_remaining_percent REAL,weekly_resets_at INTEGER,
+                weekly_window_minutes INTEGER,weekly_plan_type TEXT);
+            INSERT INTO usage_samples(sampled_at,weekly_used_percent,weekly_remaining_percent)
+                VALUES('2026-10-29T12:00:00Z',31,69);
+            PRAGMA user_version=9;
+        """)
+        connection.close()
+        migrated = connect(older)
+        try:
+            row = migrated.execute("SELECT sampled_at,recorded_at,weekly_used_percent,weekly_remaining_percent "
+                                   "FROM usage_samples").fetchone()
+            self.assertEqual(tuple(row), ("2026-10-29T12:00:00Z", None, 31, 69))
+            self.assertEqual(migrated.execute("PRAGMA user_version").fetchone()[0], 12)
+            self.assertEqual(migrated.execute("SELECT COUNT(*) FROM usage_collector_runs").fetchone()[0], 0)
+        finally:
+            migrated.close()
+
     def test_two_writers_do_not_duplicate_the_same_sample(self):
         self.write_rows({"type": "session_meta", "payload": {"session_id": self.session}}, self.usage())
         connect(self.database).close()
+
+        def run_once():
+            try:
+                return self.run_logger()
+            except RuntimeError as exc:
+                # A concurrent run may be rejected by the collector lease. That is
+                # the expected outcome; the winning run must still record the sample.
+                self.assertIn("run_id=", str(exc))
+                return None
+
         with ThreadPoolExecutor(max_workers=2) as pool:
-            list(pool.map(lambda _: self.run_logger(), range(2)))
+            results = list(pool.map(lambda _: run_once(), range(2)))
+        self.assertTrue(any(result is not None for result in results))
         self.assertEqual(self.fetchone("SELECT COUNT(*) FROM usage_samples")[0], 1)
+
+    def test_weekly_snapshot_rejects_out_of_range_and_non_finite_values(self):
+        for value in (-1, 100.01, float("nan"), float("inf")):
+            measured = logger.sample(self.usage(weekly=value), {})
+            self.assertIsNotNone(measured)
+            self.assertIsNone(measured["weekly"], msg=f"accepted invalid weekly value: {value}")
+        self.write_rows({"type": "session_meta", "payload": {"session_id": self.session}},
+                        self.usage(weekly=101))
+        self.run_logger()
+        self.assertIsNone(self.fetchone("SELECT weekly_used_percent FROM usage_samples")[0])
+
+    def test_database_rejects_inconsistent_weekly_snapshot_updates(self):
+        self.write_rows({"type": "session_meta", "payload": {"session_id": self.session}}, self.usage())
+        self.run_logger()
+        connection = connect(self.database)
+        try:
+            with self.assertRaises(sqlite3.IntegrityError):
+                connection.execute("UPDATE usage_samples SET weekly_used_percent=101 WHERE session_id=?",
+                                   (self.session,))
+            connection.rollback()
+            with self.assertRaises(sqlite3.IntegrityError):
+                connection.execute("UPDATE usage_samples SET weekly_used_percent=NULL WHERE session_id=?",
+                                   (self.session,))
+            connection.rollback()
+        finally:
+            connection.close()
+
+    def test_live_run_lease_prevents_interruption_and_duplicate_start(self):
+        connection = connect(self.database)
+        try:
+            now = usage_database.utc_now()
+            connection.execute(
+                "INSERT INTO usage_collector_runs(started_at,heartbeat_at,status,collector_version,schema_version) "
+                "VALUES(?,?,'running','4',12)", (now, now))
+            connection.commit()
+        finally:
+            connection.close()
+        with self.assertRaisesRegex(RuntimeError, "تشغيل جامع نشط"):
+            self.run_logger()
+        row = self.fetchone("SELECT status FROM usage_collector_runs")
+        self.assertEqual(row[0], "running")
+        self.assertEqual(self.fetchone("SELECT COUNT(*) FROM usage_collector_runs")[0], 1)
+
+    def test_expired_run_lease_is_marked_interrupted_before_new_run(self):
+        connection = connect(self.database)
+        try:
+            connection.execute(
+                "INSERT INTO usage_collector_runs(started_at,heartbeat_at,status,collector_version,schema_version) "
+                "VALUES('2000-01-01T00:00:00+00:00','2000-01-01T00:00:00+00:00','running','4',12)")
+            connection.commit()
+        finally:
+            connection.close()
+        result = self.run_logger()
+        self.assertEqual(result["run_id"], 2)
+        self.assertEqual(self.fetchone("SELECT status FROM usage_collector_runs WHERE run_id=1")[0], "interrupted")
+        self.assertEqual(self.fetchone("SELECT status FROM usage_collector_runs WHERE run_id=2")[0], "success")
 
     def test_dashboard_api_serves_database_data_on_loopback(self):
         self.write_rows({"type": "session_meta", "payload": {"session_id": self.session}}, self.usage())
