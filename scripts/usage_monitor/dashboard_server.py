@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import threading
 from pathlib import Path
 
 
@@ -20,6 +21,7 @@ def main() -> None:
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "dashboard_project.settings")
     os.environ["USAGE_DATABASE"] = str(args.database.expanduser().resolve())
+    os.environ["WORKFLOW_BASE_URL"] = f"http://{args.host}:{args.port}"
 
     # Apply additive usage/workflow schema migrations before the admin or API starts.
     from usage_database import connect
@@ -28,9 +30,18 @@ def main() -> None:
 
     from django.core.management import execute_from_command_line
 
-    execute_from_command_line([
-        "manage.py", "runserver", f"{args.host}:{args.port}", "--noreload",
-    ])
+    from codex_session_dispatcher import dispatch_loop
+    stop_dispatcher = threading.Event()
+    dispatcher = threading.Thread(target=dispatch_loop, args=(args.database.expanduser().resolve(), stop_dispatcher),
+                                  name="workflow-outbox-dispatcher", daemon=True)
+    dispatcher.start()
+    try:
+        execute_from_command_line([
+            "manage.py", "runserver", f"{args.host}:{args.port}", "--noreload",
+        ])
+    finally:
+        stop_dispatcher.set()
+        dispatcher.join(timeout=10)
 
 
 if __name__ == "__main__":
