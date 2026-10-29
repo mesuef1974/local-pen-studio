@@ -5,10 +5,11 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import json
+import math
 import sqlite3
 from pathlib import Path
 
-SCHEMA_VERSION = 9
+SCHEMA_VERSION = 12
 
 SCHEMA_V1 = """
 CREATE TABLE IF NOT EXISTS coordination_actors (
@@ -142,7 +143,10 @@ def connect(path: Path) -> sqlite3.Connection:
     version = connection.execute("PRAGMA user_version").fetchone()[0]
     if version > SCHEMA_VERSION:
         connection.close()
-        raise RuntimeError(f"Database schema {version} is newer than supported {SCHEMA_VERSION}")
+        raise RuntimeError(
+            f"جامع القياس يدعم مخطط قاعدة حتى {SCHEMA_VERSION}، لكن القاعدة إصدارها {version}. "
+            "حدّث نسخة جامع القياس من جذر المشروع قبل تشغيله؛ لم تُجر أي كتابة."
+        )
     if version < 1:
         connection.execute("PRAGMA journal_mode = WAL")
         with connection:
@@ -188,6 +192,22 @@ def _counter_values(value: object) -> list[int] | None:
     return values
 
 
+def _valid_weekly(value: object) -> dict:
+    if not isinstance(value, dict):
+        return {}
+    used = value.get("used_percent")
+    remaining = value.get("remaining_percent")
+    window = value.get("window_minutes")
+    if (not isinstance(used, (int, float)) or isinstance(used, bool)
+            or not 0 <= used <= 100 or not math.isfinite(used)
+            or not isinstance(remaining, (int, float)) or isinstance(remaining, bool)
+            or not 0 <= remaining <= 100 or not math.isfinite(remaining)
+            or abs(used + remaining - 100) > 0.001
+            or not isinstance(window, int) or isinstance(window, bool) or window <= 0):
+        return {}
+    return value
+
+
 def insert_sample(connection: sqlite3.Connection, session_id: str, session_name: str,
                   created_at: str | None, sample: dict) -> bool:
     timestamp = sample.get("timestamp")
@@ -210,7 +230,7 @@ def insert_sample(connection: sqlite3.Connection, session_id: str, session_name:
         "updated_at=MAX(COALESCE(usage_sessions.updated_at,''),excluded.updated_at)",
         (session_id, session_name, created_at, timestamp),
     )
-    weekly = weekly if isinstance(weekly, dict) else {}
+    weekly = _valid_weekly(weekly)
     cursor = connection.execute(
         """INSERT OR IGNORE INTO usage_samples(
         session_id,sampled_at,model,reasoning_effort,service_tier,context_window_tokens,
@@ -219,13 +239,13 @@ def insert_sample(connection: sqlite3.Connection, session_id: str, session_name:
         cumulative_total_tokens,cumulative_input_tokens,cumulative_cached_input_tokens,
         cumulative_cache_write_input_tokens,cumulative_output_tokens,cumulative_reasoning_output_tokens,
         weekly_used_percent,weekly_remaining_percent,weekly_window_minutes,weekly_resets_at,weekly_plan_type,
-        coordination_card_id,workflow_stage_code
-        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        coordination_card_id,workflow_stage_code,recorded_at
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (session_id, timestamp, sample.get("model"), sample.get("reasoning_effort"), sample.get("service_tier"),
          window, *current_values, float(used), *cumulative_values,
          weekly.get("used_percent"), weekly.get("remaining_percent"), weekly.get("window_minutes"),
          weekly.get("resets_at"), weekly.get("plan_type"),
-         sample.get("coordination_card_id"), sample.get("workflow_stage_code")),
+         sample.get("coordination_card_id"), sample.get("workflow_stage_code"), utc_now()),
     )
     return cursor.rowcount == 1
 
@@ -299,7 +319,7 @@ def dashboard_data(database: Path) -> dict:
             samples = []
             for row in reversed(rows):
                 samples.append({
-                    "timestamp": row["sampled_at"], "model": row["model"],
+                    "timestamp": row["sampled_at"], "recorded_at": row["recorded_at"], "model": row["model"],
                     "context": {"used_percent": row["context_used_percent"],
                                 "total_tokens": row["context_total_tokens"],
                                 "input_tokens": row["context_input_tokens"],
@@ -316,17 +336,43 @@ def dashboard_data(database: Path) -> dict:
                              "created_at": session["created_at"], "updated_at": session["updated_at"],
                              "model": samples[-1].get("model"), "samples": samples})
         weekly_row = connection.execute(
-            """SELECT sampled_at,weekly_used_percent,weekly_remaining_percent,weekly_resets_at,
+            """SELECT sampled_at,recorded_at,weekly_used_percent,weekly_remaining_percent,weekly_resets_at,
             weekly_window_minutes,weekly_plan_type FROM usage_samples
             WHERE weekly_used_percent IS NOT NULL ORDER BY sampled_at DESC,sample_id DESC LIMIT 1"""
         ).fetchone()
         weekly = None
         if weekly_row:
-            weekly = {"timestamp": weekly_row["sampled_at"], "used_percent": weekly_row["weekly_used_percent"],
+            weekly = {"timestamp": weekly_row["sampled_at"], "recorded_at": weekly_row["recorded_at"],
+                      "used_percent": weekly_row["weekly_used_percent"],
                       "remaining_percent": weekly_row["weekly_remaining_percent"],
                       "resets_at": weekly_row["weekly_resets_at"],
                       "window_minutes": weekly_row["weekly_window_minutes"],
                       "plan_type": weekly_row["weekly_plan_type"]}
-        return {"version": 1, "generated_at": utc_now(), "weekly": weekly, "sessions": sessions}
+        context_row = connection.execute(
+            "SELECT sampled_at,recorded_at FROM usage_samples ORDER BY sampled_at DESC,sample_id DESC LIMIT 1"
+        ).fetchone()
+        latest_run = connection.execute(
+            "SELECT * FROM usage_collector_runs ORDER BY run_id DESC LIMIT 1"
+        ).fetchone()
+        latest_success = connection.execute(
+            "SELECT * FROM usage_collector_runs WHERE status='success' ORDER BY run_id DESC LIMIT 1"
+        ).fetchone()
+        def run_summary(row):
+            if not row:
+                return None
+            return {key: row[key] for key in (
+                "run_id", "started_at", "heartbeat_at", "completed_at", "status", "collector_version", "schema_version",
+                "source_files_seen", "source_files_updated", "records_read", "samples_inserted",
+                "malformed_lines", "error_message",
+            )}
+        freshness = {
+            "context": {"observed_at": context_row["sampled_at"], "recorded_at": context_row["recorded_at"]}
+            if context_row else None,
+            "weekly": {"observed_at": weekly_row["sampled_at"], "recorded_at": weekly_row["recorded_at"]}
+            if weekly_row else None,
+            "collector": {"latest_run": run_summary(latest_run), "last_success": run_summary(latest_success)},
+        }
+        return {"version": 2, "generated_at": utc_now(), "freshness": freshness,
+                "weekly": weekly, "sessions": sessions}
     finally:
         connection.close()

@@ -5,22 +5,149 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $rootPath = (Resolve-Path -LiteralPath $Root).Path
-$logger = Join-Path $rootPath 'scripts\usage_monitor\codex_usage_logger.py'
+$sourceMonitor = Join-Path $rootPath 'scripts\usage_monitor'
+$databaseSource = Join-Path $sourceMonitor 'usage_database.py'
+$loggerSource = Join-Path $sourceMonitor 'codex_usage_logger.py'
 $python = (Get-Command python.exe -ErrorAction Stop).Source
-if (-not (Test-Path -LiteralPath $logger -PathType Leaf)) {
-    throw "Usage logger was not found: $logger"
+foreach ($required in @($databaseSource, $loggerSource, (Join-Path $sourceMonitor 'dashboard_server.py'))) {
+    if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "ملف القياس المطلوب غير موجود: $required" }
 }
 
-$action = New-ScheduledTaskAction -Execute $python -Argument ('-X utf8 "{0}"' -f $logger)
+$schemaMatch = [regex]::Match((Get-Content -LiteralPath $databaseSource -Raw), '(?m)^SCHEMA_VERSION\s*=\s*(\d+)')
+if (-not $schemaMatch.Success) { throw 'تعذر تحديد إصدار مخطط قاعدة البيانات من نسخة القياس.' }
+$sourceSchema = [int]$schemaMatch.Groups[1].Value
+$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $env:USERPROFILE '.codex' }
+$codexHome = [IO.Path]::GetFullPath($codexHome)
+$databasePath = Join-Path $codexHome 'usage-logs\usage.sqlite3'
+$databaseSchema = 0
+if (Test-Path -LiteralPath $databasePath -PathType Leaf) {
+    $databaseSchema = [int](& $python -c 'import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); print(c.execute("PRAGMA user_version").fetchone()[0]); c.close()' $databasePath)
+    if ($LASTEXITCODE -ne 0) { throw 'تعذر قراءة إصدار قاعدة القياس؛ لم تُحدّث المهمة المجدولة.' }
+}
+if ($sourceSchema -lt $databaseSchema) {
+    throw "رفض التثبيت: كود القياس يدعم مخطط $sourceSchema، وقاعدة البيانات إصدارها $databaseSchema. استخدم نسخة أحدث من جذر المشروع؛ لم تُغيّر المهمة الحالية."
+}
+
+# Use a content-addressed runtime outside Git/worktrees so the task cannot point
+# at a temporary checkout that later changes branch or disappears.
+$runtimeRoot = Join-Path $codexHome 'usage-monitor-runtime'
+$releaseRoot = Join-Path $runtimeRoot 'releases'
+New-Item -ItemType Directory -Force -Path $releaseRoot | Out-Null
+function Get-ContentFingerprint([string]$Path) {
+    $basePath = (Resolve-Path -LiteralPath $Path).Path
+    $files = Get-ChildItem -LiteralPath $basePath -File -Recurse |
+        Where-Object { $_.FullName -notmatch '[\\/]__pycache__([\\/]|$)' -and $_.Extension -ne '.pyc' -and $_.Name -ne 'runtime.json' } |
+        Sort-Object { $_.FullName.Substring($basePath.Length) }
+    $fingerprintInput = ($files | ForEach-Object {
+        '{0}:{1}' -f $_.FullName.Substring($basePath.Length).Replace('\','/'),
+            (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+    }) -join "`n"
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return [Convert]::ToHexString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($fingerprintInput))).ToLowerInvariant() }
+    finally { $sha.Dispose() }
+}
+$fingerprint = Get-ContentFingerprint $sourceMonitor
+$releaseName = 'schema-{0}-{1}' -f $sourceSchema, $fingerprint.Substring(0, 16)
+$releasePath = Join-Path $releaseRoot $releaseName
+$activePath = Join-Path $runtimeRoot 'active.json'
+$manifest = [ordered]@{
+    runtime_path = $releasePath
+    source_root = $rootPath
+    source_commit = ((& git -C $rootPath rev-parse HEAD 2>$null) -join '').Trim()
+    code_sha256 = $fingerprint
+    collector_version = '4'
+    schema_version = $sourceSchema
+    database_path = $databasePath
+    installed_at = [DateTime]::UtcNow.ToString('o')
+}
+if (-not (Test-Path -LiteralPath $releasePath -PathType Container)) {
+    $stagePath = Join-Path $releaseRoot ('.staging-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $stagePath | Out-Null
+    try {
+        foreach ($item in Get-ChildItem -LiteralPath $sourceMonitor -Force) {
+            if ($item.Name -eq '__pycache__') { continue }
+            Copy-Item -LiteralPath $item.FullName -Destination $stagePath -Recurse -Force
+        }
+        $stagedSchemaMatch = [regex]::Match((Get-Content -LiteralPath (Join-Path $stagePath 'usage_database.py') -Raw), '(?m)^SCHEMA_VERSION\s*=\s*(\d+)')
+        if (-not $stagedSchemaMatch.Success -or [int]$stagedSchemaMatch.Groups[1].Value -ne $sourceSchema) {
+            throw 'نسخة القياس المنسوخة لا تطابق إصدار المخطط الذي جرى التحقق منه.'
+        }
+        if ((Get-ContentFingerprint $stagePath) -ne $fingerprint) {
+            throw 'بصمة ملفات نسخة القياس المرحلية لا تطابق المصدر؛ لم يُفعّل الإصدار.'
+        }
+        $stageFull = [IO.Path]::GetFullPath($stagePath)
+        $releaseFull = [IO.Path]::GetFullPath($releaseRoot)
+        if (-not $stageFull.StartsWith($releaseFull + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+            throw 'رفض نقل مجلد وسيط خارج مجلد إصدارات القياس.'
+        }
+        Move-Item -LiteralPath $stagePath -Destination $releasePath
+    } catch {
+        $stageFull = [IO.Path]::GetFullPath($stagePath)
+        $runtimeFull = [IO.Path]::GetFullPath($runtimeRoot)
+        if ((Test-Path -LiteralPath $stagePath) -and $stageFull.StartsWith($runtimeFull + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+            Remove-Item -LiteralPath $stagePath -Recurse -Force
+        }
+        throw
+    }
+} elseif ((Get-ContentFingerprint $releasePath) -ne $fingerprint) {
+    throw 'محتويات الإصدار الموجود لا تطابق بصمته؛ أوقف التثبيت لحماية النسخة النشطة.'
+}
+
+$manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $releasePath 'runtime.json') -Encoding utf8
+$activeTemp = Join-Path $runtimeRoot ('.active-' + [guid]::NewGuid().ToString('N') + '.json')
+$activeBackup = Join-Path $runtimeRoot ('.active-backup-' + [guid]::NewGuid().ToString('N') + '.json')
+$manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $activeTemp -Encoding utf8
+
+$runtimeLogger = Join-Path $releasePath 'codex_usage_logger.py'
+$arguments = '-X utf8 "{0}" --sessions-root "{1}" --index "{2}" --database "{3}" --legacy-sessions "{4}" --legacy-state "{5}"' -f `
+    $runtimeLogger, (Join-Path $codexHome 'sessions'), (Join-Path $codexHome 'session_index.jsonl'),
+    $databasePath, (Join-Path $codexHome 'usage-logs\sessions'), (Join-Path $codexHome 'usage-logs\state.json')
+$action = New-ScheduledTaskAction -Execute $python -Argument $arguments -WorkingDirectory $releasePath
 $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
     -RepetitionInterval (New-TimeSpan -Minutes 1)
-$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries `
-    -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 2) `
-    -MultipleInstances IgnoreNew -Hidden
-
-Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger `
-    -Settings $settings `
-    -Description 'Records local per-session Codex token and allowance metrics without model calls.' `
-    -Force | Out-Null
-Start-ScheduledTask -TaskName $TaskName
-Get-ScheduledTask -TaskName $TaskName | Select-Object TaskName, State
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+    -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 3) -MultipleInstances IgnoreNew -Hidden
+$previousTask = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+$hadActiveManifest = Test-Path -LiteralPath $activePath -PathType Leaf
+$manifestActivated = $false
+try {
+    Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Settings $settings `
+        -Description 'Collects local Codex token metrics from a versioned runtime compatible with the local SQLite schema.' `
+        -Force | Out-Null
+    if (Test-Path -LiteralPath $activePath -PathType Leaf) {
+        [IO.File]::Replace($activeTemp, $activePath, $activeBackup)
+    } else {
+        [IO.File]::Move($activeTemp, $activePath)
+    }
+    $manifestActivated = $true
+    Start-ScheduledTask -TaskName $TaskName
+} catch {
+    if ($manifestActivated -and (Test-Path -LiteralPath $activeBackup -PathType Leaf)) {
+        try { [IO.File]::Replace($activeBackup, $activePath, $null) }
+        catch { Write-Warning "تعذر استرجاع manifest السابق تلقائيًا: $($_.Exception.Message)" }
+    } elseif ($manifestActivated -and -not $hadActiveManifest) {
+        Remove-Item -LiteralPath $activePath -Force -ErrorAction SilentlyContinue
+    }
+    if ($previousTask) {
+        try {
+            Set-ScheduledTask -TaskName $TaskName -Action $previousTask.Actions `
+                -Trigger $previousTask.Triggers -Settings $previousTask.Settings | Out-Null
+        } catch { Write-Warning "تعذر استرجاع المهمة المجدولة السابقة تلقائيًا: $($_.Exception.Message)" }
+    } else {
+        Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
+    }
+    throw
+} finally {
+    Remove-Item -LiteralPath $activeTemp -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $activeBackup -Force -ErrorAction SilentlyContinue
+}
+$databaseSchemaAfterStart = [int](& $python -c 'import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); print(c.execute("PRAGMA user_version").fetchone()[0]); c.close()' $databasePath)
+[pscustomobject]@{
+    TaskName = $TaskName
+    Runtime = $releasePath
+    CollectorVersion = $manifest.collector_version
+    SourceSchema = $sourceSchema
+    DatabaseSchemaBeforeInstall = $databaseSchema
+    DatabaseSchemaAtReturn = $databaseSchemaAfterStart
+    Database = $databasePath
+} | Format-List

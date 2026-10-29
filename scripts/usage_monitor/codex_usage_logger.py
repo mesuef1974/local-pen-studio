@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
+import math
 import os
 from pathlib import Path
+import time
 
-from usage_database import connect, import_legacy, insert_sample, utc_now
+from usage_database import SCHEMA_VERSION, connect, import_legacy, insert_sample, utc_now
 
-TAIL_BYTES = 8 * 1024 * 1024
+COLLECTOR_VERSION = "4"
+RUN_LEASE_SECONDS = 15 * 60
 
 
 def session_names(index_path: Path) -> dict[str, str]:
@@ -42,16 +46,13 @@ def metadata(path: Path) -> tuple[str | None, str | None]:
             payload.get("timestamp") if isinstance(payload.get("timestamp"), str) else None)
 
 
-def new_rows(path: Path, offset: int) -> tuple[list[dict], int]:
+def new_rows(path: Path, offset: int) -> tuple[list[dict], int, int]:
     size = path.stat().st_size
     if offset > size:
         offset = 0
-    start = offset if 0 <= offset <= size else max(0, size - TAIL_BYTES)
-    first_tail = offset == 0 and start > 0
+    start = max(0, offset)
     with path.open("rb") as stream:
         stream.seek(start)
-        if first_tail:
-            stream.readline()
         data = stream.read()
         end = stream.tell()
     if data and not data.endswith(b"\n"):
@@ -59,14 +60,18 @@ def new_rows(path: Path, offset: int) -> tuple[list[dict], int]:
         data = data[:complete_length]
         end = start + complete_length
     rows = []
+    malformed_lines = 0
     for raw in data.splitlines():
         try:
             value = json.loads(raw.decode("utf-8"))
         except (UnicodeDecodeError, ValueError):
+            malformed_lines += 1
             continue
         if isinstance(value, dict):
             rows.append(value)
-    return rows, end
+        else:
+            malformed_lines += 1
+    return rows, end, malformed_lines
 
 
 def numeric_usage(value: object) -> dict | None:
@@ -100,13 +105,18 @@ def sample(row: dict, settings: dict) -> dict | None:
     rate = payload.get("rate_limits") if isinstance(payload.get("rate_limits"), dict) else {}
     primary = rate.get("primary") if isinstance(rate.get("primary"), dict) else {}
     used_percent = primary.get("used_percent")
+    window_minutes = primary.get("window_minutes")
     weekly = None
-    if isinstance(used_percent, (int, float)) and not isinstance(used_percent, bool):
+    if (isinstance(used_percent, (int, float)) and not isinstance(used_percent, bool)
+            and 0 <= used_percent <= 100 and math.isfinite(used_percent)
+            and isinstance(window_minutes, int) and not isinstance(window_minutes, bool)
+            and window_minutes > 0):
         weekly = {
             "used_percent": used_percent,
-            "remaining_percent": max(0, min(100, 100 - used_percent)),
-            "window_minutes": primary.get("window_minutes"),
-            "resets_at": primary.get("resets_at"),
+            "remaining_percent": 100 - used_percent,
+            "window_minutes": window_minutes,
+            "resets_at": primary.get("resets_at") if isinstance(primary.get("resets_at"), int)
+                         and not isinstance(primary.get("resets_at"), bool) else None,
             "plan_type": rate.get("plan_type"),
         }
     return {
@@ -130,13 +140,49 @@ def run(sessions_root: Path, index_path: Path, database_path: Path,
     names = session_names(index_path)
     updated_sessions: set[str] = set()
     connection = connect(database_path)
+    started_at = utc_now()
+    run_id = None
+    try:
+        with connection:
+            connection.execute("BEGIN IMMEDIATE")
+            cutoff = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(seconds=RUN_LEASE_SECONDS)).isoformat()
+            active = connection.execute(
+                "SELECT run_id,started_at FROM usage_collector_runs WHERE status='running' "
+                "AND COALESCE(heartbeat_at,started_at)>=? ORDER BY run_id DESC LIMIT 1", (cutoff,)
+            ).fetchone()
+            if active:
+                raise RuntimeError(
+                    f"يوجد تشغيل جامع نشط بالفعل (run_id={active['run_id']})؛ لم يبدأ تشغيل متداخل."
+                )
+            connection.execute(
+                "UPDATE usage_collector_runs SET status='interrupted',completed_at=?, "
+                "error_message='انتهت مهلة نبض تشغيل سابق' WHERE status='running' "
+                "AND COALESCE(heartbeat_at,started_at)<?", (started_at, cutoff),
+            )
+            run_id = connection.execute(
+                """INSERT INTO usage_collector_runs(started_at,heartbeat_at,status,collector_version,schema_version)
+                VALUES(?,?,'running',?,?)""",
+                (started_at, started_at, COLLECTOR_VERSION, SCHEMA_VERSION),
+            ).lastrowid
+    except Exception:
+        connection.close()
+        raise
+    source_files_seen = source_files_updated = records_read = samples_inserted = malformed_lines = 0
+    last_heartbeat = time.monotonic()
     try:
         migration = import_legacy(connection, legacy_sessions or Path(), legacy_state or Path())
         with connection:
             for session_id, name in names.items():
                 connection.execute("UPDATE usage_sessions SET session_name=? WHERE session_id=?",
                                    (name, session_id))
-        for transcript in sessions_root.rglob("*.jsonl"):
+        transcripts = list(sessions_root.rglob("*.jsonl"))
+        source_files_seen = len(transcripts)
+        for transcript in transcripts:
+            if time.monotonic() - last_heartbeat >= 30:
+                with connection:
+                    connection.execute("UPDATE usage_collector_runs SET heartbeat_at=? WHERE run_id=?",
+                                       (utc_now(), run_id))
+                last_heartbeat = time.monotonic()
             session_id, created_at = metadata(transcript)
             if not session_id:
                 continue
@@ -146,7 +192,10 @@ def run(sessions_root: Path, index_path: Path, database_path: Path,
             offset = saved["offset_bytes"] if saved else 0
             if offset == size:
                 continue
-            rows, end = new_rows(transcript, offset)
+            rows, end, invalid = new_rows(transcript, offset)
+            records_read += len(rows)
+            malformed_lines += invalid
+            source_files_updated += 1
             settings = {"model": saved["model"], "reasoning_effort": saved["reasoning_effort"],
                         "service_tier": saved["service_tier"]} if saved else {}
             with connection:
@@ -161,6 +210,7 @@ def run(sessions_root: Path, index_path: Path, database_path: Path,
                     if measured and insert_sample(connection, session_id,
                                                   names.get(session_id, session_id), created_at, measured):
                         updated_sessions.add(session_id)
+                        samples_inserted += 1
                 connection.execute(
                     """INSERT INTO usage_sources(source_path,session_id,offset_bytes,model,reasoning_effort,
                     service_tier,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(source_path) DO UPDATE SET
@@ -170,11 +220,42 @@ def run(sessions_root: Path, index_path: Path, database_path: Path,
                     (file_key, session_id, end, settings.get("model"), settings.get("reasoning_effort"),
                      settings.get("service_tier"), utc_now()),
                 )
+                connection.execute(
+                    """UPDATE usage_collector_runs SET heartbeat_at=?,source_files_seen=?,source_files_updated=?,records_read=?,
+                    samples_inserted=?,malformed_lines=? WHERE run_id=?""",
+                    (utc_now(), source_files_seen, source_files_updated, records_read, samples_inserted,
+                     malformed_lines, run_id),
+                )
+            last_heartbeat = time.monotonic()
         known = connection.execute("SELECT COUNT(DISTINCT session_id) FROM usage_sources").fetchone()[0]
         known += connection.execute("SELECT COUNT(*) FROM usage_sessions WHERE session_id NOT IN "
                                     "(SELECT DISTINCT session_id FROM usage_sources)").fetchone()[0]
+        completed_at = utc_now()
+        with connection:
+            connection.execute(
+                """UPDATE usage_collector_runs SET heartbeat_at=?,completed_at=?,status='success',source_files_seen=?,
+                source_files_updated=?,records_read=?,samples_inserted=?,malformed_lines=? WHERE run_id=?""",
+                (completed_at, completed_at, source_files_seen, source_files_updated, records_read, samples_inserted,
+                 malformed_lines, run_id),
+            )
         return {"sessions_updated": len(updated_sessions), "sessions_known": known,
+                "source_files_seen": source_files_seen, "source_files_updated": source_files_updated,
+                "records_read": records_read, "samples_inserted": samples_inserted,
+                "malformed_lines": malformed_lines, "run_id": run_id,
                 "database": str(database_path), **migration}
+    except Exception as exc:
+        try:
+            with connection:
+                connection.execute(
+                    """UPDATE usage_collector_runs SET heartbeat_at=?,completed_at=?,status='failed',source_files_seen=?,
+                    source_files_updated=?,records_read=?,samples_inserted=?,malformed_lines=?,error_message=?
+                    WHERE run_id=?""",
+                    (utc_now(), utc_now(), source_files_seen, source_files_updated, records_read, samples_inserted,
+                     malformed_lines, f"{type(exc).__name__}: {exc}"[:500], run_id),
+                )
+        except Exception:
+            pass
+        raise
     finally:
         connection.close()
 
