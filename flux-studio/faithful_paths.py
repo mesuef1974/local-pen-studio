@@ -94,7 +94,7 @@ def extract(data):
         if not len(xs):continue
         x=float(xs[len(xs)//2]);y=float(ys[len(ys)//2]);step=.001 if x<width-1 else -.001
         paths.append([[x,y],[x+step,y]]);dots+=1
-    if len(paths)>6000 or sum(len(path) for path in paths)>400_000:
+    if len(paths)>10_000 or sum(len(path) for path in paths)>400_000:
         raise ValueError('تجاوزت العلامات والخطوط حد التعقيد؛ لم تُحذف أي تفاصيل تلقائيًا.')
     baseline=measure(rgb,gray,mask,paths,scale,pen,include_images=False)
     factor=min(8,max(1,int(math.sqrt(40_000_000/(width*height)))))
@@ -135,7 +135,7 @@ def extract(data):
         fill_distance=cv2.distanceTransform(filled,cv2.DIST_L2,cv2.DIST_MASK_PRECISE)
         retained=[path for path in paths if not covered_seed(path,fill_distance,pad,audit_factor,pen/scale*audit_factor/2)]
     candidate=retained+fill_paths
-    if len(candidate)>6000 or sum(len(p) for p in candidate)>400_000:raise ValueError('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف خطوط.')
+    if len(candidate)>10_000 or sum(len(p) for p in candidate)>400_000:raise ValueError('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف خطوط.')
     final=measure(rgb,gray,mask,candidate,scale,pen)
     contours_added=len(fill_paths)
     # Never silently choose a fill that worsens the measured mask agreement.
