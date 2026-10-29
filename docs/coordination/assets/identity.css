@@ -54,6 +54,11 @@
   --identity-error: #a63f3f;
   --identity-blue-dark: #173a50;
   --identity-blue-soft: #edf3f7;
+  --identity-focus: #165f9a;
+  --identity-status-returned: #80549a;
+  --identity-status-warning: #bb8b30;
+  --identity-status-success: #32836d;
+  --identity-status-error: #b54b4b;
   --identity-shadow: 0 12px 40px rgb(24 53 71 / 8%);
 
   /* Shared aliases keep existing page styles on one palette. */
