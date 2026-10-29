@@ -52,6 +52,22 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "يحدد المصنع الجلسة المختصة"):
             create_command(self.path, payload)
 
+    def test_owner_review_is_not_a_card_completion_criterion(self):
+        payload = self.payload()
+        payload["criteria"] = [
+            {"criterion_code": "automated_check", "title": "Automated check", "check_method": "automated_quality_gate"},
+            {"criterion_code": "owner_review", "title": "Owner review", "check_method": "owner_acceptance"},
+            {"criterion_code": "manual_owner_step", "title": "Owner step", "check_method": "owner_acceptance"},
+        ]
+        result = create_command(self.path, payload)
+        db = connect(self.path)
+        try:
+            for card_id in result["child_card_ids"]:
+                criteria = db.execute("SELECT criterion_code FROM coordination_card_criteria WHERE card_id=?", (card_id,)).fetchall()
+                self.assertEqual([row[0] for row in criteria], ["automated_check"])
+        finally:
+            db.close()
+
     def test_admin_audit_schema_is_created_by_migration(self):
         db = connect(self.path)
         try:
