@@ -8,7 +8,7 @@ import json
 import sqlite3
 from pathlib import Path
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 
 SCHEMA_V1 = """
 CREATE TABLE IF NOT EXISTS coordination_actors (

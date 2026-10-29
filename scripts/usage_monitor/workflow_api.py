@@ -116,9 +116,41 @@ def board(path: Path, *, status: str = "", actor_id: str = "", query: str = "") 
             {where}
             ORDER BY c.updated_at DESC,c.card_id
         """, tuple(args))
+        command_roots = {row[0] for row in connection.execute("""SELECT root.card_id
+            FROM coordination_command_cards root JOIN coordination_command_cards child
+              ON child.idempotency_key=root.idempotency_key AND child.role_code='session'
+            WHERE root.role_code='root'""")}
+        cards = [card for card in cards if card["card_id"] not in command_roots]
         sessions = _rows(connection, """SELECT actor_id,display_name,charter,active
             FROM coordination_actors WHERE active=1 AND actor_id<>'owner' ORDER BY display_name,actor_id""")
-        return {"cards": cards, "sessions": sessions, "generated_at": utc_now()}
+        completed_owner_commands = _rows(connection, """
+            SELECT c.card_id,c.title,c.updated_at
+            FROM coordination_command_receipts r
+            JOIN coordination_cards c ON c.card_id=r.root_card_id
+            WHERE c.current_status_code='completed'
+            ORDER BY c.updated_at DESC,c.card_id
+        """)
+        session_completions = _rows(connection, """
+            SELECT a.actor_id,a.display_name,a.active,COUNT(c.card_id) AS completed_count
+            FROM coordination_actors a
+            LEFT JOIN coordination_cards c
+              ON c.assigned_actor_id=a.actor_id AND c.current_status_code='completed'
+            WHERE a.actor_id<>'owner'
+              AND (a.active=1 OR c.card_id IS NOT NULL)
+            GROUP BY a.actor_id,a.display_name,a.active
+            ORDER BY a.active DESC,a.display_name,a.actor_id
+        """)
+        return {
+            "cards": cards,
+            "sessions": sessions,
+            "completion_summary": {
+                "owner_commands_completed": len(completed_owner_commands),
+                "completed_owner_commands": completed_owner_commands,
+                "session_completions": session_completions,
+                "session_cards_completed": sum(row["completed_count"] for row in session_completions),
+            },
+            "generated_at": utc_now(),
+        }
     finally:
         connection.close()
 
@@ -126,16 +158,27 @@ def board(path: Path, *, status: str = "", actor_id: str = "", query: str = "") 
 def metrics(path: Path) -> dict[str, Any]:
     connection = _connect(path)
     try:
-        assignments = _rows(connection, """SELECT (julianday(x.assigned_at)-julianday(c.created_at))*86400 AS seconds
+        command_roots = {row[0] for row in connection.execute("""SELECT root.card_id
+            FROM coordination_command_cards root JOIN coordination_command_cards child
+              ON child.idempotency_key=root.idempotency_key AND child.role_code='session'
+            WHERE root.role_code='root'""")}
+        cards = _rows(connection, "SELECT c.* FROM coordination_cards c ORDER BY c.updated_at DESC")
+        cards = [card for card in cards if card["card_id"] not in command_roots]
+        execution_ids = {card["card_id"] for card in cards}
+        assignments = _rows(connection, """SELECT x.card_id,(julianday(x.assigned_at)-julianday(c.created_at))*86400 AS seconds
             FROM coordination_cards c JOIN coordination_assignments x ON x.card_id=c.card_id
             WHERE x.ended_at IS NULL AND x.assigned_at>=c.created_at""")
-        cycles = _rows(connection, """SELECT (julianday(COALESCE(c.closed_at,c.updated_at))-julianday(c.created_at))*86400 AS seconds
+        assignments = [row for row in assignments if row["card_id"] in execution_ids]
+        cycles = _rows(connection, """SELECT c.card_id,(julianday(COALESCE(c.closed_at,c.updated_at))-julianday(c.created_at))*86400 AS seconds
             FROM coordination_cards c WHERE c.current_status_code IN ('completed','failed','archived')""")
-        first_qa = _rows(connection, """SELECT q.outcome FROM coordination_quality_runs q
+        cycles = [row for row in cycles if row["card_id"] in execution_ids]
+        first_qa = _rows(connection, """SELECT q.card_id,q.outcome FROM coordination_quality_runs q
             WHERE q.quality_run_id=(SELECT q2.quality_run_id FROM coordination_quality_runs q2
                 WHERE q2.card_id=q.card_id ORDER BY q2.started_at,q2.quality_run_id LIMIT 1)""")
-        pushes = _rows(connection, """SELECT outcome,commit_sha,remote_commit_sha,verified_at
+        first_qa = [row for row in first_qa if row["card_id"] in execution_ids]
+        pushes = _rows(connection, """SELECT card_id,outcome,commit_sha,remote_commit_sha,verified_at
             FROM coordination_delivery_attempts WHERE outcome IN ('accepted','returned','blocked','failed')""")
+        pushes = [row for row in pushes if row["card_id"] in execution_ids]
 
         def median(rows: list[dict[str, Any]]) -> float | None:
             values = [float(row["seconds"]) for row in rows if row.get("seconds") is not None and float(row["seconds"]) >= 0]
@@ -162,6 +205,9 @@ def card_details(path: Path, card_id: str) -> dict[str, Any] | None:
         if not card:
             return None
         result = {"card": dict(card)}
+        if card["parent_card_id"]:
+            result["owner_command"] = _rows(connection, """SELECT card_id,title,owner_request,scope,created_at
+                FROM coordination_cards WHERE card_id=?""", (card["parent_card_id"],))[0]
         result["criteria"] = _rows(connection, "SELECT * FROM coordination_card_criteria WHERE card_id=? ORDER BY sort_order,criterion_id", (card_id,))
         result["events"] = _rows(connection, """SELECT event_id,card_id,actor_id,event_type,details,recorded_at,stage_code,
             previous_status,next_status,reason_code,reason_resolution FROM coordination_events
@@ -187,12 +233,14 @@ def card_details(path: Path, card_id: str) -> dict[str, Any] | None:
 
 
 def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
-    title = str(payload.get("title", "")).strip()
     owner_request = str(payload.get("owner_request", "")).strip()
-    scope = str(payload.get("scope", "")).strip()
+    title = str(payload.get("title", "")).strip()
+    if not title and owner_request:
+        title = re.split(r"[.!?؟\n]", owner_request, maxsplit=1)[0].strip()[:180]
+    scope = str(payload.get("scope", "")).strip() or owner_request
     key = str(payload.get("idempotency_key", "")).strip()
-    if not title or not owner_request or not scope or not key:
-        raise ValueError("العنوان وطلب المالك والنطاق ومفتاح الطلب مطلوبة.")
+    if not owner_request or not key:
+        raise ValueError("اكتب وصف المهمة أولًا.")
     if len(title) > 240 or len(owner_request) > 12000 or len(scope) > 12000 or len(key) > 200:
         raise ValueError("تجاوز أحد الحقول الحد المسموح به.")
     requested_targets = payload.get("target_actor_ids", [])
@@ -211,6 +259,10 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
         and str(item.get("criterion_code", "")).strip().casefold() != "owner_review"
         and str(item.get("check_method", "")).strip().casefold() != "owner_acceptance"
     ]
+    if not criteria:
+        criteria = [{"criterion_code": "automated_delivery_qa", "title": "التحقق الآلي من الإنجاز",
+                     "description": "تشغيل الفحوص المناسبة وتسجيل النتيجة مع البطاقة.",
+                     "required": True, "check_method": "automated_quality_gate"}]
     connection = _connect(path, write=True)
     try:
         connection.execute("BEGIN IMMEDIATE")
@@ -227,7 +279,12 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
         now = utc_now()
         date = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d")
         root_id = f"CARD-{date}-{uuid.uuid4().hex[:8].upper()}"
-        card_type = str(payload.get("card_type_code") or "general")[:80]
+        command_text = _normalize_text(" ".join((title, owner_request, scope)))
+        review_terms = ("review", "مراجعة", "تدقيق", "تقييم")
+        implementation_terms = ("implement", "fix", "build", "edit", "نفذ", "نفّذ", "اصلح", "أصلح", "عدّل", "عدل", "أضف", "اضف", "برمج")
+        inferred_type = "review" if any(_normalize_text(term) in command_text for term in review_terms) and not any(
+            _normalize_text(term) in command_text for term in implementation_terms) else "implementation"
+        card_type = inferred_type
         priority = str(payload.get("priority_code") or "normal")[:40]
 
         def insert_card(card_id: str, status_code: str, *, parent: str | None = None,
@@ -254,7 +311,7 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
                 return int(assignment.lastrowid)
             return created_event_id
 
-        root_event = insert_card(root_id, "queued")
+        root_event = insert_card(root_id, "assigned" if targets else "queued")
         connection.execute("INSERT INTO coordination_command_receipts(idempotency_key,root_card_id,created_at) VALUES(?,?,?)",
                            (key, root_id, now))
         connection.execute("INSERT INTO coordination_command_cards(idempotency_key,card_id,role_code) VALUES(?,?, 'root')",
@@ -293,5 +350,127 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
     except Exception:
         connection.rollback()
         raise
+    finally:
+        connection.close()
+
+
+def transition_assigned_card(path: Path, card_id: str, actor_id: str,
+                             status_code: str, summary: str = "") -> dict[str, Any]:
+    """Record lifecycle updates only from the active session assigned to the card."""
+    from coordination_repository import record_issue, transition_card
+
+    summary = str(summary or "").strip()
+    if len(summary) > 4000:
+        raise ValueError("ملخص النتيجة أطول من الحد المسموح.")
+    if status_code not in {"in_progress", "blocked", "delivered", "returned", "completed"}:
+        raise ValueError("حالة الجلسة المطلوبة غير مدعومة.")
+    connection = _connect(path, write=True)
+    try:
+        card = connection.execute("""SELECT c.assigned_actor_id,c.current_status_code,c.card_type_code,
+            c.title,c.owner_request,c.scope,a.active FROM coordination_cards c
+            LEFT JOIN coordination_actors a ON a.actor_id=c.assigned_actor_id
+            WHERE c.card_id=?""", (card_id,)).fetchone()
+        if not card:
+            raise KeyError("البطاقة غير موجودة.")
+        if card["assigned_actor_id"] != actor_id or not card["active"]:
+            raise ValueError("هذه الجلسة ليست الجهة المسندة النشطة لهذه البطاقة.")
+        current = card["current_status_code"]
+        if current == status_code:
+            return {"card_id": card_id, "status_code": current, "updated": False}
+        active_assignment = connection.execute("""SELECT 1 FROM coordination_assignments
+            WHERE card_id=? AND assigned_actor_id=? AND ended_at IS NULL LIMIT 1""", (card_id, actor_id)).fetchone()
+        if not active_assignment:
+            raise ValueError("لا يوجد إسناد نشط لهذه الجلسة على البطاقة.")
+
+        if status_code == "in_progress":
+            if current not in {"assigned", "returned"}:
+                raise ValueError("لا يمكن بدء التنفيذ من الحالة الحالية.")
+            transition_card(connection, card_id, status_code, actor_id=actor_id, stage_code="execution",
+                            note=summary or "بدأت الجلسة تنفيذ البطاقة", source_type="session_lifecycle")
+        elif status_code == "blocked":
+            if not summary:
+                raise ValueError("اكتب سبب التعذر حتى يُسجل العائق.")
+            if current not in {"assigned", "in_progress"}:
+                raise ValueError("لا يمكن تسجيل التعذر من الحالة الحالية.")
+            issue_id = record_issue(connection, card_id, stage_code="execution", cause_code="session_blocked",
+                                    cause_resolution="unresolved", impact_summary=summary, actor_id=actor_id)
+            transition_card(connection, card_id, status_code, actor_id=actor_id, stage_code="execution",
+                            reason_code="session_unavailable", note=summary, source_type="session_lifecycle",
+                            source_id=str(issue_id))
+        elif status_code == "delivered":
+            delivery = connection.execute("""SELECT commit_sha,remote_commit_sha,verified_at,outcome
+                FROM coordination_delivery_attempts WHERE card_id=? ORDER BY attempt_number DESC LIMIT 1""", (card_id,)).fetchone()
+            if not delivery or not delivery["verified_at"] or not delivery["commit_sha"] or \
+                    delivery["commit_sha"].lower() != (delivery["remote_commit_sha"] or "").lower() or delivery["outcome"] != "accepted":
+                raise ValueError("لا يُسجل التسليم قبل التحقق من تطابق Commit مع origin.")
+            if current not in {"in_progress", "blocked"}:
+                raise ValueError("لا يمكن تسجيل التسليم من الحالة الحالية.")
+            transition_card(connection, card_id, "delivered", actor_id=actor_id, stage_code="delivery",
+                            note=summary or "تحقق دفع Commit على origin", source_type="session_lifecycle")
+        elif status_code == "returned":
+            latest_quality = connection.execute("SELECT outcome FROM coordination_quality_runs WHERE card_id=? ORDER BY quality_run_id DESC LIMIT 1", (card_id,)).fetchone()
+            if current not in {"delivered", "verifying"} or not summary or (latest_quality and latest_quality["outcome"] == "pass"):
+                raise ValueError("إعادة البطاقة تتطلب نتيجة فحص وسببًا واضحًا.")
+            transition_card(connection, card_id, "returned", actor_id=actor_id, stage_code="quality",
+                            note=summary, reason_code="verification_failed", source_type="session_lifecycle")
+        else:
+            text = _normalize_text(" ".join((card["title"], card["owner_request"], card["scope"])))
+            review_terms = ("review", "مراجعة", "تدقيق", "تقييم")
+            implementation_terms = ("implement", "fix", "build", "edit", "نفذ", "نفّذ", "اصلح", "أصلح", "عدّل", "عدل", "أضف", "اضف", "برمج")
+            is_review = card["card_type_code"] == "review" or (
+                any(_normalize_text(term) in text for term in review_terms)
+                and not any(_normalize_text(term) in text for term in implementation_terms))
+            if is_review:
+                if current not in {"assigned", "in_progress"} or len(summary) < 20:
+                    raise ValueError("إكمال بطاقة المراجعة يتطلب تقريرًا مختصرًا وحالة تنفيذ نشطة.")
+                evidence = connection.execute("""SELECT 1 FROM coordination_quality_runs WHERE card_id=?
+                    UNION SELECT 1 FROM coordination_validation_results WHERE card_id=?
+                    UNION SELECT 1 FROM coordination_events WHERE card_id=? AND event_type='review_finding'
+                    LIMIT 1""", (card_id, card_id, card_id)).fetchone()
+                if not evidence:
+                    raise ValueError("سجل نتيجة المراجعة أو الفحوص في المصنع قبل إكمال البطاقة.")
+                transition_card(connection, card_id, "completed", actor_id=actor_id, stage_code="verification",
+                                note=summary, source_type="review_report")
+            else:
+                if current in {"in_progress", "blocked"}:
+                    delivery = connection.execute("""SELECT commit_sha,remote_commit_sha,verified_at,outcome
+                        FROM coordination_delivery_attempts WHERE card_id=? ORDER BY attempt_number DESC LIMIT 1""", (card_id,)).fetchone()
+                    if not delivery or not delivery["verified_at"] or not delivery["commit_sha"] or \
+                            delivery["commit_sha"].lower() != (delivery["remote_commit_sha"] or "").lower() or delivery["outcome"] != "accepted":
+                        raise ValueError("لا تُغلق بطاقة التنفيذ قبل إثبات الدفع إلى origin.")
+                    transition_card(connection, card_id, "delivered", actor_id=actor_id, stage_code="delivery",
+                                    note="تسليم موثق على origin", source_type="session_lifecycle")
+                    current = "delivered"
+                if current == "delivered":
+                    transition_card(connection, card_id, "verifying", actor_id=actor_id, stage_code="quality",
+                                    note="بدأ التحقق من فحوص الجودة", source_type="session_lifecycle")
+                    current = "verifying"
+                if current != "verifying":
+                    raise ValueError("لا تُغلق بطاقة التنفيذ إلا من مرحلة فحوص الجودة.")
+                if connection.execute("SELECT 1 FROM coordination_issues WHERE card_id=? AND resolved_at IS NULL LIMIT 1", (card_id,)).fetchone():
+                    raise ValueError("لا تُغلق البطاقة مع وجود عائق غير محلول.")
+                quality = connection.execute("""SELECT quality_run_id,outcome FROM coordination_quality_runs
+                    WHERE card_id=? ORDER BY quality_run_id DESC LIMIT 1""", (card_id,)).fetchone()
+                if not quality or quality["outcome"] != "pass":
+                    raise ValueError("فحوص الجودة لم تجتز بعد؛ سجّل الحالة returned لإعادتها للتنفيذ.")
+                required = {row[0] for row in connection.execute(
+                    "SELECT criterion_code FROM coordination_card_criteria WHERE card_id=? AND required=1", (card_id,))}
+                passed = {row[0] for row in connection.execute("""SELECT check_code FROM coordination_quality_checks
+                    WHERE quality_run_id=? AND outcome='pass' UNION SELECT criterion FROM coordination_validation_results
+                    WHERE card_id=? AND outcome='pass'""", (quality["quality_run_id"], card_id))}
+                if not required.issubset(passed):
+                    raise ValueError("بعض معايير الإنجاز المطلوبة لم تجتز.")
+                if len(summary) < 20:
+                    raise ValueError("أضف خلاصة التسليم قبل إكمال بطاقة التنفيذ.")
+                transition_card(connection, card_id, "completed", actor_id=actor_id, stage_code="quality",
+                                note=summary, source_type="session_lifecycle")
+            parent = connection.execute("SELECT parent_card_id FROM coordination_cards WHERE card_id=?", (card_id,)).fetchone()[0]
+            if parent:
+                remaining = connection.execute("SELECT 1 FROM coordination_cards WHERE parent_card_id=? AND current_status_code<>'completed' LIMIT 1", (parent,)).fetchone()
+                parent_status = connection.execute("SELECT current_status_code FROM coordination_cards WHERE card_id=?", (parent,)).fetchone()[0]
+                if not remaining and parent_status in {"queued", "assigned", "in_progress"}:
+                    transition_card(connection, parent, "completed", actor_id=actor_id, stage_code="rollup",
+                                    note="اكتملت جميع بطاقات الجلسات التابعة", source_type="session_rollup")
+        return {"card_id": card_id, "status_code": status_code, "updated": True}
     finally:
         connection.close()

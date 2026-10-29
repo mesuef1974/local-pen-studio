@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import sqlite3
@@ -45,6 +46,10 @@ def register_endpoint(database: Path, actor_id: str, thread_id: str, capabilitie
 
 
 def _message(row: sqlite3.Row, criteria: list[sqlite3.Row]) -> str:
+    base_url = os.environ.get("WORKFLOW_BASE_URL", "http://127.0.0.1:8769").rstrip("/")
+    origin = base_url
+    lifecycle = f"{base_url}/api/workflow/cards/{row['card_id']}/lifecycle"
+    actor_id = row["target_actor_id"]
     lines = [
         f"تكليف بطاقة منسق — {row['card_id']}",
         f"العنوان: {row['title']}",
@@ -53,11 +58,34 @@ def _message(row: sqlite3.Row, criteria: list[sqlite3.Row]) -> str:
         "معايير الإكمال:",
     ]
     lines.extend(f"- [{'مطلوب' if c['required'] else 'اختياري'}] {c['title']} ({c['criterion_code']}; {c['check_method']})" for c in criteria)
+    headers = f'$headers = @{{ Origin = "{origin}"; "X-Workflow-Request" = "1" }}'
     lines.extend([
         "هذه البطاقة صادرة بأمر المالك. استلمها ونفذها ضمن النطاق، ولا ترفضها.",
-        "سجل العائق فورًا إذا تعذر التنفيذ. بعد الإنجاز ادفع تغييرات نطاق البطاقة إلى Git، ثم سجل الفرع وcommit ونتيجة الدفع في المصنع.",
-        f"مرجع منع التكرار: {row['idempotency_key']}",
+        "عند بدء العمل حدّث الحالة فورًا إلى قيد التنفيذ بهذا الطلب المحلي:",
+        headers,
+        f'$body = @{{ actor_id = "{actor_id}"; status_code = "in_progress" }} | ConvertTo-Json -Compress',
+        f'Invoke-RestMethod -Uri "{lifecycle}" -Method Post -Headers $headers -ContentType "application/json" -Body $body',
     ])
+    if row["card_type_code"] == "review":
+        lines.extend([
+            "هذه بطاقة مراجعة وتقرير؛ لا تنفذ إصلاحات خارج النطاق ولا يلزم دفع تغييرات كود.",
+            "بعد تسجيل نتائج المراجعة والفحوص في المصنع، أغلق بطاقة المراجعة بالتقرير النهائي عبر status_code=completed وsummary يوضح النتيجة.",
+            f'$body = @{{ actor_id = "{actor_id}"; status_code = "completed"; summary = "اكتب هنا خلاصة المراجعة ونتيجتها" }} | ConvertTo-Json -Compress',
+            f'Invoke-RestMethod -Uri "{lifecycle}" -Method Post -Headers $headers -ContentType "application/json" -Body $body',
+        ])
+    else:
+        lines.extend([
+            "إذا تعذر التنفيذ، سجّل سببًا واضحًا كعائق عبر الطلب المحلي:",
+            f'$body = @{{ actor_id = "{actor_id}"; status_code = "blocked"; summary = "اكتب هنا سبب التعذر" }} | ConvertTo-Json -Compress',
+            f'Invoke-RestMethod -Uri "{lifecycle}" -Method Post -Headers $headers -ContentType "application/json" -Body $body',
+            "بعد الإنجاز ادفع التغييرات، وسجّل التسليم وفحوص الجودة وأدلتها في المصنع. بعد اجتياز المعايير المطلوبة حدّث الحالة إلى مكتملة:",
+            f'$body = @{{ actor_id = "{actor_id}"; status_code = "completed"; summary = "اكتب خلاصة الدفع ونتيجة الفحوص" }} | ConvertTo-Json -Compress',
+            f'Invoke-RestMethod -Uri "{lifecycle}" -Method Post -Headers $headers -ContentType "application/json" -Body $body',
+            "إذا فشلت الفحوص بعد الدفع، أعد البطاقة للتنفيذ بدل تركها في حالة مسندة:",
+            f'$body = @{{ actor_id = "{actor_id}"; status_code = "returned"; summary = "اكتب الفحوص التي فشلت والعمل المطلوب" }} | ConvertTo-Json -Compress',
+            f'Invoke-RestMethod -Uri "{lifecycle}" -Method Post -Headers $headers -ContentType "application/json" -Body $body',
+        ])
+    lines.append(f"مرجع منع التكرار: {row['idempotency_key']}")
     return "\n".join(lines)
 
 
@@ -73,7 +101,7 @@ def dispatch_one(database: Path, *, codex_executable: str | None = None,
             db.execute("""UPDATE coordination_outbox SET state_code='dead_letter',last_error_code='dispatch_result_unknown',
                 locked_until=NULL,updated_at=? WHERE state_code='processing' AND locked_until<?""", (now_text, now_text))
             row = db.execute("""SELECT o.outbox_id,o.card_id,o.target_actor_id,o.idempotency_key,
-                c.title,c.owner_request,c.scope,e.thread_id
+                c.title,c.owner_request,c.scope,c.card_type_code,e.thread_id
                 FROM coordination_outbox o JOIN coordination_cards c ON c.card_id=o.card_id
                 JOIN coordination_actor_endpoints e ON e.actor_id=o.target_actor_id AND e.enabled=1
                 WHERE o.state_code IN ('pending','retry') AND o.available_at<=?

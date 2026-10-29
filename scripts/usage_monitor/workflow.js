@@ -182,7 +182,9 @@
   }
 
   function renderBoard(board) {
-    const cards = Array.isArray(board.cards) ? board.cards : [];
+    const allCards = Array.isArray(board.cards) ? board.cards : [];
+    const commandRootIds = new Set(allCards.filter(card => allCards.some(child => child.parent_card_id === card.card_id)).map(card => card.card_id));
+    const cards = allCards.filter(card => !commandRootIds.has(card.card_id));
     const sessions = Array.isArray(board.sessions) ? board.sessions : [];
     fillFilters(sessions);
     $('workflow-card-count').textContent = `${arabicNumber.format(cards.length)} بطاقة`;
@@ -238,6 +240,43 @@
     }
     setConnection('ready', `متصل · آخر تحديث ${formatDate(board.generated_at)}`);
     renderKPIs(board);
+    renderCompletionSummary(board.completion_summary);
+  }
+
+  function renderCompletionSummary(summary) {
+    const ownerCommands = Array.isArray(summary?.completed_owner_commands) ? summary.completed_owner_commands : [];
+    const sessions = Array.isArray(summary?.session_completions) ? summary.session_completions : [];
+    $('wf-owner-commands-completed').textContent = arabicNumber.format(Number(summary?.owner_commands_completed) || 0);
+
+    const sessionCounts = $('wf-session-completions');
+    sessionCounts.replaceChildren();
+    sessions.forEach(session => {
+      const item = element('span', undefined, 'workflow-session-completion');
+      item.setAttribute('role', 'listitem');
+      item.append(
+        element('span', safeText(session.display_name)),
+        element('strong', arabicNumber.format(Number(session.completed_count) || 0)),
+      );
+      sessionCounts.append(item);
+    });
+
+    const history = $('wf-completed-history');
+    history.replaceChildren();
+    if (!ownerCommands.length) {
+      history.append(element('p', 'لا توجد أوامر مالك مكتملة بعد.', 'workflow-completed-empty'));
+      return;
+    }
+    ownerCommands.forEach(card => {
+      const item = element('button', undefined, 'workflow-completed-item');
+      item.type = 'button';
+      item.setAttribute('aria-label', `فتح تفاصيل الأمر المكتمل ${safeText(card.card_id)}`);
+      item.append(
+        element('span', safeText(card.title, 'أمر مالك')),
+        element('small', safeText(card.card_id)),
+      );
+      item.addEventListener('click', () => openCard(card.card_id));
+      history.append(item);
+    });
   }
 
   function renderKPIs(board) {
@@ -384,6 +423,11 @@
     const lead = element('div', undefined, 'workflow-detail-lead');
     lead.append(element('strong', 'طلب المالك'), element('p', safeText(card.owner_request, 'لا يوجد نص لطلب المالك.')));
     root.append(lead);
+    const ownerCommand = data.owner_command;
+    if (ownerCommand) {
+      root.append(section('أمر المالك المرتبط', [ownerCommand], item =>
+        detailItem(`${item.title} · ${item.card_id}`, item.owner_request, item.created_at), 'لا يوجد أمر مرتبط.'));
+    }
     appendFacts(root, card, data.deliveries || []);
     const children = (currentBoard?.cards || []).filter(item => item.parent_card_id === card.card_id);
     if (children.length) {
@@ -444,7 +488,7 @@
   function openCommandDialog() {
     $('workflow-command-error').hidden = true;
     $('workflow-command-dialog').showModal();
-    $('command-title').focus();
+    $('command-owner-request').focus();
   }
 
   async function submitCommand(event) {
@@ -457,18 +501,7 @@
     submit.textContent = 'جارٍ الإنشاء والتوجيه…';
     errorBox.hidden = true;
     const commandPayload = {
-      title: $('command-title').value.trim(),
       owner_request: $('command-owner-request').value.trim(),
-      scope: $('command-scope').value.trim(),
-      priority_code: $('command-priority').value,
-      card_type_code: $('command-type').value.trim(),
-      criteria: [{
-        criterion_code: $('criterion-code').value.trim(),
-        title: $('criterion-title').value.trim(),
-        description: '',
-        required: $('criterion-required').checked,
-        check_method: $('criterion-method').value.trim(),
-      }],
     };
     const signature = JSON.stringify(commandPayload);
     if (!commandIdempotencyKey || commandPayloadSignature !== signature) {
@@ -482,11 +515,6 @@
       commandPayloadSignature = null;
       $('workflow-command-dialog').close();
       form.reset();
-      $('command-priority').value = 'normal';
-      $('command-type').value = 'implementation';
-      $('criterion-code').value = 'automated_delivery_qa';
-      $('criterion-method').value = 'automated_quality_gate';
-      $('criterion-required').checked = true;
       $('workflow-query').value = '';
       $('workflow-status').value = '';
       $('workflow-actor').value = '';
@@ -503,6 +531,7 @@
     } catch (error) {
       errorBox.textContent = error.message || 'تعذر إنشاء الأمر. لم تتغير اللوحة.';
       errorBox.hidden = false;
+      errorBox.focus();
     } finally {
       submit.disabled = false;
       submit.textContent = 'إنشاء وتوجيه';
