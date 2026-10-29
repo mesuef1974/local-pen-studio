@@ -1,5 +1,9 @@
 # Keep source, project documentation and intentional fixtures only.
 /*
+!/AGENTS.md
+!/أرشيف المشروع/
+!/أرشيف المشروع/**
+أرشيف المشروع/تقارير الذكاء الاصطناعي المحلي/local-ai-report-print-check.pdf
 !/.gitignore
 !/typography.css
 !/assets/
