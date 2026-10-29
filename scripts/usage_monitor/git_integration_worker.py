@@ -342,7 +342,7 @@ def process_one(database: Path) -> dict | None:
             _record(database, row, state="awaiting_checks", note="GitHub لم يؤكد بعد أن فرع PR قابل للدمج بلا تعارض")
             return {"integration_id": ident, "state": "awaiting_checks"}
         _ensure_verifying(database, row["card_id"])
-        _run(["gh", "pr", "merge", str(row["pull_request_number"]), "--repo", row["repository"], "--merge"])
+        _run(["gh", "pr", "merge", str(row["pull_request_number"]), "--repo", row["repository"], "--squash"])
         pr = _pr_json(int(row["pull_request_number"]), row["repository"])
         if pr.get("state") != "MERGED":
             _record(database, row, state="merged_sync_pending", note="أُرسل طلب الدمج؛ بانتظار تأكيد GitHub")
