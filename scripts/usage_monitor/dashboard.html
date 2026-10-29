@@ -101,11 +101,11 @@
       </div>
     </section>
     <section id="workflow-board" class="workflow-board panel" aria-labelledby="wf-board-title">
-      <div class="panel-head workflow-board-head"><div><h3 id="wf-board-title">خط الإنتاج حسب الجلسة</h3><div class="sub">التوجيه يتبع اختصاص الجلسة؛ لا توجد مرحلة اعتماد روتينية من المالك.</div></div><span id="workflow-card-count" class="pill">—</span></div>
+      <div class="panel-head workflow-board-head"><div><h3 id="wf-board-title">خط الإنتاج حسب المالك والجلسة</h3><div class="sub">يظهر أمر المالك في صف مستقل، وتظهر مهمة التنفيذ في صف الجلسة المسندة إليها.</div></div><span id="workflow-card-count" class="pill">—</span></div>
       <form class="workflow-filters" id="workflow-filters" role="search">
         <label class="workflow-search">بحث في البطاقات<input id="workflow-query" type="search" name="q" placeholder="معرّف البطاقة أو الأمر أو الفرع" autocomplete="off"></label>
         <label>الحالة<select id="workflow-status" name="status"><option value="">كل الحالات</option></select></label>
-        <label>الجلسة<select id="workflow-actor" name="actor_id"><option value="">كل الجلسات</option></select></label>
+        <label>الجهة<select id="workflow-actor" name="actor_id"><option value="">كل الجهات</option></select></label>
         <button class="btn" type="submit">تطبيق الفلاتر</button><button class="btn workflow-clear" id="workflow-clear" type="button">مسح</button>
       </form>
       <div id="workflow-error" class="workflow-feedback is-error" role="alert" hidden><div><strong>تعذر تحميل مصنع البطاقات</strong><p id="workflow-error-message">تعذر الاتصال بخدمة التدفق المحلية.</p></div><button class="btn" id="workflow-retry" type="button">إعادة المحاولة</button></div>
@@ -139,6 +139,6 @@
 </main>
 <span id="chart-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
 <script src="dashboard.js?v=time-minute-4" defer></script>
-<script src="workflow.js?v=workflow-api-7" defer></script>
+<script src="workflow.js?v=owner-lane-1" defer></script>
 </body>
 </html>

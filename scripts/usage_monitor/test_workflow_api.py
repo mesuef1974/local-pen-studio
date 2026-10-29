@@ -37,10 +37,30 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
             self.assertEqual(row[0], "laser")
             root = db.execute("SELECT current_status_code FROM coordination_cards WHERE card_id=?", (result["root_card_id"],)).fetchone()
             self.assertEqual(root[0], "assigned")
-            self.assertEqual([card["card_id"] for card in board(self.path)["cards"]], result["child_card_ids"])
+            board_data = board(self.path)
+            self.assertEqual([card["card_id"] for card in board_data["cards"]], result["child_card_ids"])
+            self.assertEqual([card["card_id"] for card in board_data["owner_cards"]], [result["root_card_id"]])
+            self.assertEqual(board_data["owner_cards"][0]["owner_target_name"], "Laser")
+            self.assertEqual([card["card_id"] for card in board(self.path, actor_id="laser")["owner_cards"]], [result["root_card_id"]])
+            self.assertEqual([card["card_id"] for card in board(self.path, actor_id="owner")["owner_cards"]], [result["root_card_id"]])
             retry = create_command(self.path, self.payload())
             self.assertFalse(retry["created"])
             self.assertEqual(retry["child_card_ids"], result["child_card_ids"])
+        finally:
+            db.close()
+
+    def test_markdown_owner_title_is_derived_and_shown_in_owner_lane(self):
+        payload = {
+            "owner_request": "### نص المهمة لبطاقة التنفيذ\n\n**العنوان:** بوابة ويب محلية لطابعة xTool P2S\n\n**المطلوب:** إنشاء صفحة frontend dashboard كمرجع منظم للوثائق والمواد.",
+            "idempotency_key": "cmd-title-from-markdown",
+        }
+        result = create_command(self.path, payload)
+        db = connect(self.path)
+        try:
+            title = db.execute("SELECT title FROM coordination_cards WHERE card_id=?", (result["root_card_id"],)).fetchone()[0]
+            self.assertEqual(title, "بوابة ويب محلية لطابعة xTool P2S")
+            owner_card = board(self.path)["owner_cards"][0]
+            self.assertEqual(owner_card["display_title"], title)
         finally:
             db.close()
 
