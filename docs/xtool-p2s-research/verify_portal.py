@@ -20,6 +20,8 @@ class Page(HTMLParser):
         self.ids: set[str] = set()
         self.duplicate_ids: set[str] = set()
         self.links: list[str] = []
+        self.stylesheets: list[str] = []
+        self.images_without_alt = 0
         self.title_text = ""
         self.in_title = False
 
@@ -39,6 +41,10 @@ class Page(HTMLParser):
             reference = values.get("href") if tag != "script" else values.get("src")
             if reference:
                 self.links.append(reference)
+            if tag == "link" and "stylesheet" in (values.get("rel") or "").split():
+                self.stylesheets.append(reference or "")
+        if tag == "img" and not values.get("alt", "").strip():
+            self.images_without_alt += 1
 
     def handle_endtag(self, tag: str) -> None:
         if tag == "title":
@@ -62,10 +68,21 @@ def main() -> int:
             failures.append(f"{path.name}: expected html lang=ar dir=rtl")
         if not parser.title_text:
             failures.append(f"{path.name}: missing document title")
+        required_styles = {"../coordination/assets/identity.css", "assets/portal.css"}
+        if not required_styles.issubset(parser.stylesheets):
+            failures.append(f"{path.name}: missing shared identity or portal stylesheet")
+        if parser.images_without_alt:
+            failures.append(f"{path.name}: {parser.images_without_alt} image(s) missing alt text")
         if "main" not in parser.tags:
             failures.append(f"{path.name}: missing main landmark")
         if parser.duplicate_ids:
             failures.append(f"{path.name}: duplicate IDs {sorted(parser.duplicate_ids)}")
+        if path.name == "user-experiences-ar.html":
+            source = path.read_text(encoding="utf-8")
+            if "class=\"nav\"" not in source or "aria-current=\"page\"" not in source:
+                failures.append("user-experiences-ar.html: missing shared current-page navigation")
+            if "<style>" in source or "style=\"" in source:
+                failures.append("user-experiences-ar.html: page-specific inline styles found")
         for reference in parser.links:
             parsed = urlparse(reference)
             if parsed.scheme or reference.startswith("//") or reference.startswith("#") or parsed.netloc:
@@ -97,6 +114,7 @@ def main() -> int:
             failures.append("video-library-ar.html: expected a single metadata table body")
 
     print(f"HTML pages checked: {len(pages)}")
+    print(f"Pages using shared visual identity: {sum({'../coordination/assets/identity.css', 'assets/portal.css'}.issubset(p.stylesheets) for p in page_indexes.values())}/{len(pages)}")
     print(f"Broken local links/fragments: {sum('local' in x or 'link' in x for x in failures)}")
     print(f"Failures: {len(failures)}")
     for failure in failures:
