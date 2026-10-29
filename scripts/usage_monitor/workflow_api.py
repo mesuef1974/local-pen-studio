@@ -31,6 +31,30 @@ def _contains_arabic(value: str) -> bool:
     return bool(re.search(r"[\u0600-\u06ff]", value or ""))
 
 
+def _derive_title(owner_request: str) -> str:
+    for line in str(owner_request or "").splitlines():
+        match = re.match(r"^\s*(?:[-*]\s*)?(?:\*\*)?العنوان(?:\*\*)?\s*[:：]\s*(?:\*\*)?(.+?)(?:\*\*)?\s*$", line)
+        if match:
+            title = re.sub(r"[*#\s]+$", "", match.group(1)).strip()
+            if title:
+                return title[:180]
+    placeholders = {"نص المهمة لبطاقة التنفيذ", "نص المهمة", "بطاقة جديدة", "مهمة جديدة", "المهمة المطلوبة"}
+    for line in str(owner_request or "").splitlines():
+        candidate = re.sub(r"^\s*#+\s*|^\s*[-*]\s*|[*#]+\s*$", "", line).strip()
+        if not candidate or _normalize_text(candidate) in placeholders:
+            continue
+        title = re.split(r"[.!?؟\n]", candidate, maxsplit=1)[0].strip()
+        if title and _normalize_text(title) not in placeholders:
+            return title[:180]
+    return ""
+
+
+def _display_title(title: str, owner_request: str) -> str:
+    if _normalize_text(title) in {"نص المهمة لبطاقة التنفيذ", "نص المهمة", "بطاقة جديدة", "مهمة جديدة", "المهمة المطلوبة"}:
+        return _derive_title(owner_request) or title
+    return title
+
+
 def _route_targets(connection: sqlite3.Connection, payload: dict[str, Any]) -> list[sqlite3.Row]:
     """Choose one active, dispatchable specialist using explicit charter capabilities."""
     actors = connection.execute("""SELECT a.actor_id,a.display_name,COALESCE(a.charter,'') charter
@@ -89,8 +113,13 @@ def board(path: Path, *, status: str = "", actor_id: str = "", query: str = "") 
             filters.append("c.current_status_code=?")
             args.append(status)
         if actor_id:
-            filters.append("c.assigned_actor_id=?")
-            args.append(actor_id)
+            filters.append("(c.assigned_actor_id=? OR EXISTS ("
+                           "SELECT 1 FROM coordination_command_cards root "
+                           "JOIN coordination_command_cards child ON child.idempotency_key=root.idempotency_key "
+                           "AND child.role_code='session' JOIN coordination_cards execution ON execution.card_id=child.card_id "
+                           "WHERE root.card_id=c.card_id AND root.role_code='root' "
+                           "AND (?='owner' OR execution.assigned_actor_id=?)))")
+            args.extend([actor_id, actor_id, actor_id])
         if query:
             filters.append("(c.card_id LIKE ? OR c.title LIKE ? OR c.owner_request LIKE ? OR EXISTS ("
                            "SELECT 1 FROM coordination_delivery_attempts d WHERE d.card_id=c.card_id AND d.branch_name LIKE ?))")
@@ -124,7 +153,21 @@ def board(path: Path, *, status: str = "", actor_id: str = "", query: str = "") 
             FROM coordination_command_cards root JOIN coordination_command_cards child
               ON child.idempotency_key=root.idempotency_key AND child.role_code='session'
             WHERE root.role_code='root'""")}
-        cards = [card for card in cards if card["card_id"] not in command_roots]
+        root_targets: dict[str, list[str]] = {}
+        for target in connection.execute("""SELECT root.card_id,a.display_name
+            FROM coordination_command_cards root
+            JOIN coordination_command_cards child ON child.idempotency_key=root.idempotency_key AND child.role_code='session'
+            JOIN coordination_cards execution ON execution.card_id=child.card_id
+            LEFT JOIN coordination_actors a ON a.actor_id=execution.assigned_actor_id
+            WHERE root.role_code='root' ORDER BY a.display_name"""):
+            if target[1]:
+                root_targets.setdefault(target[0], []).append(target[1])
+        owner_cards = [dict(card, owner_command=card["card_id"] in command_roots,
+                            owner_target_name="، ".join(root_targets.get(card["card_id"], [])))
+                       for card in cards if card["card_id"] in command_roots or card["assigned_actor_id"] == "owner"]
+        cards = [card for card in cards if card["card_id"] not in command_roots and card["assigned_actor_id"] != "owner"]
+        for card in [*owner_cards, *cards]:
+            card["display_title"] = _display_title(card["title"], card["owner_request"])
         sessions = _rows(connection, """SELECT actor_id,display_name,charter,active
             FROM coordination_actors WHERE active=1 AND actor_id<>'owner' ORDER BY display_name,actor_id""")
         completed_owner_commands = _rows(connection, """
@@ -173,6 +216,7 @@ def board(path: Path, *, status: str = "", actor_id: str = "", query: str = "") 
         """)
         return {
             "cards": cards,
+            "owner_cards": owner_cards,
             "sessions": sessions,
             "completion_summary": {
                 "owner_commands_completed": len(completed_owner_commands),
@@ -239,10 +283,14 @@ def card_details(path: Path, card_id: str) -> dict[str, Any] | None:
             return None
         actor_names = {row["actor_id"]: row["display_name"] for row in connection.execute(
             "SELECT actor_id,display_name FROM coordination_actors")}
-        result = {"card": dict(card)}
+        card_data = dict(card)
+        card_data["display_title"] = _display_title(card_data["title"], card_data["owner_request"])
+        result = {"card": card_data}
         if card["parent_card_id"]:
             result["owner_command"] = _rows(connection, """SELECT card_id,title,owner_request,scope,created_at
                 FROM coordination_cards WHERE card_id=?""", (card["parent_card_id"],))[0]
+            result["owner_command"]["display_title"] = _display_title(
+                result["owner_command"]["title"], result["owner_command"]["owner_request"])
         result["criteria"] = _rows(connection, "SELECT * FROM coordination_card_criteria WHERE card_id=? ORDER BY sort_order,criterion_id", (card_id,))
         result["events"] = _rows(connection, """SELECT event_id,card_id,actor_id,event_type,details,recorded_at,stage_code,
             previous_status,next_status,reason_code,reason_resolution FROM coordination_events
@@ -289,7 +337,7 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
     owner_request = str(payload.get("owner_request", "")).strip()
     title = str(payload.get("title", "")).strip()
     if not title and owner_request:
-        title = re.split(r"[.!?؟\n]", owner_request, maxsplit=1)[0].strip()[:180]
+        title = _derive_title(owner_request)
     scope = str(payload.get("scope", "")).strip() or owner_request
     key = str(payload.get("idempotency_key", "")).strip()
     if not owner_request or not key:

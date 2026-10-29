@@ -168,7 +168,8 @@
   function fillFilters(sessions) {
     const actor = $('workflow-actor');
     const selected = actor.value;
-    actor.replaceChildren(new Option('كل الجلسات', ''));
+    actor.replaceChildren(new Option('كل الجهات', ''));
+    actor.add(new Option('المالك', 'owner'));
     for (const session of sessions) {
       if (!isSessionActor(session)) continue;
       actor.add(new Option(safeText(session.display_name, session.actor_id), session.actor_id));
@@ -182,13 +183,14 @@
   }
 
   function cardButton(card) {
+    const titleText = safeText(card.display_title || card.title, 'بطاقة بلا عنوان');
     const button = element('button', undefined, 'workflow-card');
     button.type = 'button';
     button.dataset.cardId = card.card_id;
     button.dataset.status = statusCode(card);
-    button.setAttribute('aria-label', `${safeText(card.card_id)}، ${safeText(card.title)}، ${statusLabel(card)}. عرض التفاصيل`);
+    button.setAttribute('aria-label', `${safeText(card.card_id)}، ${titleText}، ${statusLabel(card)}. عرض التفاصيل`);
     const id = element('span', safeText(card.card_id), 'workflow-card-id');
-    const title = element('span', safeText(card.title, 'بطاقة بلا عنوان'), 'workflow-card-title');
+    const title = element('span', titleText, 'workflow-card-title');
     const meta = element('span', undefined, 'workflow-card-meta');
     const status = element('span', statusLabel(card), 'workflow-status-label');
     status.dataset.status = statusCode(card);
@@ -201,6 +203,8 @@
     if (card.branch_name) foot.push(card.branch_name);
     if (card.commit_sha) foot.push(`Commit مسجل · SHA ${String(card.commit_sha).slice(0, 8)}`);
     if (card.qa_outcome) foot.push(`QA ${card.qa_outcome}`);
+    if (card.owner_command) foot.push('أمر المالك');
+    if (card.owner_target_name) foot.push(`التنفيذ لدى ${safeText(card.owner_target_name)}`);
     button.append(id, title, meta);
     if (foot.length) button.append(element('span', foot.join(' · '), 'workflow-card-meta'));
     button.addEventListener('click', () => openCard(card.card_id));
@@ -212,30 +216,35 @@
     const commandRootIds = new Set(allCards.filter(card => allCards.some(child => child.parent_card_id === card.card_id)).map(card => card.card_id));
     const cards = allCards.filter(card => !commandRootIds.has(card.card_id)
       && !['completed', 'failed', 'blocked', 'archived'].includes(statusCode(card)));
+    const ownerCards = (Array.isArray(board.owner_cards) ? board.owner_cards : [])
+      .filter(card => !['completed', 'failed', 'blocked', 'archived'].includes(statusCode(card)));
     const sessions = Array.isArray(board.sessions) ? board.sessions : [];
     fillFilters(sessions);
-    $('workflow-card-count').textContent = `${arabicNumber.format(cards.length)} بطاقة`;
+    $('workflow-card-count').textContent = `${arabicNumber.format(cards.length)} تنفيذ · ${arabicNumber.format(ownerCards.length)} للمالك`;
     const root = $('workflow-board-grid');
     root.replaceChildren();
     const header = element('div', undefined, 'workflow-grid-header');
-    header.append(element('div', 'الجلسة / الاختصاص'));
+    header.append(element('div', 'المالك / الجلسة'));
     boardStages.forEach(stage => header.append(element('div', stage.label)));
     root.append(header);
 
-    const lanes = sessions.filter(isSessionActor).map(session => ({ session, cards: cards.filter(card => card.assigned_actor_id === session.actor_id) }));
-    const knownActors = new Set(lanes.map(lane => lane.session.actor_id));
+    const ownerLane = {session: {actor_id: 'owner', display_name: 'المالك', charter: 'أوامر المالك؛ وتظهر مهامها في صف الجلسة المسندة.'}, cards: ownerCards};
+    const sessionLanes = sessions.filter(isSessionActor).map(session => ({ session, cards: cards.filter(card => card.assigned_actor_id === session.actor_id) }));
+    const knownActors = new Set(sessionLanes.map(lane => lane.session.actor_id));
     const unassigned = cards.filter(card => !card.assigned_actor_id || !knownActors.has(card.assigned_actor_id));
     const terminalStatuses = new Set(['completed', 'failed', 'blocked', 'archived']);
     const awaitingRouting = unassigned.filter(card => !terminalStatuses.has(statusCode(card)));
     const terminalUnassigned = unassigned.filter(card => terminalStatuses.has(statusCode(card)));
-    if (terminalUnassigned.length) lanes.unshift({
-      session: { actor_id: '', display_name: 'أوامر المالك المنتهية', charter: 'سجلات مكتملة أو مؤرشفة؛ لا تحتاج إلى توجيه' },
-      cards: terminalUnassigned,
-    });
-    if (awaitingRouting.length) lanes.unshift({
+    const lanes = [ownerLane];
+    if (awaitingRouting.length) lanes.push({
       session: { actor_id: '', display_name: 'غير مسندة', charter: 'بانتظار توجيه المنسق' },
       cards: awaitingRouting,
     });
+    if (terminalUnassigned.length) lanes.push({
+      session: { actor_id: '', display_name: 'أوامر المالك المنتهية', charter: 'سجلات مكتملة أو مؤرشفة؛ لا تحتاج إلى توجيه' },
+      cards: terminalUnassigned,
+    });
+    lanes.push(...sessionLanes);
 
     for (const lane of lanes) {
       const row = element('div', undefined, 'workflow-lane');
@@ -256,7 +265,7 @@
     }
     if (!lanes.length) root.append(element('p', 'لا توجد جلسات مسجلة في خدمة التدفق.', 'workflow-empty-cell'));
     $('workflow-error').hidden = true;
-    $('workflow-empty').hidden = cards.length > 0;
+    $('workflow-empty').hidden = cards.length + ownerCards.length > 0;
     $('workflow-board-scroll').hidden = lanes.length === 0;
     if (!cards.length) {
       const filtered = Boolean($('workflow-query').value.trim() || $('workflow-status').value || $('workflow-actor').value);
@@ -483,7 +492,7 @@
 
   function renderCardDetails(data) {
     const card = data.card || {};
-    $('workflow-detail-title').textContent = `${safeText(card.card_id, currentCardId)} · ${safeText(card.title, 'بطاقة')}`;
+    $('workflow-detail-title').textContent = `${safeText(card.card_id, currentCardId)} · ${safeText(card.display_title || card.title, 'بطاقة')}`;
     const root = $('workflow-detail-content');
     root.replaceChildren();
     const lead = element('div', undefined, 'workflow-detail-lead');
@@ -492,7 +501,7 @@
     const ownerCommand = data.owner_command;
     if (ownerCommand) {
       root.append(section('أمر المالك المرتبط', [ownerCommand], item =>
-        detailItem(`${item.title} · ${item.card_id}`, item.owner_request, item.created_at), 'لا يوجد أمر مرتبط.'));
+        detailItem(`${item.display_title || item.title} · ${item.card_id}`, item.owner_request, item.created_at), 'لا يوجد أمر مرتبط.'));
     }
     appendFacts(root, card, data.deliveries || []);
     const children = (currentBoard?.cards || []).filter(item => item.parent_card_id === card.card_id);
