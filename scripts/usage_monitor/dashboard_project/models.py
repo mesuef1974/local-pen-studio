@@ -13,6 +13,7 @@ from django import forms
 
 ADMIN_TABLES = {
     "coordination_actor_capabilities": "قدرات الجلسات والجهات",
+    "coordination_actor_duties": "مهام الجلسات ومسؤولياتها في الفلو",
     "coordination_actor_endpoints": "نقاط اتصال الجلسات",
     "coordination_actors": "الجلسات والجهات",
     "coordination_assignments": "إسنادات البطاقات",
@@ -51,6 +52,7 @@ ADMIN_TABLES = {
 
 DISPLAY_COLUMNS = {
     "coordination_actor_capabilities": ("actor_id", "capability"),
+    "coordination_actor_duties": ("actor_id", "assignment_scope", "flow_responsibility", "required_outputs", "verification_guidance"),
     "coordination_actor_endpoints": ("actor_id", "provider_code", "thread_id", "enabled", "updated_at"),
     "coordination_actors": ("actor_id", "display_name", "active"),
     "coordination_assignments": ("assignment_id", "card_id", "assigned_actor_id", "reason_code", "assigned_at"),
@@ -88,6 +90,7 @@ DISPLAY_COLUMNS = {
 }
 
 SEARCH_FIELDS = {
+    "coordination_actor_duties": ("actor_id", "assignment_scope", "flow_responsibility", "required_outputs"),
     "coordination_cards": ("card_id", "title", "owner_request"),
     "coordination_events": ("event_type", "card_id", "actor_id", "source_id"),
     "coordination_git_integrations": ("card_id", "repository", "pull_request_url", "last_error_code"),
@@ -123,6 +126,8 @@ FILTER_FIELDS = {
 
 FIELD_LABELS = {
     "actor_id": "معرّف الجلسة أو الجهة", "active": "نشط", "attempt_id": "معرّف محاولة التسليم",
+    "assignment_scope": "نطاق الإسناد", "flow_responsibility": "مسؤولية الجلسة في الفلو",
+    "required_outputs": "المخرجات المطلوبة", "verification_guidance": "إرشادات التحقق",
     "object_pk": "معرّف السجل",
     "attempt_number": "رقم المحاولة", "assigned_actor_id": "الجلسة المسندة إليها",
     "assigned_by_actor_id": "الجهة المسندة", "assigned_at": "وقت الإسناد",

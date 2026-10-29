@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from coordination_repository import transition_card
-from usage_database import connect, utc_now
+from usage_database import SCHEMA_VERSION, connect, utc_now
 from workflow_api import board, card_details, create_command, submit_delivery, submit_quality, transition_assigned_card
 
 
@@ -18,8 +18,10 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
         db = connect(self.path)
         now = utc_now()
         with db:
-            db.execute("INSERT INTO coordination_actors(actor_id,display_name,charter,active) VALUES('owner','Owner','owner',1)")
-            db.execute("INSERT INTO coordination_actors(actor_id,display_name,charter,active) VALUES('laser','Laser','frontend interface',1)")
+            db.execute("INSERT INTO coordination_actors(actor_id,display_name,charter,active) VALUES('owner','Owner','owner',1) "
+                       "ON CONFLICT(actor_id) DO UPDATE SET display_name=excluded.display_name,charter=excluded.charter,active=1")
+            db.execute("INSERT INTO coordination_actors(actor_id,display_name,charter,active) VALUES('laser','Laser','frontend interface',1) "
+                       "ON CONFLICT(actor_id) DO UPDATE SET display_name=excluded.display_name,charter=excluded.charter,active=1")
             db.execute("INSERT INTO coordination_actor_endpoints(actor_id,provider_code,thread_id,enabled,created_at,updated_at) VALUES('laser','codex_cli','thread-laser',1,?,?)", (now, now))
             db.execute("INSERT INTO coordination_actor_capabilities(actor_id,capability) VALUES('laser','frontend')")
         db.close()
@@ -268,7 +270,7 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
     def test_admin_audit_schema_is_created_by_migration(self):
         db = connect(self.path)
         try:
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 13)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], SCHEMA_VERSION)
             self.assertIsNotNone(db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='workflow_admin_audit'").fetchone())
             self.assertIsNotNone(db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='coordination_git_integrations'").fetchone())
         finally:
