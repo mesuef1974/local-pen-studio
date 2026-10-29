@@ -100,6 +100,43 @@ def main() -> int:
                 if parsed.fragment not in linked_page.ids:
                     failures.append(f"{path.name}: missing local fragment: {reference}")
 
+    inventory_page = ROOT / "source-inventory-ar.html"
+    inventory = page_indexes.get(inventory_page.resolve())
+    if inventory is None:
+        failures.append("source-inventory-ar.html: page is missing")
+    else:
+        required_inventory_links = {
+            "index.html", "README.md", "user-experiences-ar.html",
+            "video-library-ar.html", "xTool-P2S-Quick-Start-Guide-EN.pdf",
+            "../laser-integration-implementation-plan-ar.html",
+            "../laser-team-charters-ar.html",
+            "../laser-material-process-matrix-ar.html",
+            "../laser-material-process-matrix-ar.md",
+        }
+        missing_inventory_links = required_inventory_links.difference(inventory.links)
+        if missing_inventory_links:
+            failures.append(
+                "source-inventory-ar.html: file paths are not clickable links: "
+                f"{sorted(missing_inventory_links)}"
+            )
+
+    references_page = ROOT / "references.html"
+    references = page_indexes.get(references_page.resolve())
+    if references is not None:
+        required_reference_links = {
+            "xTool-P2S-Quick-Start-Guide-EN.pdf", "user-experiences-ar.html",
+            "video-library-ar.html", "source-inventory-ar.html",
+            "../laser-integration-implementation-plan-ar.html",
+            "../laser-material-process-matrix-ar.html",
+            "../laser-team-charters-ar.html",
+        }
+        missing_reference_links = required_reference_links.difference(references.links)
+        if missing_reference_links:
+            failures.append(
+                "references.html: inactive or missing local-file links: "
+                f"{sorted(missing_reference_links)}"
+            )
+
     video_page = ROOT / "video-library-ar.html"
     video = page_indexes.get(video_page.resolve())
     if video is None:
