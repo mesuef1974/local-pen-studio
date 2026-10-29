@@ -204,7 +204,13 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
     criteria = payload.get("criteria", [])
     if not isinstance(criteria, list) or len(criteria) > 50:
         raise ValueError("معايير الإنجاز غير صالحة.")
-    criteria = [item for item in criteria if isinstance(item, dict) and str(item.get("title", "")).strip()]
+    criteria = [
+        item for item in criteria
+        if isinstance(item, dict)
+        and str(item.get("title", "")).strip()
+        and str(item.get("criterion_code", "")).strip().casefold() != "owner_review"
+        and str(item.get("check_method", "")).strip().casefold() != "owner_acceptance"
+    ]
     connection = _connect(path, write=True)
     try:
         connection.execute("BEGIN IMMEDIATE")
