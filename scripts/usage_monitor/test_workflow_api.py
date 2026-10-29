@@ -26,15 +26,20 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
         self.temp.cleanup()
 
     def payload(self):
-        return {"title": "إصلاح واجهة لوحة المتابعة frontend", "owner_request": "إصلاح واجهة dashboard وتحسين العرض frontend", "scope": "تعديل CSS وHTML", "idempotency_key": "cmd-routing-1", "criteria": []}
+        return {"title": "إصلاح واجهة لوحة المتابعة frontend", "owner_request": "إصلاح واجهة dashboard وتحسين العرض frontend", "scope": "تعديل CSS وHTML", "idempotency_key": "cmd-routing-1", "target_actor_ids": ["laser"], "criteria": []}
 
-    def test_routes_and_returns_compatible_child_id_fields(self):
+    def test_owner_selected_session_is_assigned_and_recorded(self):
         result = create_command(self.path, self.payload())
         self.assertEqual(result["child_card_ids"], result["session_card_ids"])
         db = connect(self.path)
         try:
             row = db.execute("SELECT assigned_actor_id FROM coordination_cards WHERE card_id=?", (result["child_card_ids"][0],)).fetchone()
             self.assertEqual(row[0], "laser")
+            assignment = db.execute("SELECT assigned_by_actor_id FROM coordination_assignments WHERE card_id=?", (result["child_card_ids"][0],)).fetchone()
+            self.assertEqual(assignment[0], "owner")
+            event = db.execute("SELECT actor_id,details FROM coordination_events WHERE card_id=? AND event_type='card_assigned'", (result["child_card_ids"][0],)).fetchone()
+            self.assertEqual(event[0], "owner")
+            self.assertIn("حدد المالك الجلسة", event[1])
             root = db.execute("SELECT current_status_code FROM coordination_cards WHERE card_id=?", (result["root_card_id"],)).fetchone()
             self.assertEqual(root[0], "assigned")
             board_data = board(self.path)
@@ -53,6 +58,7 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
         payload = {
             "owner_request": "### نص المهمة لبطاقة التنفيذ\n\n**العنوان:** بوابة ويب محلية لطابعة xTool P2S\n\n**المطلوب:** إنشاء صفحة frontend dashboard كمرجع منظم للوثائق والمواد.",
             "idempotency_key": "cmd-title-from-markdown",
+            "target_actor_ids": ["laser"],
         }
         result = create_command(self.path, payload)
         db = connect(self.path)
@@ -64,11 +70,16 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
         finally:
             db.close()
 
-    def test_rejects_task_without_specialty_signal(self):
+    def test_owner_can_select_session_for_a_general_task_without_keyword_routing(self):
         payload = self.payload()
         payload.update(title="عمل عام", owner_request="القيام بالمهمة المطلوبة", scope="عمل عام", idempotency_key="cmd-routing-2")
-        with self.assertRaisesRegex(ValueError, "لم تتضح تخصصات"):
-            create_command(self.path, payload)
+        result = create_command(self.path, payload)
+        db = connect(self.path)
+        try:
+            actor = db.execute("SELECT assigned_actor_id FROM coordination_cards WHERE card_id=?", (result["child_card_ids"][0],)).fetchone()[0]
+            self.assertEqual(actor, "laser")
+        finally:
+            db.close()
 
     def test_rejects_english_card_content(self):
         payload = self.payload()
@@ -76,15 +87,42 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "باللغة العربية"):
             create_command(self.path, payload)
 
-    def test_browser_cannot_override_backend_routing(self):
+    def test_session_selection_is_required_and_must_be_single(self):
         payload = self.payload()
-        payload["target_actor_ids"] = ["laser"]
-        with self.assertRaisesRegex(ValueError, "يحدد المصنع الجلسة المختصة"):
+        payload.pop("target_actor_ids")
+        with self.assertRaisesRegex(ValueError, "اختر جلسة واحدة"):
             create_command(self.path, payload)
+        payload = self.payload()
+        payload["target_actor_ids"] = ["laser", "laser"]
+        with self.assertRaisesRegex(ValueError, "اختر جلسة واحدة"):
+            create_command(self.path, payload)
+
+    def test_selected_session_must_be_active_and_dispatchable(self):
+        payload = self.payload()
+        payload["target_actor_ids"] = ["missing-session"]
+        with self.assertRaisesRegex(ValueError, "غير نشطة أو غير مهيأة"):
+            create_command(self.path, payload)
+
+        db = connect(self.path)
+        try:
+            now = utc_now()
+            with db:
+                db.execute("INSERT INTO coordination_actors(actor_id,display_name,charter,active) VALUES('offline','غير متصلة','عام',1)")
+                db.execute("INSERT INTO coordination_actor_endpoints(actor_id,provider_code,thread_id,enabled,created_at,updated_at) VALUES('offline','codex_cli','thread-offline',0,?,?)", (now, now))
+        finally:
+            db.close()
+        payload["target_actor_ids"] = ["offline"]
+        with self.assertRaisesRegex(ValueError, "غير نشطة أو غير مهيأة"):
+            create_command(self.path, payload)
+
+    def test_board_marks_assignable_sessions(self):
+        data = board(self.path)
+        session = next(item for item in data["sessions"] if item["actor_id"] == "laser")
+        self.assertEqual(session["dispatchable"], 1)
 
     def test_review_lifecycle_completes_child_and_rolls_up_parent(self):
         payload = {"title": "مراجعة كود dashboard", "owner_request": "مراجعة كود dashboard وتقرير بالنتائج",
-                   "scope": "مراجعة فقط", "idempotency_key": "cmd-review-lifecycle"}
+                   "scope": "مراجعة فقط", "idempotency_key": "cmd-review-lifecycle", "target_actor_ids": ["laser"]}
         result = create_command(self.path, payload)
         card_id = result["child_card_ids"][0]
         db = connect(self.path)
