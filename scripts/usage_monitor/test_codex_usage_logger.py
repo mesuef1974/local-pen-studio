@@ -87,7 +87,7 @@ class UsageLoggerTests(unittest.TestCase):
         self.assertEqual(data["freshness"]["weekly"]["observed_at"], data["weekly"]["timestamp"])
         self.assertIsNotNone(data["freshness"]["weekly"]["recorded_at"])
         self.assertEqual(data["freshness"]["collector"]["latest_run"]["status"], "success")
-        self.assertEqual(self.fetchone("PRAGMA user_version")[0], 12)
+        self.assertEqual(self.fetchone("PRAGMA user_version")[0], usage_database.SCHEMA_VERSION)
         connection = connect(self.database)
         try:
             tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
@@ -99,6 +99,22 @@ class UsageLoggerTests(unittest.TestCase):
         self.assertIn("owner_decisions", tables)
         self.assertIn("coordination_deliverables", tables)
         self.assertIn("usage_samples", tables)
+        self.assertIn("coordination_actor_duties", tables)
+        duties = self.fetchone("SELECT COUNT(*) FROM coordination_actor_duties")[0]
+        self.assertEqual(duties, 4)
+        self.assertGreater(
+            len(self.fetchone("SELECT flow_responsibility FROM coordination_actor_duties "
+                              "WHERE actor_id='laser'")[0]), 0)
+        connection = connect(self.database)
+        try:
+            connection.execute("INSERT INTO coordination_actors(actor_id,display_name) VALUES('new-session','جلسة جديدة')")
+            connection.execute("INSERT INTO coordination_actor_duties(actor_id,assignment_scope,flow_responsibility,"
+                               "required_outputs,verification_guidance) VALUES(?,?,?,?,?)",
+                               ("new-session", "اختصاص جديد", "مسؤولية محددة في الفلو", "مخرج موثق", "فحص وفق البطاقة"))
+            self.assertEqual(connection.execute("SELECT assignment_scope FROM coordination_actor_duties "
+                                                "WHERE actor_id='new-session'").fetchone()[0], "اختصاص جديد")
+        finally:
+            connection.close()
         self.assertIn("coordination_card_id", sample_fields)
         self.assertIn("workflow_stage_code", sample_fields)
         self.assertEqual(tuple(self.fetchone("SELECT coordination_card_id,workflow_stage_code FROM usage_samples")),
@@ -121,7 +137,7 @@ class UsageLoggerTests(unittest.TestCase):
 
         connection = connect(legacy_db)
         try:
-            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 12)
+            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], usage_database.SCHEMA_VERSION)
             self.assertEqual(connection.execute("SELECT session_name FROM usage_sessions WHERE session_id='kept'").fetchone()[0],
                              "بيانات سابقة")
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM schema_migrations WHERE version=2").fetchone()[0], 1)
@@ -256,11 +272,11 @@ class UsageLoggerTests(unittest.TestCase):
             usage_database.SCHEMA_VERSION = supported - 1
             with self.assertRaises(RuntimeError) as raised:
                 connect(self.database)
-            self.assertIn("11", str(raised.exception))
-            self.assertIn("12", str(raised.exception))
+            self.assertIn(str(supported - 1), str(raised.exception))
+            self.assertIn(str(supported), str(raised.exception))
         finally:
             usage_database.SCHEMA_VERSION = supported
-        self.assertEqual(self.fetchone("PRAGMA user_version")[0], 12)
+        self.assertEqual(self.fetchone("PRAGMA user_version")[0], supported)
         self.assertEqual(self.fetchone("SELECT COUNT(*) FROM usage_collector_runs")[0], 0)
 
     def test_schema_nine_upgrade_preserves_quota_and_marks_old_record_time_unknown(self):
@@ -282,7 +298,7 @@ class UsageLoggerTests(unittest.TestCase):
             row = migrated.execute("SELECT sampled_at,recorded_at,weekly_used_percent,weekly_remaining_percent "
                                    "FROM usage_samples").fetchone()
             self.assertEqual(tuple(row), ("2026-10-29T12:00:00Z", None, 31, 69))
-            self.assertEqual(migrated.execute("PRAGMA user_version").fetchone()[0], 12)
+            self.assertEqual(migrated.execute("PRAGMA user_version").fetchone()[0], usage_database.SCHEMA_VERSION)
             self.assertEqual(migrated.execute("SELECT COUNT(*) FROM usage_collector_runs").fetchone()[0], 0)
         finally:
             migrated.close()

@@ -105,7 +105,8 @@ WORKFLOW_ADMIN_GROUPS = (
         "coordination_assignments", "coordination_card_criteria", "coordination_card_dependencies",
     )),
     ("الجلسات والتوجيه", "sessions", (
-        "coordination_actors", "coordination_actor_capabilities", "coordination_actor_endpoints", "usage_sessions",
+        "coordination_actors", "coordination_actor_duties", "coordination_actor_capabilities",
+        "coordination_actor_endpoints", "usage_sessions",
     )),
     ("التنفيذ والتسليم", "delivery", (
         "coordination_deliverables", "coordination_delivery_attempts", "coordination_delivery_paths",
@@ -232,6 +233,8 @@ class WorkflowTableAdmin(admin.ModelAdmin):
         # changelist available instead of rendering a fragile date drilldown.
         self.date_hierarchy = None
         self.ordering = (model._meta.pk.name,)
+        if model._meta.db_table == "coordination_actor_duties":
+            self.readonly_fields = ("updated_at",)
 
     def get_form(self, request, obj=None, **kwargs):
         base_form = super().get_form(request, obj, **kwargs)
