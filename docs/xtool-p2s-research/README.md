@@ -19,7 +19,7 @@ python -m http.server 8786 --bind 127.0.0.1
 - `materials.html` — المواد والعمليات والتحذيرات والتعارضات.
 - `software-connectivity.html` — الصيغ والاتصال وxTool Studio وLightBurn وحدود API.
 - `user-experiences-ar.html` — تجارب ومراجعات منفردة من مصادرها.
-- `visual-guides.html` — رسومات SVG أصلية توضيحية.
+- `visual-guides.html` — صور فوتوغرافية منسوبة، وصورة منتج رسمية، ورسومات SVG أصلية توضيحية.
 - `video-library-ar.html` — جدول بيانات وصفية وروابط أصلية فقط؛ لا فيديو مستضاف أو منسوخ.
 - `references.html` — مصادر خارجية وروابط الملفات المحلية.
 - `source-inventory-ar.html` — مواقع وبصمات الملفات الموجودة قبل التحرير وقرار إعادة الاستخدام.
