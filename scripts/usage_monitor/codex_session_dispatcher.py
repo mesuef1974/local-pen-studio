@@ -55,6 +55,12 @@ def _message(row: sqlite3.Row, criteria: list[sqlite3.Row]) -> str:
         f"العنوان: {row['title']}",
         "طلب المالك:", row["owner_request"],
         "النطاق:", row["scope"],
+        "مسؤوليات الجلسة المسندة كما هي مسجلة في قاعدة المصنع:",
+        f"نطاق اختصاصها: {row['assignment_scope']}",
+        f"مسؤوليتها في الفلو: {row['flow_responsibility']}",
+        f"المخرجات المتوقعة منها: {row['required_outputs']}",
+        f"إرشادات التحقق: {row['verification_guidance']}",
+        "طلب المالك ونطاق البطاقة يحددان العمل المطلوب لهذه المهمة ضمن هذا الاختصاص.",
         "معايير الإكمال:",
     ]
     lines.extend(f"- [{'مطلوب' if c['required'] else 'اختياري'}] {c['title']} ({c['criterion_code']}; {c['check_method']})" for c in criteria)
@@ -109,14 +115,23 @@ def dispatch_one(database: Path, *, codex_executable: str | None = None,
             db.execute("""UPDATE coordination_outbox SET state_code='dead_letter',last_error_code='dispatch_result_unknown',
                 locked_until=NULL,updated_at=? WHERE state_code='processing' AND locked_until<?""", (now_text, now_text))
             row = db.execute("""SELECT o.outbox_id,o.card_id,o.target_actor_id,o.idempotency_key,
-                c.title,c.owner_request,c.scope,c.card_type_code,e.thread_id
+                c.title,c.owner_request,c.scope,c.card_type_code,e.thread_id,
+                d.assignment_scope,d.flow_responsibility,d.required_outputs,d.verification_guidance
                 FROM coordination_outbox o JOIN coordination_cards c ON c.card_id=o.card_id
                 JOIN coordination_actor_endpoints e ON e.actor_id=o.target_actor_id AND e.enabled=1
+                LEFT JOIN coordination_actor_duties d ON d.actor_id=o.target_actor_id
                 WHERE o.state_code IN ('pending','retry') AND o.available_at<=?
                 ORDER BY o.available_at,o.outbox_id LIMIT 1""", (now_text,)).fetchone()
             if not row:
                 return None
             outbox_id = row["outbox_id"]
+            if row["assignment_scope"] is None:
+                retry_at = (now + timedelta(seconds=60)).isoformat()
+                db.execute("""UPDATE coordination_outbox SET state_code='retry',available_at=?,
+                    last_error_code='session_duties_missing',updated_at=? WHERE outbox_id=?""",
+                    (retry_at, now_text, outbox_id))
+                return {"outbox_id": outbox_id, "state_code": "retry",
+                        "target_actor_id": row["target_actor_id"], "error_code": "session_duties_missing"}
             db.execute("""UPDATE coordination_outbox SET state_code='processing',attempt_count=attempt_count+1,
                 locked_until=?,updated_at=? WHERE outbox_id=?""",
                 ((now + timedelta(seconds=LEASE_SECONDS)).isoformat(), now_text, outbox_id))

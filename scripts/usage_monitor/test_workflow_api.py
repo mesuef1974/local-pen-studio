@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
+from codex_session_dispatcher import dispatch_one
 from coordination_repository import transition_card
 from usage_database import SCHEMA_VERSION, connect, utc_now
 from workflow_api import board, card_details, create_command, submit_delivery, submit_quality, transition_assigned_card
@@ -52,6 +53,8 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
             self.assertEqual(board_data["owner_cards"][0]["owner_target_name"], "Laser")
             self.assertEqual([card["card_id"] for card in board(self.path, actor_id="laser")["owner_cards"]], [result["root_card_id"]])
             self.assertEqual([card["card_id"] for card in board(self.path, actor_id="owner")["owner_cards"]], [result["root_card_id"]])
+            self.assertEqual(card_details(self.path, result["child_card_ids"][0])["assigned_session_duties"]["assignment_scope"],
+                             "العتاد الليزري والمواد والعمليات والسلامة والبرامج ومصادرها")
             retry = create_command(self.path, self.payload())
             self.assertFalse(retry["created"])
             self.assertEqual(retry["child_card_ids"], result["child_card_ids"])
@@ -123,6 +126,37 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
         data = board(self.path)
         session = next(item for item in data["sessions"] if item["actor_id"] == "laser")
         self.assertEqual(session["dispatchable"], 1)
+        self.assertIn("تسجيل المصادر والقيود", session["flow_responsibility"])
+
+    def test_session_without_duty_profile_is_not_assignable(self):
+        db = connect(self.path)
+        try:
+            now = utc_now()
+            with db:
+                db.execute("INSERT INTO coordination_actors(actor_id,display_name,active) VALUES('unprofiled','جلسة جديدة',1)")
+                db.execute("INSERT INTO coordination_actor_endpoints(actor_id,provider_code,thread_id,enabled,created_at,updated_at) "
+                           "VALUES('unprofiled','codex_cli','thread-new',1,?,?)", (now, now))
+        finally:
+            db.close()
+        self.assertNotIn("unprofiled", {item["actor_id"] for item in board(self.path)["sessions"]})
+        payload = self.payload()
+        payload.update(target_actor_ids=["unprofiled"], idempotency_key="cmd-unprofiled-session")
+        with self.assertRaisesRegex(ValueError, "غير نشطة أو غير مهيأة"):
+            create_command(self.path, payload)
+
+    def test_dispatch_prompt_loads_assigned_session_duties_from_database(self):
+        card = create_command(self.path, self.payload())
+        captured = {}
+
+        def fake_runner(args, **kwargs):
+            captured["message"] = args[-1]
+            return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+
+        result = dispatch_one(self.path, codex_executable="codex", runner=fake_runner)
+        self.assertEqual(result["state_code"], "sent")
+        self.assertIn("مسؤوليتها في الفلو", captured["message"])
+        self.assertIn("المخرجات المتوقعة منها", captured["message"])
+        self.assertIn("العتاد الليزري والمواد والعمليات والسلامة والبرامج ومصادرها", captured["message"])
 
     def test_review_lifecycle_completes_child_and_rolls_up_parent(self):
         payload = {"title": "مراجعة كود dashboard", "owner_request": "مراجعة كود dashboard وتقرير بالنتائج",
