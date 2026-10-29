@@ -32,6 +32,86 @@
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? '—' : `${dateOnly.format(date)} · ${clockTime.format(date)}`;
   };
+  const elapsedLabel = timestamp => {
+    const parsed = Date.parse(timestamp || '');
+    if (!Number.isFinite(parsed)) return 'لا يوجد توقيت مسجل';
+    const seconds = Math.max(0, Math.floor((Date.now() - parsed) / 1000));
+    if (seconds < 60) return 'قبل أقل من دقيقة';
+    if (seconds < 3600) return `قبل ${formatNumber(Math.floor(seconds / 60))} دقيقة`;
+    if (seconds < 86400) return `قبل ${formatNumber(Math.floor(seconds / 3600))} ساعة`;
+    return `قبل ${formatNumber(Math.floor(seconds / 86400))} يوم`;
+  };
+  function setFreshnessRow(prefix, value, freshMs, staleMs) {
+    const state = $(`${prefix}-status-state`);
+    const dot = `${prefix}-status-dot`;
+    const detail = $(`${prefix}-status-updated`);
+    const observed = value?.observed_at;
+    const recorded = value?.recorded_at;
+    const date = Date.parse(observed || '');
+    let code = 'unavailable';
+    let label = 'غير متاحة';
+    if (Number.isFinite(date)) {
+      const age = Date.now() - date;
+      if (age < -60000) { code = 'error'; label = 'توقيت غير صالح'; }
+      else if (age <= freshMs) { code = 'current'; label = 'حديثة'; }
+      else if (age <= staleMs) { code = 'delayed'; label = 'متأخرة'; }
+      else { code = 'stale'; label = 'قديمة'; }
+    }
+    state.textContent = label;
+    state.classList.remove('state-delayed', 'state-stale', 'state-error', 'state-unavailable');
+    if (code !== 'current') state.classList.add(`state-${code}`);
+    setDotState(dot, code === 'current' ? 'is-current' : code === 'delayed' ? 'is-stale' : code === 'stale' || code === 'error' ? 'is-error' : 'is-unavailable');
+    detail.textContent = Number.isFinite(date)
+      ? `رُصدت ${formatDate(observed)} · ${elapsedLabel(observed)} · ${recorded ? `حُفظت ${formatDate(recorded)}` : 'وقت الحفظ غير مسجل للعينة التاريخية'}`
+      : 'لم تُسجل لقطة من هذا النوع بعد.';
+    return code;
+  }
+  function renderFreshness(freshness) {
+    const contextState = setFreshnessRow('context', freshness?.context, 180000, 900000);
+    const weeklyState = setFreshnessRow('weekly', freshness?.weekly, 900000, 3600000);
+    const collector = freshness?.collector || {};
+    const attempt = collector.latest_run;
+    const success = collector.last_success;
+    const collectorState = $('collector-status-state');
+    collectorState.classList.remove('state-delayed', 'state-stale', 'state-error', 'state-unavailable');
+    if (!attempt) {
+      collectorState.textContent = 'غير متاحة';
+      collectorState.classList.add('state-unavailable');
+      setDotState('collector-status-dot', 'is-unavailable');
+      $('collector-status-updated').textContent = 'لم يُسجل تشغيل للجامع بعد.';
+    } else if (attempt.status === 'running') {
+      collectorState.textContent = 'جارٍ الجمع';
+      collectorState.classList.add('state-delayed');
+      setDotState('collector-status-dot', 'is-stale');
+      $('collector-status-updated').textContent = `بدأ ${formatDate(attempt.started_at)}.`;
+    } else if (attempt.status === 'failed' || attempt.status === 'interrupted') {
+      collectorState.textContent = attempt.status === 'failed' ? 'فشل الجمع' : 'انقطع الجمع';
+      collectorState.classList.add('state-error');
+      setDotState('collector-status-dot', 'is-error');
+      $('collector-status-updated').textContent = `المحاولة ${formatDate(attempt.started_at)} · آخر نجاح ${formatDate(success?.completed_at)}`;
+    } else {
+      const age = Date.now() - Date.parse(success?.completed_at || '');
+      const invalid = Number(success?.malformed_lines) || 0;
+      const state = invalid > 0 ? 'error' : age <= 180000 ? 'current' : age <= 300000 ? 'delayed' : 'stale';
+      collectorState.textContent = invalid > 0 ? 'أسطر تحتاج مراجعة' : state === 'current' ? 'يعمل' : state === 'delayed' ? 'متأخر' : 'توقف عن التحديث';
+      if (state !== 'current') collectorState.classList.add(state === 'error' ? 'state-error' : `state-${state}`);
+      setDotState('collector-status-dot', state === 'current' ? 'is-current' : state === 'delayed' ? 'is-stale' : 'is-error');
+      const counts = ` · ${formatNumber(success?.source_files_updated || 0)} ملفات تغيرت، ${formatNumber(success?.samples_inserted || 0)} عينات أضيفت`;
+      const invalidText = invalid ? ` · ${formatNumber(invalid)} أسطر غير صالحة` : '';
+      $('collector-status-updated').textContent = `آخر نجاح ${formatDate(success?.completed_at)} · ${elapsedLabel(success?.completed_at)}${counts}${invalidText}`;
+    }
+    setDotState('live-status-dot', collectorState.classList.contains('state-error') ? 'is-error'
+      : collectorState.classList.contains('state-unavailable') ? 'is-unavailable'
+        : collectorState.classList.contains('state-stale') ? 'is-error'
+          : collectorState.classList.contains('state-delayed') ? 'is-stale' : 'is-current');
+    $('live-status').textContent = `آخر تشغيل للجامع ${formatDate(success?.completed_at)}`;
+    const empty = $('weekly-empty');
+    if (weeklyState === 'stale' || weeklyState === 'delayed') {
+      empty.textContent = `هذه آخر لقطة حصة في السجلات عند ${formatDate(freshness?.weekly?.observed_at)}؛ لم تصل لقطة أحدث بعد.`;
+      empty.classList.add('show');
+    }
+    if (contextState === 'unavailable') $('context-status-updated').textContent = 'لا توجد عينات سياق محفوظة.';
+  }
   const formatAxisTime = value => clockTime.format(value);
   const lastSample = session => (session?.samples || []).reduce((latest, sample) => {
     const time = Date.parse(sample?.timestamp || '');
@@ -598,28 +678,12 @@
     renderBreakdown(sessions);
     renderSessionTable(activeSessions);
     renderWeekly(data.weekly);
+    renderFreshness(data.freshness);
     drawTrend(sessions);
     renderSessionCharts(sessions);
     $('generated-at').textContent = `توليد استجابة اللوحة: ${formatDate(data.generated_at)}`;
     $('updated-badge').textContent = `${formatNumber(activeMeasured.length)} جلسات نشطة`;
 
-    const sampleTimes = activeSessions.map(session => Date.parse(lastSample(session)?.timestamp || ''));
-    if (data.weekly?.timestamp) sampleTimes.push(Date.parse(data.weekly.timestamp));
-    const validSampleTimes = sampleTimes.filter(Number.isFinite);
-    const latestSampleTime = validSampleTimes.length ? Math.max(...validSampleTimes) : NaN;
-    const sampleAge = Date.now() - latestSampleTime;
-    const fresh = Number.isFinite(latestSampleTime) && sampleAge >= 0 && sampleAge < 150000;
-    const latestSampleText = Number.isFinite(latestSampleTime) ? formatDate(latestSampleTime) : null;
-
-    setDotState('live-status-dot', 'is-current');
-    setDotState('usage-status-dot', fresh ? 'is-current' : 'is-stale');
-    $('live-status').textContent = latestSampleText
-      ? `قاعدة البيانات متصلة · آخر عينة ${latestSampleText}`
-      : 'قاعدة البيانات متصلة · لا توجد عينات محفوظة';
-    $('usage-status-state').textContent = fresh ? 'العينة حديثة' : 'العينة قديمة';
-    $('usage-status-updated').textContent = latestSampleText
-      ? `آخر عينة SQLite: ${latestSampleText}`
-      : 'لا توجد عينة محفوظة في SQLite';
   }
 
   async function refresh(manual = false) {
@@ -648,9 +712,10 @@
         $('live-status').textContent = 'تعذر تحميل القياس المحلي';
         setDotState('live-status-dot', 'is-error');
         $('announcement').textContent = 'تعذر تحميل القياس المحلي. استخدم زر تحديث الآن للمحاولة مجددًا.';
-        $('usage-status-state').textContent = 'تعذر التحديث';
-        setDotState('usage-status-dot', 'is-error');
-        $('usage-status-updated').textContent = 'تحقق من أن المسجل المحلي يعمل ثم أعد المحاولة.';
+        $('collector-status-state').textContent = 'تعذر قراءة الحالة';
+        $('collector-status-state').classList.add('state-error');
+        setDotState('collector-status-dot', 'is-error');
+        $('collector-status-updated').textContent = 'تعذر قراءة سجل الجامع من قاعدة البيانات.';
         if (!latestData) $('sessions-empty').hidden = false;
       } finally {
         button.disabled = false;

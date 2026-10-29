@@ -214,7 +214,7 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
     def test_admin_audit_schema_is_created_by_migration(self):
         db = connect(self.path)
         try:
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 9)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 12)
             self.assertIsNotNone(db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='workflow_admin_audit'").fetchone())
         finally:
             db.close()
