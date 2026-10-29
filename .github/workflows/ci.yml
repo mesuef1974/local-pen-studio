@@ -97,7 +97,7 @@ jobs:
       - run: python scripts/test_handoff.py
       - run: python scripts/test_handoff_bridge.py
       - run: python scripts/test_handoff_coordinator.py
-      - run: python -m unittest test_editor_ops test_background_service test_lineart_tools test_input_adjustments
+      - run: python -m unittest test_editor_ops test_background_service test_lineart_tools test_input_adjustments test_ink_copy test_centerline_routing
         working-directory: drawing-simulator
       - run: python -m unittest test_preparation
         working-directory: trace-studio
@@ -138,7 +138,7 @@ jobs:
       - run: node --test flux-studio/test-api-client.mjs flux-studio/test-core.mjs flux-studio/test-paper.mjs flux-studio/test-prompts.mjs
       - run: node --test test-controller.mjs test-core.mjs
         working-directory: pipeline-studio
-      - run: node --test test-editor-geometry.cjs test-lineart-workflow.cjs test-path-order.cjs test-path-refinement.cjs test-worker-ink.cjs
+      - run: node --test test-editor-geometry.cjs test-lineart-workflow.cjs test-path-order.cjs test-path-refinement.cjs test-worker-ink.cjs test-approved-vectors.mjs
         working-directory: drawing-simulator
       - run: node --test test-workflow.cjs test-preparation-ui.cjs
         working-directory: trace-studio

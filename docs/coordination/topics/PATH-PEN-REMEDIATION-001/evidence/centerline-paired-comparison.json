@@ -1,0 +1,138 @@
+{
+  "schema": "paired-centerline-baseline-current-v1",
+  "baselineRef": "36058c65d368ee307965c7742f752b446c6cac6f",
+  "environment": {
+    "python": "3.12.10",
+    "opencv": "4.10.0",
+    "numpy": "2.4.6"
+  },
+  "method": "paired end-to-end extraction; input decode included; graph stages from current extractor profile; fidelity is exact raster hash comparison",
+  "samples": [
+    {
+      "name": "flux-studio/sample-ink.png",
+      "sourceSha256": "3e11c3f996f9991c00d3c5b64e40d32e56d59637276a04ee1642a87dd5f928c0",
+      "width": 768,
+      "height": 768,
+      "repeatsPerImplementation": 9,
+      "order": "alternating baseline/current order each repetition after one warm-up call each",
+      "medianWallMs": {
+        "baseline": 81.023,
+        "current": 69.697
+      },
+      "currentSpeedupPercent": 13.98,
+      "pathCount": {
+        "baseline": 463,
+        "current": 463
+      },
+      "centerlineRasterSha256": {
+        "baseline": "9e3d7deb4369d25bd650a3c29df1c15c1e90d8b85a4f6e848157ee1790b4ff0a",
+        "current": "9e3d7deb4369d25bd650a3c29df1c15c1e90d8b85a4f6e848157ee1790b4ff0a"
+      },
+      "exactRasterMatch": true,
+      "centerlineVsSkeleton": {
+        "inkIoUPercent": 98.83412,
+        "inkRecallPercent": 98.83412,
+        "inkPrecisionPercent": 100.0,
+        "skeletonPixels": 10550,
+        "rasterPixels": 10427
+      },
+      "physicalPenAudit": {
+        "inkIoU": 58.79,
+        "inkRecall": 69.3,
+        "inkPrecision": 79.49,
+        "missingInkPercent": 30.7,
+        "extraInkPercent": 20.51
+      },
+      "medianStagesMs": {
+        "baseline": {
+          "edge_detection": 5.823,
+          "graph_construction": 25.715,
+          "graph_trace": 14.63,
+          "grayscale_and_denoise": 0.247,
+          "input_decode_and_validation": 10.845,
+          "junction_routing": 7.087,
+          "path_simplification_and_limits": 0.779,
+          "thinning": 6.78,
+          "threshold": 0.73,
+          "total": 78.012
+        },
+        "current": {
+          "edge_detection": 0.006,
+          "graph_construction": 26.248,
+          "graph_trace": 10.086,
+          "grayscale_and_denoise": 0.243,
+          "input_decode_and_validation": 11.326,
+          "junction_routing": 6.439,
+          "path_simplification_and_limits": 0.876,
+          "spur_pruning": 0.001,
+          "thinning": 5.836,
+          "threshold": 0.662,
+          "total": 68.646
+        }
+      }
+    },
+    {
+      "name": "drawing-simulator/reference-benchmark/reference.png",
+      "sourceSha256": "c173be9f80a8fbbd831b7201d5d44afb34ab3ec068394657d8caf79024632a6c",
+      "width": 512,
+      "height": 640,
+      "repeatsPerImplementation": 9,
+      "order": "alternating baseline/current order each repetition after one warm-up call each",
+      "medianWallMs": {
+        "baseline": 20.379,
+        "current": 16.211
+      },
+      "currentSpeedupPercent": 20.45,
+      "pathCount": {
+        "baseline": 10,
+        "current": 10
+      },
+      "centerlineRasterSha256": {
+        "baseline": "b30e42deea35360145bbf174522aaaf50d26bef0b18f1403ee161c96190b3347",
+        "current": "b30e42deea35360145bbf174522aaaf50d26bef0b18f1403ee161c96190b3347"
+      },
+      "exactRasterMatch": true,
+      "centerlineVsSkeleton": {
+        "inkIoUPercent": 100.0,
+        "inkRecallPercent": 100.0,
+        "inkPrecisionPercent": 100.0,
+        "skeletonPixels": 2197,
+        "rasterPixels": 2197
+      },
+      "physicalPenAudit": {
+        "inkIoU": 22.2,
+        "inkRecall": 22.2,
+        "inkPrecision": 100.0,
+        "missingInkPercent": 77.8,
+        "extraInkPercent": 0.0
+      },
+      "medianStagesMs": {
+        "baseline": {
+          "edge_detection": 2.229,
+          "graph_construction": 5.162,
+          "graph_trace": 2.151,
+          "grayscale_and_denoise": 0.104,
+          "input_decode_and_validation": 4.4,
+          "junction_routing": 0.528,
+          "path_simplification_and_limits": 0.083,
+          "thinning": 2.682,
+          "threshold": 0.368,
+          "total": 19.656
+        },
+        "current": {
+          "edge_detection": 0.003,
+          "graph_construction": 5.87,
+          "graph_trace": 1.549,
+          "grayscale_and_denoise": 0.108,
+          "input_decode_and_validation": 4.337,
+          "junction_routing": 0.476,
+          "path_simplification_and_limits": 0.08,
+          "spur_pruning": 0.0,
+          "thinning": 2.693,
+          "threshold": 0.334,
+          "total": 15.714
+        }
+      }
+    }
+  ]
+}

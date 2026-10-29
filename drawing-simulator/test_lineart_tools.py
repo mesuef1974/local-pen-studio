@@ -50,6 +50,24 @@ class CleanupTests(unittest.TestCase):
             self.assertFalse(np.array_equal(image,output))
 
 class SkeletonTests(unittest.TestCase):
+    def test_supported_path_count_boundaries(self):
+        columns=101
+        def image_with_paths(count):
+            rows=(count+columns-1)//columns
+            image=np.full((rows*4,columns*4,3),255,np.uint8)
+            for index in range(count):
+                y=(index//columns)*4+1;x=(index%columns)*4+1
+                image[y,x:x+3]=0
+            return image
+        for count in (6000,6001,10000):
+            with self.subTest(count=count):
+                result=extract_paths({'image':encode(image_with_paths(count)),'lineMode':'centerline',
+                    'lineDenoise':0,'inkThreshold':0,'minLength':2,'tolerance':0})
+                self.assertEqual(len(result['paths']),count)
+        with self.assertRaisesRegex(ValueError,'10,000'):
+            extract_paths({'image':encode(image_with_paths(10001)),'lineMode':'centerline',
+                'lineDenoise':0,'inkThreshold':0,'minLength':2,'tolerance':0})
+
     def test_explicit_threshold_controls_faint_ink(self):
         image=np.full((50,50,3),255,np.uint8);image[25,5:45]=150
         body={'image':encode(image),'lineMode':'centerline','lineDenoise':0,'minLength':2,'tolerance':0}
