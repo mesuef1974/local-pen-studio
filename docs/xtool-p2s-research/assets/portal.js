@@ -1,0 +1,1 @@
+document.addEventListener('DOMContentLoaded',()=>{const here=location.pathname.split('/').pop()||'index.html';document.querySelectorAll('.nav a').forEach(a=>{if(a.getAttribute('href')===here)a.setAttribute('aria-current','page')})});
