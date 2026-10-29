@@ -2,7 +2,6 @@
   'use strict';
 
   const $ = id => document.getElementById(id);
-  const tabs = [$('tab-usage'), $('tab-workflow')];
   const stages = [
     { code: 'queued', label: 'في الطابور' },
     { code: 'assigned', label: 'مسندة' },
@@ -15,8 +14,11 @@
     { code: 'failed', label: 'فشلت' },
     { code: 'archived', label: 'مؤرشفة' },
   ];
-  const arabicNumber = new Intl.NumberFormat('ar-QA', { maximumFractionDigits: 1 });
-  const dateTime = new Intl.DateTimeFormat('ar-QA', { dateStyle: 'medium', timeStyle: 'short' });
+  const arabicNumber = new Intl.NumberFormat('ar-QA', { maximumFractionDigits: 1, numberingSystem: 'latn' });
+  const dateTime = new Intl.DateTimeFormat('ar-QA', {
+    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    hourCycle: 'h23', numberingSystem: 'latn', timeZone: 'Asia/Qatar',
+  });
   const priorityLabels = { low: 'منخفضة', normal: 'عادية', high: 'عالية', urgent: 'عاجلة' };
   const eventLabels = {
     card_created: 'إنشاء البطاقة', card_assigned: 'إسناد إلى جلسة', blocker_observed: 'تسجيل عائق',
@@ -34,7 +36,6 @@
   let currentCardId = null;
   let boardController = null;
   let searchTimer = 0;
-  let boardLoaded = false;
   let commandIdempotencyKey = null;
   let commandPayloadSignature = null;
 
@@ -270,7 +271,6 @@
     try {
       const board = await requestJSON(url, { signal: boardController.signal });
       currentBoard = board;
-      boardLoaded = true;
       $('workflow-loading').hidden = true;
       $('workflow-error').hidden = true;
       $('workflow-board').setAttribute('aria-busy', 'false');
@@ -494,32 +494,6 @@
     }
   }
 
-  function switchTab(index, focus = false) {
-    tabs.forEach((tab, i) => {
-      const active = i === index;
-      tab.classList.toggle('is-active', active);
-      tab.setAttribute('aria-selected', String(active));
-      tab.tabIndex = active ? 0 : -1;
-      $(tab.getAttribute('aria-controls')).hidden = !active;
-    });
-    if (focus) tabs[index].focus();
-    if (index === 0) window.dispatchEvent(new Event('resize'));
-    if (index === 1 && !boardLoaded) loadBoard();
-  }
-
-  tabs.forEach((tab, index) => {
-    tab.addEventListener('click', () => switchTab(index));
-    tab.addEventListener('keydown', event => {
-      let next = index;
-      if (event.key === 'ArrowLeft') next = (index + 1) % tabs.length;
-      else if (event.key === 'ArrowRight') next = (index - 1 + tabs.length) % tabs.length;
-      else if (event.key === 'Home') next = 0;
-      else if (event.key === 'End') next = tabs.length - 1;
-      else return;
-      event.preventDefault();
-      switchTab(next, true);
-    });
-  });
   $('workflow-refresh').addEventListener('click', () => loadBoard());
   $('workflow-retry').addEventListener('click', () => loadBoard());
   $('workflow-filters').addEventListener('submit', event => { event.preventDefault(); loadBoard(); });
@@ -554,7 +528,9 @@
   });
   $('workflow-detail-dialog').addEventListener('close', () => { currentCardId = null; });
 
+  loadBoard();
+
   window.setInterval(() => {
-    if (!$('workflow-view').hidden) loadBoard({ showLoading: false });
+    loadBoard({ showLoading: false });
   }, 60000);
 })();

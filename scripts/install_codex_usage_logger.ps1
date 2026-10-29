@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $rootPath = (Resolve-Path -LiteralPath $Root).Path
-$logger = Join-Path $rootPath 'scripts\codex_usage_logger.py'
+$logger = Join-Path $rootPath 'scripts\usage_monitor\codex_usage_logger.py'
 $python = (Get-Command python.exe -ErrorAction Stop).Source
 if (-not (Test-Path -LiteralPath $logger -PathType Leaf)) {
     throw "Usage logger was not found: $logger"

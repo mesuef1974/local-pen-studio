@@ -28,28 +28,25 @@
     .weekly-empty{color:#754b0c}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
+  <link rel="stylesheet" href="/identity.css">
 </head>
 <body>
 <a class="skip-link" href="#summary">تجاوز إلى ملخص الاستهلاك</a>
 <main class="shell">
   <header class="top">
     <div class="brand"><div class="mark" aria-hidden="true">◒</div><div><div class="eyebrow">مركز متابعة الاستخدام المحلي</div><h1 class="title">لوحة استهلاك التوكنز</h1></div></div>
-    <div class="actions"><span class="status"><i class="dot" aria-hidden="true"></i><span id="live-status">مزامنة محلية تلقائية كل دقيقة</span></span><span id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span><button class="btn" id="refresh" type="button" aria-busy="false">تحديث الآن ↻</button></div>
+    <div class="actions"><span class="status"><i class="dot is-stale" id="live-status-dot" aria-hidden="true"></i><span id="live-status">بانتظار قراءة قاعدة البيانات…</span></span><span id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span><button class="btn" id="refresh" type="button" aria-busy="false">تحديث الآن ↻</button></div>
   </header>
   <section class="hero"><div><h2>صورة واضحة لاستهلاك جلساتك</h2><p>تجميع محلي لقياسات Codex، مع فصل استهلاك السياق عن الحصة الأسبوعية.</p></div><div class="hero-badge">🔒 البيانات تبقى على هذا الجهاز</div></section>
-  <nav class="workspace-tabs" aria-label="أقسام لوحة المتابعة" role="tablist">
-    <button class="workspace-tab is-active" id="tab-usage" type="button" role="tab" aria-selected="true" aria-controls="usage-view" tabindex="0">استهلاك التوكنز</button>
-    <button class="workspace-tab" id="tab-workflow" type="button" role="tab" aria-selected="false" aria-controls="workflow-view" tabindex="-1">مصنع البطاقات</button>
-  </nav>
-  <div id="usage-view" role="tabpanel" aria-labelledby="tab-usage">
+  <div id="usage-view">
   <section class="grid" id="summary" aria-label="ملخص المؤشرات" tabindex="-1">
     <article class="card metric" style="--wash:#e7f4f2"><div class="metric-label">إجمالي توكنز الجلسات</div><div class="metric-value" id="total-tokens">—</div><div class="metric-note">مجموع آخر قراءة لكل جلسة</div></article>
-    <article class="card metric" style="--wash:#edf1fb"><div class="metric-label">الجلسات المقاسة</div><div class="metric-value" id="session-count">—</div><div class="metric-note" id="active-note">جلسات لها عينات قياس</div></article>
+    <article class="card metric" style="--wash:#edf1fb"><div class="metric-label">الجلسات النشطة</div><div class="metric-value" id="session-count">—</div><div class="metric-note" id="active-note">من أصل 4 جلسات حالية</div></article>
     <article class="card metric" style="--wash:#fcf2e1"><div class="metric-label">متوسط استخدام السياق</div><div class="metric-value" id="avg-context">—</div><div class="metric-note">آخر قراءة لكل جلسة؛ قد تختلف تواريخها</div></article>
     <article class="card metric" style="--wash:#f8eaea"><div class="metric-label">أعلى ضغط سياق</div><div class="metric-value" id="peak-context">—</div><div class="metric-note">أعلى قراءة في آخر عينات الجلسات</div></article>
   </section>
   <section class="weekly-panel usage-status-panel" aria-label="الحصة الأسبوعية">
-    <div class="usage-status-head"><div class="usage-status-title"><span class="dot" id="usage-status-dot"></span><strong>استهلاك الحصة الأسبوعية</strong><span class="status-chip" id="usage-status-state">جارٍ التحميل</span></div><span class="weekly-caption" id="usage-status-updated">—</span></div>
+    <div class="usage-status-head"><div class="usage-status-title"><span class="dot is-stale" id="usage-status-dot" aria-hidden="true"></span><strong>استهلاك الحصة الأسبوعية</strong><span class="status-chip" id="usage-status-state">جارٍ التحميل</span></div><span class="weekly-caption" id="usage-status-updated">—</span></div>
     <div class="usage-weekly"><div class="usage-status-row"><span class="usage-status-label">حد 7 أيام</span><strong class="weekly-remaining" id="weekly-remaining">—</strong></div>
       <div class="weekly-track" id="weekly-track" role="progressbar" aria-label="نسبة الحصة الأسبوعية المتبقية" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="weekly-fill" id="weekly-fill"></div></div>
       <div class="weekly-foot"><span><b id="weekly-used">—</b> مستخدمة</span><span><b id="weekly-remaining-foot">—</b> متبقية</span></div>
@@ -71,10 +68,10 @@
       <article class="chart-card" data-session-id="01a1836f-d720-7950-834a-035a0052411e"><div class="chart-card-head"><div><h3>تنسيق إنتاج SVG</h3><div class="sub" id="meta-svg">تحميل قياسات الجلسة…</div></div><div class="session-total" id="total-svg">—</div></div><div class="session-chart"><canvas id="chart-svg" role="img" aria-label="مخطط جلسة تنسيق إنتاج SVG: إجمالي التوكنز وضغط السياق" aria-describedby="summary-svg" tabindex="0" aria-keyshortcuts="ArrowLeft ArrowRight Home End"></canvas><div class="chart-tooltip" id="tooltip-svg" role="tooltip" hidden></div><div class="chart-empty" id="empty-svg">لا توجد قياسات لهذه الجلسة بعد.</div></div><p class="chart-summary" id="summary-svg">جارٍ إعداد ملخص تنسيق إنتاج SVG…</p></article>
     </div>
   </section>
-  <section class="panel table-panel" aria-labelledby="sessions-title"><div class="panel-head"><div><h3 id="sessions-title">تفاصيل الجلسات</h3><div class="sub">آخر عينة محفوظة لكل جلسة</div></div><span class="pill" id="updated-badge">لم تُحدّث</span></div><div class="table-scroll"><table><thead><tr><th scope="col">الجلسة</th><th scope="col">النموذج</th><th scope="col">إجمالي التوكنز</th><th scope="col">ضغط السياق</th><th scope="col">آخر تحديث</th></tr></thead><tbody id="sessions-body"></tbody><tbody id="sessions-empty" hidden><tr><td class="empty" colspan="5">لا توجد بيانات بعد. شغّل مسجل القياس المحلي، ثم اختر «تحديث الآن».</td></tr></tbody></table></div></section>
+  <section class="panel table-panel" aria-labelledby="sessions-title"><div class="panel-head"><div><h3 id="sessions-title">تفاصيل الجلسات النشطة</h3><div class="sub">آخر عينة محفوظة للجلسات الأربع الحالية؛ تبقى السجلات التاريخية محفوظة في SQLite.</div></div><span class="pill" id="updated-badge">لم تُحدّث</span></div><div class="table-scroll"><table><thead><tr><th scope="col">الجلسة</th><th scope="col">النموذج</th><th scope="col">إجمالي التوكنز</th><th scope="col">ضغط السياق</th><th scope="col">آخر تحديث</th></tr></thead><tbody id="sessions-body"></tbody><tbody id="sessions-empty" hidden><tr><td class="empty" colspan="5">لا توجد بيانات بعد. شغّل مسجل القياس المحلي، ثم اختر «تحديث الآن».</td></tr></tbody></table></div></section>
   <div class="footer"><span>قراءات تقديرية كما وردت من سجل Codex المحلي؛ لا تمثل عداد فوترة.</span><span id="generated-at"></span></div>
   </div>
-  <section id="workflow-view" class="workflow-view" role="tabpanel" aria-labelledby="tab-workflow" hidden>
+  <section id="workflow-view" class="workflow-view">
     <header class="workflow-heading">
       <div><div class="eyebrow">Local Pen Studio · مركز التنسيق</div><h2>مصنع البطاقات</h2><p>أوامر المالك، تنفيذ الجلسات، التسليم، والتحقق الآلي في لوحة واحدة.</p></div>
       <div class="workflow-actions"><span id="workflow-connection" class="workflow-connection" role="status"><i aria-hidden="true"></i><span>لم يبدأ الاتصال</span></span><button class="btn workflow-primary" id="workflow-command-open" type="button">＋ أمر مالك جديد</button><button class="btn" id="workflow-refresh" type="button">تحديث اللوحة</button></div>
@@ -132,7 +129,7 @@
   </section>
 </main>
 <span id="chart-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
-<script src="dashboard.js" defer></script>
-<script src="workflow.js" defer></script>
+<script src="dashboard.js?v=time-minute-4" defer></script>
+<script src="workflow.js?v=workflow-api-5" defer></script>
 </body>
 </html>
