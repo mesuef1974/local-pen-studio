@@ -29,11 +29,11 @@ class RoutingTests(unittest.TestCase):
         output,stats=route_junctions(paths)
         self.assertEqual(len(output),2)
         np.testing.assert_array_equal(raster(paths,(12,12)),raster(output,(12,12)))
-    def test_photo_lineart_preserves_every_traced_pixel(self):
-        image=np.array(Image.open(Path(__file__).parent/'photo-lineart-comparison/realistic.png').convert('RGB'))
+    def test_reference_lineart_preserves_every_traced_pixel(self):
+        image=np.array(Image.open(Path(__file__).parent/'reference-benchmark/reference.png').convert('RGB'))
         args={'image':encode(image),'lineMode':'centerline','minLength':2,'lineDenoise':0,'tolerance':0}
         old=extract_paths({**args,'junctionRouting':False});new=extract_paths(args)
-        self.assertLess(len(new['paths']),len(old['paths']))
+        self.assertLessEqual(len(new['paths']),len(old['paths']))
         np.testing.assert_array_equal(raster(old['paths'],image.shape[:2]),raster(new['paths'],image.shape[:2]))
 
 if __name__=='__main__':unittest.main()

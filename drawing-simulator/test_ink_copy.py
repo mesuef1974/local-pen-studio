@@ -20,8 +20,8 @@ class InkCopyTests(unittest.TestCase):
         np.testing.assert_array_equal(raster(paths,mask.shape),mask)
     def test_large_fill_is_bounded(self):
         with self.assertRaises(ValueError):copy_ink(np.full((400,400),255,np.uint8))
-    def test_photo_ink_is_copied_without_extra_or_missing_pixels(self):
-        image=np.array(Image.open(Path(__file__).parent/'photo-lineart-comparison/realistic.png').convert('L'))
+    def test_reference_ink_is_copied_without_extra_or_missing_pixels(self):
+        image=np.array(Image.open(Path(__file__).parent/'reference-benchmark/reference.png').convert('L'))
         _,mask=cv2.threshold(image,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
         np.testing.assert_array_equal(raster(copy_ink(mask),mask.shape),mask)
 

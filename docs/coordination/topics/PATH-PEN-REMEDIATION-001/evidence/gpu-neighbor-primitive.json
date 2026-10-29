@@ -1,0 +1,18 @@
+{
+  "schema": "gpu-neighbor-primitive-probe-v1",
+  "sample": "flux-studio/sample-ink.png",
+  "shape": [768, 768],
+  "skeletonPixels": 10550,
+  "device": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "method": "20 repetitions after warm-up; includes CPU/GPU transfer, convolution, synchronization, and GPU-to-CPU readback",
+  "cpuPrimitive": {
+    "operation": "OpenCV 3x3 eight-neighbor count",
+    "medianMs": 4.155
+  },
+  "gpuPrimitive": {
+    "operation": "PyTorch CUDA 3x3 eight-neighbor convolution",
+    "medianMs": 0.763,
+    "exactIntegerNeighborCountMatch": true
+  },
+  "decision": "Prototype evidence only. Not integrated: the measurement covers neighbor counting, not complete adjacency construction, Python graph tracing, or end-to-end extraction. No extraction speedup is claimed from this primitive probe."
+}

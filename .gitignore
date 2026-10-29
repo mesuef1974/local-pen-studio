@@ -49,6 +49,8 @@
 !/pipeline-studio/package.json
 !/pipeline-studio/requirements-generation.txt
 /drawing-simulator/*
+!/drawing-simulator/approved-vectors.mjs
+!/drawing-simulator/test-approved-vectors.mjs
 !/drawing-simulator/*.py
 !/drawing-simulator/*.js
 !/drawing-simulator/*.cjs

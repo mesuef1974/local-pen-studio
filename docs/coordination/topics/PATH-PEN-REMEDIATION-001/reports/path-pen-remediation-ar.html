@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>تقرير إصلاح مسار القلم وقياسه</title>
+  <style>
+    :root{color-scheme:light;--ink:#183532;--muted:#526a67;--line:#d7e2df;--brand:#087f73;--wash:#f2f7f5;--warn:#fff5df}
+    *{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:16px/1.8 "Segoe UI",Tahoma,sans-serif}
+    main{max-width:1120px;margin:auto;padding:28px 20px 48px}header,section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:18px}
+    h1{font-size:clamp(25px,4vw,36px);line-height:1.35;margin:0 0 8px}h2{font-size:22px;color:#075f57;margin:0 0 14px}h3{font-size:18px;margin:18px 0 8px}
+    p{margin:8px 0}.muted{color:var(--muted)}.callout{background:var(--warn);border-right:4px solid #c79226;padding:12px 16px;border-radius:8px}
+    .table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:680px}th,td{text-align:right;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}th{background:#e7f2ef;color:#164b45}
+    code,pre{font-family:Consolas,"Cascadia Code",monospace;direction:ltr;unicode-bidi:embed}code{overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f1f5f4;padding:14px;border-radius:8px;text-align:left}
+    a{color:#075f57;text-underline-offset:3px}.status{display:inline-block;border:1px solid #a8d5ca;background:#e9f7f2;border-radius:999px;padding:2px 10px;font-size:14px}
+    ul,ol{padding-right:24px}footer{color:var(--muted);font-size:14px;padding:10px 2px}@media(max-width:640px){main{padding:12px}header,section{padding:18px}body{font-size:15px}}@media print{body{background:#fff;font-size:12px}main{max-width:none;padding:0}header,section{break-inside:avoid;border-color:#bbb;padding:14px;margin-bottom:10px}a{color:inherit;text-decoration:none}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>إصلاحات مسار القلم: القياس والحدود والتكامل</h1>
+    <p class="muted">مراجعة تنفيذ بطاقة <code>CARD-20261029-602AD20D-LASER</code> على فرع مبني من <code>main</code> عند الالتزام <code>36058c65d368ee307965c7742f752b446c6cac6f</code>.</p>
+    <p><span class="status">قيد التنفيذ — استعادة استثنائية موثقة</span></p>
+    <p class="callout">هذا التقرير يسجل نتائج العمل المحلي والقياس. استُعيدت الحالة إلى in_progress بتوجيه المالك عبر قرار مسجل (الحدث 52) وانتقال موثق (الحدث 53). أزيلت قاعدة الانتقال المؤقتة بعد الاستعادة. أُنشئ commit محدود على الفرع؛ لم يُدفع بعد، ومراجعة QA الآلية لم تُطلب بعد.</p>
+  </header>
+
+  <section>
+    <h2>الخلاصة التنفيذية</h2>
+    <p>وُحّد حد المسارات الفعلي عند <strong>10,000</strong> في الاستخراج والاستيراد، وثُبتت نقاط 6,000 و6,001 و10,000 و10,001 باختبارات. إصلاح التتبّع خفّض كلفة تتبع عقد الرسم، كما جرى تخطي EdgeDrawing غير المستخدم في وضع المركز الخطي. في مقارنة متناوبة من 9 تشغيلات لكل تطبيق، انخفض الزمن الكلي 13.98% لعينة الرسم 768×768 و20.45% للمرجع 512×640، مع تطابق صورة الحبر الناتجة بايتًا ببايت.</p>
+    <p>نُفذ فحص CUDA تجريبي على RTX 4060 لعدّ الجيران: 0.763 ms مقابل 4.155 ms لعملية CPU المقارنة، مع تطابق الناتج. لم يُنقل الاستخراج إلى GPU؛ التجربة تقيس عملية فرعية ولا تثبت كسبًا لمسار الاستخراج الكامل.</p>
+  </section>
+
+  <section>
+    <h2>1. حد المسارات واختبار الحدود</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>المكوّن</th><th>العقد بعد التعديل</th><th>الدليل</th></tr></thead>
+      <tbody>
+        <tr><td><code>drawing-simulator/pen_paths.py</code></td><td>يرفض أكثر من 10,000 مسار برسالة حد صريحة.</td><td>اختبار إنشاء 6,000 و6,001 و10,000 مسار وقبولها؛ 10,001 مرفوض.</td></tr>
+        <tr><td><code>flux-studio/faithful_paths.py</code> و<code>path_fidelity.py</code></td><td>بقي عقد 10,000 الموجود في main دون تغيير.</td><td>اختبار يقبل 6,000 و6,001 و10,000 ويرفض 10,001.</td></tr>
+        <tr><td>استيراد المتجهات في المحرر</td><td>تحقق موحد في <code>approved-vectors.mjs</code> مع حد 10,000؛ الملفان أُضيفا صراحة لاستثناءات <code>.gitignore</code>.</td><td>اختبار Node لحدود العدد وهندسة النقاط.</td></tr>
+        <tr><td><code>drawing-simulator/path-methodology-ar.html</code></td><td>تحديث التوثيق من حد قديم إلى 4 ملايين بكسل و10,000 مسار.</td><td>مطابقة النص للعقد التنفيذي الحالي.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>2. زمن الاستخراج ودقة المخرجات</h2>
+    <p>قياس paired متناوب: تشغيل baseline ثم الحالي، وعكس الترتيب في الدورة التالية، بعد تشغيل تمهيدي لكل نسخة. كل نسخة 9 مرات؛ زمن الجدار يشمل فك الصورة والتحقق وبناء المسارات والتبسيط. المصدران مثبتان ببصمة SHA-256 داخل ملف الدليل.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>العينة</th><th>Baseline</th><th>الحالي</th><th>التحسن</th><th>المسارات</th><th>مطابقة القناع</th></tr></thead>
+      <tbody>
+        <tr><td>رسم خطي 768×768</td><td>81.023 ms</td><td>69.697 ms</td><td>13.98%</td><td>463 → 463</td><td>تطابق تام؛ IoU مع الهيكل 98.834%</td></tr>
+        <tr><td>مرجع 512×640</td><td>20.379 ms</td><td>16.211 ms</td><td>20.45%</td><td>10 → 10</td><td>تطابق تام؛ IoU مع الهيكل 100%</td></tr>
+      </tbody>
+    </table></div>
+    <h3>تفصيل المراحل لعينة 768×768، وسيط 9 تشغيلات</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>المرحلة</th><th>Baseline ms</th><th>الحالي ms</th><th>الفرق</th></tr></thead>
+      <tbody>
+        <tr><td>فك الصورة والتحقق</td><td>10.845</td><td>11.326</td><td>+0.481</td></tr>
+        <tr><td>رمادي وتنظيف</td><td>0.247</td><td>0.243</td><td>−0.004</td></tr>
+        <tr><td>EdgeDrawing غير المستخدم</td><td>5.823</td><td>0.006</td><td>−5.817</td></tr>
+        <tr><td>العتبة والتخفيف</td><td>0.730 + 6.780</td><td>0.662 + 5.836</td><td>−1.012</td></tr>
+        <tr><td>بناء الجوار</td><td>25.715</td><td>26.248</td><td>+0.533</td></tr>
+        <tr><td>تتبّع الرسم</td><td>14.630</td><td>10.086</td><td>−4.544</td></tr>
+        <tr><td>ربط التقاطعات وتبسيط المسارات</td><td>7.087 + 0.779</td><td>6.439 + 0.876</td><td>−0.551</td></tr>
+        <tr><td>المجموع الموقّت داخل الدالة</td><td>78.012</td><td>68.646</td><td>−9.366</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted">التحسين المركزي في التتبّع: تمثيل روابط الجوار بكثافة عبر NumPy ثم تحويلها لقوائم جيران Python قبل المرور، ما خفّض زمن التتبّع المقاس. بناء الجوار ارتفع قليلًا لهذه العينة؛ المحصلة في القياس المتناوب ظلت أسرع مع نفس الصورة الناتجة. المراحل والمجموع لا تشملان تكلفة إعداد/إرجاع بيانات القياس الخارجية، لذا مرجع القرار هو زمن الجدار في الجدول.</p>
+  </section>
+
+  <section>
+    <h2>3. فحص GPU على الجهاز</h2>
+    <p>الجهاز المبلّغ عنه: Intel i7-13650HX وNVIDIA RTX 4060 Laptop GPU بذاكرة 8 GiB. تأكدت تجربة PyTorch CUDA من ظهور RTX 4060 وعملت على مصفوفة الهيكل 768×768.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>العملية المصغرة</th><th>CPU OpenCV</th><th>GPU CUDA شامل النسخ والتزامن والقراءة</th><th>الدقة</th></tr></thead>
+      <tbody><tr><td>حساب عدد جيران الهيكل في نافذة 3×3</td><td>4.155 ms</td><td>0.763 ms</td><td>تطابق عددي تام</td></tr></tbody>
+    </table></div>
+    <p>هذه نتيجة مرشح لتجربة أوسع فقط. لم تُحسب فيها كامل خريطة الجوار، أو تتبع المسارات، أو التوجيه، لذلك لم تُدمج في التطبيق ولم تُنسب إليها سرعة الاستخراج. يلزم قياس تنفيذ كامل مع بوابة تطابق القناع قبل أي نقل إنتاجي.</p>
+  </section>
+
+  <section>
+    <h2>4. الاختبارات وإصلاح CI</h2>
+    <ul>
+      <li>استبدل مرجع الملف الغائب <code>drawing-simulator/photo-lineart-comparison/realistic.png</code> بالصورة المتعقبة <code>drawing-simulator/reference-benchmark/reference.png</code> في <code>test_centerline_routing.py</code> و<code>test_ink_copy.py</code>. لا تُضاف عينات مولدة أو ملفات شخصية إلى Git.</li>
+      <li>أُضيف الاختباران إلى خطوة Python في <code>.github/workflows/ci.yml</code>، وأضيف اختبار استيراد المتجه إلى خطوة JavaScript.</li>
+      <li>نجحت محليًا 48 وحدة Python للرسم والمسارات، و24 وحدة Python في flux-studio، و7 اختبارات JavaScript للمحرر والمسارات. كما نجح فحص سياسة المستودع على 340 ملفًا، واختبار السياسة، وفحص YAML.</li>
+    </ul>
+    <p>أوامر إعادة الاختبار:</p>
+    <pre>Push-Location drawing-simulator
+python -m unittest test_lineart_tools test_ink_copy test_centerline_routing
+node --test test-approved-vectors.mjs
+Pop-Location
+Push-Location flux-studio
+python -m unittest test_fidelity
+Pop-Location</pre>
+    <p>أمر إعادة القياس المتناوب:</p>
+    <pre>python drawing-simulator/profile_centerline_compare.py --repeats 9 --output docs/coordination/topics/PATH-PEN-REMEDIATION-001/evidence/centerline-paired-comparison.json</pre>
+  </section>
+
+  <section>
+    <h2>5. الأدلة وحدود النتيجة</h2>
+    <ul>
+      <li><a href="../evidence/centerline-paired-comparison.json">قياس baseline والحالي، المراحل، بصمات الصور ومطابقة المخرجات</a>.</li>
+      <li><a href="../evidence/gpu-neighbor-primitive.json">قياس عملية CUDA التجريبية وقرار عدم دمجها</a>.</li>
+      <li><a href="../../../../../drawing-simulator/pen_paths.py">منفذ استخراج المسارات</a> · <a href="../../../../../drawing-simulator/profile_centerline_compare.py">أداة مقارنة الأداء</a>.</li>
+    </ul>
+    <p>مطابقة المسارات الرقمية تامة بين baseline والحالي، لكن قناع القلم الفعلي التجريبي يتفاوت حسب سماكة القلم وتحويل المليمتر للبكسل. في عينة 768×768 كانت مؤشرات تدقيق القلم 58.79% IoU و69.30% استرجاع؛ هذه مشكلة معايرة/تمثيل مستقلة عن تحسين الأداء ولا ندعي أن هذا الإصلاح حلها.</p>
+  </section>
+
+  <section>
+    <h2>6. مراجعة مراحل الفلو: ما تبقى للإكمال</h2>
+    <ol>
+      <li>اكتملت الاختبارات المحلية ذات الصلة وفحص YAML وسياسة المستودع بنجاح.</li>
+      <li>مراجعة التغييرات المحددة و<code>git diff --check</code>، ثم تثبيت commit محدود النطاق.</li>
+      <li>دفع الفرع فقط، والتحقق من تطابق رأس الفرع المحلي والبعيد وظهور تشغيل CI.</li>
+      <li>طلب/تسجيل نتيجة QA الآلية مع ربطها بالبطاقة وأدلة القياس.</li>
+      <li>تسجيل ملف التقرير، commit، نتيجة الدفع والفحوص في المصنع؛ بعد ذلك فقط تحديث الحالة إلى مكتملة. لا دمج ولا نشر ضمن هذا التكليف.</li>
+    </ol>
+  </section>
+  <footer>أُعدّ هذا التقرير للبطاقة المحددة على فرع العمل. تحديثه النهائي مطلوب بعد فحوص CI والدفع ومراجعة QA.</footer>
+</main>
+</body>
+</html>
