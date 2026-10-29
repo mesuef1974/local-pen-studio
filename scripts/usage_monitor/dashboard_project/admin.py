@@ -5,6 +5,7 @@ from django.contrib.admin import AllValuesFieldListFilter
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
+from django.db import connections, transaction
 
 from .models import ADMIN_MODELS, DISPLAY_COLUMNS, FILTER_FIELDS, SEARCH_FIELDS
 
@@ -130,6 +131,36 @@ class WorkflowTableAdmin(admin.ModelAdmin):
 
     def has_module_permission(self, request):
         return request.user.is_active and request.user.is_superuser
+
+    @staticmethod
+    def _audit_snapshot(obj):
+        return type(obj).objects.using("workflow").filter(pk=obj.pk).values().first()
+
+    def _write_audit(self, request, obj, action, before, after):
+        import json
+        from usage_database import utc_now
+        with connections["workflow"].cursor() as cursor:
+            cursor.execute("""INSERT INTO workflow_admin_audit
+                (actor_username,table_name,object_pk,action_code,before_json,after_json,recorded_at)
+                VALUES(%s,%s,%s,%s,%s,%s,%s)""", [
+                request.user.get_username(), obj._meta.db_table, str(obj.pk), action,
+                json.dumps(before, ensure_ascii=False, default=str) if before is not None else None,
+                json.dumps(after, ensure_ascii=False, default=str) if after is not None else None,
+                utc_now(),
+            ])
+
+    def save_model(self, request, obj, form, change):
+        with transaction.atomic(using="workflow"):
+            before = self._audit_snapshot(obj) if change else None
+            super().save_model(request, obj, form, change)
+            self._write_audit(request, obj, "update" if change else "create", before,
+                              self._audit_snapshot(obj))
+
+    def delete_model(self, request, obj):
+        with transaction.atomic(using="workflow"):
+            before = self._audit_snapshot(obj)
+            self._write_audit(request, obj, "delete", before, None)
+            super().delete_model(request, obj)
 
     def _label(self, obj, field):
         value = getattr(obj, field)
