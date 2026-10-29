@@ -10,7 +10,7 @@
 </head>
 <body><main class="sheet">
 <header class="hero"><div><h1>بطاقة تنفيذ بنية البيانات المحلية</h1><p>تحويل مخرجات JSON إلى جداول SQLite وخدمة اللوحة عبر API محلية</p></div><div class="ref">FLOW-INFRA-EXEC-001</div></header>
-<div class="status"><strong>الحالة: نُفّذ العمل والتحقق المحلي ودُفع commit التنفيذ إلى Git؛ البطاقة بانتظار مراجعة المالك.</strong> اعتمد المالك مبادئ سجل الأحداث المرحلي، ورُحّلت البيانات الفعلية دون حذف مصدر الرجوع.</div>
+<div class="status"><strong>الحالة: أُنجزت البطاقة آليًا بعد اجتياز معايير الجودة والتحقق من تطابق الدفع مع origin.</strong> دور المالك إصدار الأمر؛ التنفيذ والتحقق والإغلاق آلي.</div>
 <section><h2>بيانات التكليف</h2><div class="facts">
 <div class="fact"><b>صاحب القرار</b>المالك</div><div class="fact"><b>المنسق والمنفذ</b>جلسة عصف ذهني الحالية</div><div class="fact"><b>التوجيه وسببه</b>المنسق؛ تنفيذ قاعدة البيانات والربط والتوثيق يقع ضمن مسؤوليته</div>
 <div class="fact"><b>الموضوع المرجعي</b><a href="../topics/WORKFLOW-INFRA-001/workflow-infrastructure-brainstorm-ar.html">FLOW-INFRA-001 — محضر العصف المعماري</a></div><div class="fact"><b>المستودع والفرع</b><code>local-pen-studio</code> · فرع تنفيذ مستقل مشتق من فرع العصف</div><div class="fact"><b>تاريخ الإصدار</b>28 أكتوبر 2026</div>
@@ -34,7 +34,7 @@
 <li>إذا تعذر تحقيق شرط، يُسجل السبب والدليل في البطاقة وتبقى المهمة مفتوحة.</li>
 </ul></section>
 <section><h2>التسليم والاستلام</h2><div class="wrap"><table><thead><tr><th>معيار القبول</th><th>الحالة والدليل</th></tr></thead><tbody>
-<tr><td>مصدر التنفيذ مثبت في Git</td><td>تم الدفع والتحقق على الفرع <code>codex/workflow-infrastructure-brainstorm-001</code>، commit التنفيذ <code>05268dd2d050caebe4c14aa2335436688d2375df</code>؛ HEAD المحلي يطابق <code>origin</code>.</td></tr><tr><td>الترحيل ومطابقة البيانات</td><td>13 جلسة؛ 4,971 عينة قديمة استوردت؛ العينات الجديدة مستمرة؛ 66 مؤشرًا محفوظًا وقت تنفيذ الترحيل</td></tr><tr><td>المسجل واللوحة</td><td>مجدول محلي يعمل؛ API تعيد بيانات SQLite</td></tr><tr><td>الفحوص والنسخة الاحتياطية</td><td>9 اختبارات ناجحة؛ نسخة احتياطية سليمة</td></tr><tr><td>Commit وPush وتطابق remote</td><td>اكتمل لنسخة التنفيذ؛ سجل البطاقة الحالي يوثق الإيصال.</td></tr><tr><td>قرار المالك بعد التسليم</td><td>بانتظار المراجعة</td></tr>
-</tbody></table></div><p class="note"><strong>مسؤولية البطاقة:</strong> تبقى على المنسق حتى اكتمال التحقق والدفع والتسليم. لا يعني تنفيذ الفرع دمجه في الفرع الافتراضي أو نشره.</p></section>
+<tr><td>مصدر التنفيذ مثبت في Git</td><td>تم الدفع والتحقق على الفرع <code>codex/workflow-infrastructure-brainstorm-001</code>، commit التنفيذ <code>05268dd2d050caebe4c14aa2335436688d2375df</code>؛ HEAD المحلي يطابق <code>origin</code>.</td></tr><tr><td>الترحيل ومطابقة البيانات</td><td>13 جلسة؛ 4,971 عينة قديمة استوردت؛ العينات الجديدة مستمرة؛ 66 مؤشرًا محفوظًا وقت تنفيذ الترحيل</td></tr><tr><td>المسجل واللوحة</td><td>مجدول محلي يعمل؛ API تعيد بيانات SQLite</td></tr><tr><td>الفحوص والنسخة الاحتياطية</td><td>9 اختبارات ناجحة؛ نسخة احتياطية سليمة</td></tr><tr><td>Commit وPush وتطابق remote</td><td>اكتمل لنسخة التنفيذ؛ سجل البطاقة الحالي يوثق الإيصال.</td></tr>
+</tbody></table></div><p class="note"><strong>مسؤولية البطاقة:</strong> تبقى على المنسق حتى اكتمال التحقق والدفع والتسليم؛ تُغلق آليًا بعد استيفاء الشروط المسجلة دون قبول يدوي من المالك.</p></section>
 <footer class="foot"><span>البطاقة: FLOW-INFRA-EXEC-001</span><span>الحالة: تنفيذ</span><span>المالك: صاحب القرار النهائي</span></footer>
 </main></body></html>

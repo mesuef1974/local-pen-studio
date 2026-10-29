@@ -175,6 +175,22 @@ class UsageLoggerTests(unittest.TestCase):
         finally:
             connection.close()
 
+    def test_terminal_status_closes_active_assignment(self):
+        connection = connect(self.database)
+        try:
+            upsert_actor(connection, "laser", "ليزر")
+            create_card(connection, card_id="FLOW-TERMINAL", title="بطاقة نهائية",
+                        owner_request="طلب", scope="نطاق", status_code="assigned",
+                        assigned_actor_id="laser")
+            transition_card(connection, "FLOW-TERMINAL", "completed", actor_id=None,
+                            stage_code="quality", note="اكتملت الفحوص الآلية")
+            assignment = connection.execute(
+                "SELECT ended_at FROM coordination_assignments WHERE card_id='FLOW-TERMINAL'"
+            ).fetchone()
+            self.assertIsNotNone(assignment[0])
+        finally:
+            connection.close()
+
     def test_incremental_runs_are_idempotent(self):
         self.write_rows({"type": "session_meta", "payload": {"session_id": self.session}}, self.usage())
         self.run_logger()

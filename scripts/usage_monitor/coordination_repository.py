@@ -112,11 +112,17 @@ def transition_card(connection: sqlite3.Connection, card_id: str, next_status: s
                           note=note, related_event_id=related_event_id,
                           source_type=source_type, source_id=source_id)
         legacy = next_status if next_status in LEGACY_STATUS else COARSE_STATUS.get(next_status, "in_progress")
+        transitioned_at = utc_now()
         connection.execute(
             """UPDATE coordination_cards SET current_status_code=?,current_status_version=?,status=?,updated_at=?
             WHERE card_id=?""",
-            (next_status, status["version"], legacy, utc_now(), card_id),
+            (next_status, status["version"], legacy, transitioned_at, card_id),
         )
+        if next_status in {"completed", "failed", "archived"}:
+            connection.execute(
+                "UPDATE coordination_assignments SET ended_at=? WHERE card_id=? AND ended_at IS NULL",
+                (transitioned_at, card_id),
+            )
     return event_id
 
 
