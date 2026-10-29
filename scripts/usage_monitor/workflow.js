@@ -333,10 +333,13 @@
 
   function appendFacts(root, card, deliveries = []) {
     const facts = element('div', undefined, 'workflow-detail-facts');
+    const latestDelivery = deliveries[deliveries.length - 1];
+    const branchName = card.branch_name || latestDelivery?.branch_name;
+    const commitSha = card.commit_sha || latestDelivery?.commit_sha;
     const pairs = [
       ['الحالة', statusLabel(card)], ['الجلسة المسؤولة', safeText(card.assigned_actor_name)],
       ['النطاق', safeText(card.scope)], ['الأولوية', priorityLabels[card.priority_code] || safeText(card.priority_code)],
-      ['الفرع', safeText(card.branch_name)], ['Commit', safeText(card.commit_sha)],
+      ['الفرع', safeText(branchName)], ['Commit', safeText(commitSha)],
       ['التحقق من الدفع', deliverySummary(deliveries)], ['نتيجة QA', outcomeLabels[card.qa_outcome] || safeText(card.qa_outcome)],
       ['تاريخ الإنشاء', formatDate(card.created_at)], ['آخر تحديث', formatDate(card.updated_at)],
     ];
