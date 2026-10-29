@@ -2,10 +2,10 @@
   'use strict';
 
   const $ = id => document.getElementById(id);
-  const number = new Intl.NumberFormat('ar-QA', { maximumFractionDigits: 1 });
-  const wholeNumber = new Intl.NumberFormat('ar-QA', { maximumFractionDigits: 0 });
-  const dateTime = new Intl.DateTimeFormat('ar-QA', { dateStyle: 'medium', timeStyle: 'short' });
-  const axisTime = new Intl.DateTimeFormat('ar-QA', { month: 'short', day: 'numeric', hour: '2-digit' });
+  const number = new Intl.NumberFormat('ar-QA', { maximumFractionDigits: 1, numberingSystem: 'latn' });
+  const wholeNumber = new Intl.NumberFormat('ar-QA', { maximumFractionDigits: 0, numberingSystem: 'latn' });
+  const dateTime = new Intl.DateTimeFormat('ar-QA', { dateStyle: 'medium', timeStyle: 'short', numberingSystem: 'latn' });
+  const axisTime = new Intl.DateTimeFormat('ar-QA', { month: 'short', day: 'numeric', hour: '2-digit', numberingSystem: 'latn' });
   const specs = [
     { id: '01a182be-0161-7e73-a20a-8491ca192c18', key: 'laser', name: 'ليزر', color: '#0072b2' },
     { id: '01a18383-0873-7df3-8b67-c1a1c8fe9607', key: 'brainstorm', name: 'عصف ذهني', color: '#d55e00' },
