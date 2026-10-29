@@ -78,7 +78,7 @@ class UsageLoggerTests(unittest.TestCase):
         self.assertEqual(data["sessions"][0]["model"], "gpt-6-luna")
         self.assertEqual(data["sessions"][0]["samples"][0]["context"]["used_percent"], 25)
         self.assertEqual(data["weekly"]["remaining_percent"], 82)
-        self.assertEqual(self.fetchone("PRAGMA user_version")[0], 4)
+        self.assertEqual(self.fetchone("PRAGMA user_version")[0], 6)
         connection = connect(self.database)
         try:
             tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
@@ -112,7 +112,7 @@ class UsageLoggerTests(unittest.TestCase):
 
         connection = connect(legacy_db)
         try:
-            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 4)
+            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 6)
             self.assertEqual(connection.execute("SELECT session_name FROM usage_sessions WHERE session_id='kept'").fetchone()[0],
                              "بيانات سابقة")
             self.assertEqual(connection.execute("SELECT COUNT(*) FROM schema_migrations WHERE version=2").fetchone()[0], 1)
