@@ -129,9 +129,11 @@ def board(path: Path, *, status: str = "", actor_id: str = "", query: str = "") 
         for card in [*owner_cards, *cards]:
             card["display_title"] = _display_title(card["title"], card["owner_request"])
         sessions = _rows(connection, """SELECT a.actor_id,a.display_name,a.charter,a.active,
+            d.assignment_scope,d.flow_responsibility,d.required_outputs,d.verification_guidance,
             CASE WHEN EXISTS (SELECT 1 FROM coordination_actor_endpoints e
                               WHERE e.actor_id=a.actor_id AND e.enabled=1) THEN 1 ELSE 0 END AS dispatchable
-            FROM coordination_actors a WHERE a.active=1 AND a.actor_id<>'owner'
+            FROM coordination_actors a JOIN coordination_actor_duties d ON d.actor_id=a.actor_id
+            WHERE a.active=1 AND a.actor_id<>'owner'
             ORDER BY a.display_name,a.actor_id""")
         completed_owner_commands = _rows(connection, """
             SELECT c.card_id,c.title,c.updated_at
@@ -249,6 +251,9 @@ def card_details(path: Path, card_id: str) -> dict[str, Any] | None:
         card_data = dict(card)
         card_data["display_title"] = _display_title(card_data["title"], card_data["owner_request"])
         result = {"card": card_data}
+        duty = connection.execute("""SELECT assignment_scope,flow_responsibility,required_outputs,verification_guidance
+            FROM coordination_actor_duties WHERE actor_id=?""", (card["assigned_actor_id"],)).fetchone()
+        result["assigned_session_duties"] = dict(duty) if duty else None
         if card["parent_card_id"]:
             result["owner_command"] = _rows(connection, """SELECT card_id,title,owner_request,scope,created_at
                 FROM coordination_cards WHERE card_id=?""", (card["parent_card_id"],))[0]
@@ -344,6 +349,7 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
         connection.execute("BEGIN IMMEDIATE")
         selected_actor = connection.execute("""SELECT a.actor_id FROM coordination_actors a
             WHERE a.actor_id=? AND a.active=1 AND a.actor_id<>'owner'
+              AND EXISTS (SELECT 1 FROM coordination_actor_duties d WHERE d.actor_id=a.actor_id)
               AND EXISTS (SELECT 1 FROM coordination_actor_endpoints e
                           WHERE e.actor_id=a.actor_id AND e.enabled=1)""",
             (selected_actor_id,)).fetchone()
