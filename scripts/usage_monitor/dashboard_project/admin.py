@@ -56,7 +56,75 @@ CODE_LABELS = {
     "commit": "التزام",
     "branch": "فرع",
     "owner_command": "أمر مالك",
+    "intake": "استقبال الأمر",
+    "assignment": "الإسناد",
+    "advisory": "الرأي الاستشاري",
+    "delivery": "التسليم",
+    "git_delivery": "التسليم عبر Git",
+    "owner_decision": "قرار المالك",
+    "verification": "التحقق",
+    "create": "إنشاء",
+    "update": "تعديل",
+    "delete": "حذف",
+    "general": "عام",
+    "urgent": "عاجلة",
+    "high": "عالية",
+    "normal": "عادية",
+    "low": "منخفضة",
 }
+
+READ_ONLY_WORKFLOW_TABLES = {
+    "coordination_command_receipts",
+    "coordination_command_cards",
+    "coordination_events",
+    "coordination_git_events",
+    "coordination_delivery_attempts",
+    "coordination_delivery_paths",
+    "coordination_opinion_history",
+    "owner_decision_history",
+    "coordination_quality_runs",
+    "coordination_quality_checks",
+    "coordination_validation_results",
+    "schema_migrations",
+    "workflow_admin_audit",
+}
+
+WORKFLOW_ADMIN_GROUPS = (
+    ("أوامر المالك والبطاقات", "commands", (
+        "coordination_cards", "coordination_command_cards", "coordination_command_receipts",
+        "coordination_assignments", "coordination_card_criteria", "coordination_card_dependencies",
+    )),
+    ("الجلسات والتوجيه", "sessions", (
+        "coordination_actors", "coordination_actor_capabilities", "coordination_actor_endpoints", "usage_sessions",
+    )),
+    ("التنفيذ والتسليم", "delivery", (
+        "coordination_deliverables", "coordination_delivery_attempts", "coordination_delivery_paths",
+        "coordination_git_events", "coordination_issues", "coordination_outbox",
+    )),
+    ("الآراء والقرارات والجودة", "reviews", (
+        "coordination_opinions", "coordination_opinion_history", "owner_decisions", "owner_decision_history",
+        "coordination_quality_runs", "coordination_quality_checks", "coordination_validation_results",
+    )),
+    ("القياس والسجلات والإعدادات", "records", (
+        "coordination_events", "workflow_admin_audit", "usage_samples", "usage_sources", "database_metadata",
+        "schema_migrations", "workflow_reason_definitions", "workflow_status_definitions", "workflow_transition_rules",
+    )),
+)
+
+
+class TranslatedAllValuesFieldListFilter(AllValuesFieldListFilter):
+    def choices(self, changelist):
+        for choice in super().choices(changelist):
+            display = str(choice["display"])
+            for code, label in CODE_LABELS.items():
+                if display == code:
+                    choice = {**choice, "display": label}
+                    break
+                prefix = f"{code} ("
+                if display.startswith(prefix) and display.endswith(")"):
+                    choice = {**choice, "display": f"{label} {display[len(code):]}"}
+                    break
+            yield choice
 
 
 class OwnerOnlyAdminSite(admin.AdminSite):
@@ -67,6 +135,36 @@ class OwnerOnlyAdminSite(admin.AdminSite):
 
     def has_permission(self, request):
         return super().has_permission(request) and request.user.is_superuser
+
+    def get_app_list(self, request, app_label=None):
+        app_list = super().get_app_list(request, app_label)
+        if app_label:
+            return app_list
+        grouped_apps = []
+        for app in app_list:
+            if app["app_label"] != "workflow_admin":
+                grouped_apps.append(app)
+                continue
+            models_by_table = {item["model"]._meta.db_table: item for item in app["models"]}
+            assigned = set()
+            for name, slug, table_names in WORKFLOW_ADMIN_GROUPS:
+                group_models = [models_by_table[table] for table in table_names if table in models_by_table]
+                if not group_models:
+                    continue
+                assigned.update(table_names)
+                selected_url = next((item["admin_url"] for item in group_models
+                                     if item.get("admin_url") and item["admin_url"] in request.path), None)
+                grouped_apps.append({
+                    **app,
+                    "name": name,
+                    "app_label": f"workflow_admin_{slug}",
+                    "app_url": selected_url or group_models[0].get("admin_url") or app["app_url"],
+                    "models": group_models,
+                })
+            remainder = [item for table, item in models_by_table.items() if table not in assigned]
+            if remainder:
+                grouped_apps.append({**app, "name": "جداول أخرى", "app_label": "workflow_admin_other", "models": remainder})
+        return grouped_apps
 
 
 owner_admin_site = OwnerOnlyAdminSite(name="admin")
@@ -113,7 +211,7 @@ class WorkflowTableAdmin(admin.ModelAdmin):
             name for name in SEARCH_FIELDS.get(model._meta.db_table, ()) if name in available
         )
         self.list_filter = tuple(
-            (name, AllValuesFieldListFilter)
+            (name, TranslatedAllValuesFieldListFilter)
             for name in FILTER_FIELDS.get(model._meta.db_table, ()) if name in available
         )
         # Django's date hierarchy raises AttributeError when a table has rows
@@ -131,6 +229,18 @@ class WorkflowTableAdmin(admin.ModelAdmin):
 
     def has_module_permission(self, request):
         return request.user.is_active and request.user.is_superuser
+
+    def _is_read_only_workflow_table(self):
+        return self.model._meta.db_table in READ_ONLY_WORKFLOW_TABLES
+
+    def has_add_permission(self, request):
+        return not self._is_read_only_workflow_table() and super().has_add_permission(request)
+
+    def has_change_permission(self, request, obj=None):
+        return not self._is_read_only_workflow_table() and super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        return not self._is_read_only_workflow_table() and super().has_delete_permission(request, obj)
 
     @staticmethod
     def _audit_snapshot(obj):

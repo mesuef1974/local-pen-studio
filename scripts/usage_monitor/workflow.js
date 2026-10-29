@@ -196,7 +196,17 @@
     const lanes = sessions.filter(isSessionActor).map(session => ({ session, cards: cards.filter(card => card.assigned_actor_id === session.actor_id) }));
     const knownActors = new Set(lanes.map(lane => lane.session.actor_id));
     const unassigned = cards.filter(card => !card.assigned_actor_id || !knownActors.has(card.assigned_actor_id));
-    if (unassigned.length) lanes.unshift({ session: { actor_id: '', display_name: 'غير مسندة', charter: 'بانتظار توجيه المنسق' }, cards: unassigned });
+    const terminalStatuses = new Set(['completed', 'failed', 'archived']);
+    const awaitingRouting = unassigned.filter(card => !terminalStatuses.has(statusCode(card)));
+    const terminalUnassigned = unassigned.filter(card => terminalStatuses.has(statusCode(card)));
+    if (terminalUnassigned.length) lanes.unshift({
+      session: { actor_id: '', display_name: 'أوامر المالك المنتهية', charter: 'سجلات مكتملة أو مؤرشفة؛ لا تحتاج إلى توجيه' },
+      cards: terminalUnassigned,
+    });
+    if (awaitingRouting.length) lanes.unshift({
+      session: { actor_id: '', display_name: 'غير مسندة', charter: 'بانتظار توجيه المنسق' },
+      cards: awaitingRouting,
+    });
 
     for (const lane of lanes) {
       const row = element('div', undefined, 'workflow-lane');
@@ -236,7 +246,8 @@
     $('wf-kpi-total').textContent = arabicNumber.format(cards.length);
     $('wf-kpi-active').textContent = arabicNumber.format(count('assigned', 'in_progress', 'returned'));
     $('wf-kpi-blocked').textContent = arabicNumber.format(count('blocked'));
-    $('wf-kpi-verifying').textContent = arabicNumber.format(count('delivered', 'verifying'));
+    $('wf-kpi-push-verified').textContent = arabicNumber.format(count('delivered'));
+    $('wf-kpi-qa-in-progress').textContent = arabicNumber.format(count('verifying'));
   }
 
   function renderMetrics(data) {

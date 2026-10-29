@@ -43,6 +43,7 @@ ADMIN_TABLES = {
     "workflow_reason_definitions": "تعريفات أسباب الفلو",
     "workflow_status_definitions": "تعريفات حالات الفلو",
     "workflow_transition_rules": "قواعد انتقال الحالات",
+    "workflow_admin_audit": "سجل تغييرات الإدارة",
 }
 
 DISPLAY_COLUMNS = {
@@ -77,6 +78,7 @@ DISPLAY_COLUMNS = {
     "workflow_reason_definitions": ("reason_code", "version", "category", "display_name"),
     "workflow_status_definitions": ("status_code", "version", "display_name", "terminal"),
     "workflow_transition_rules": ("from_status_code", "to_status_code", "version", "enabled"),
+    "workflow_admin_audit": ("audit_id", "actor_username", "table_name", "object_pk", "action_code", "recorded_at"),
 }
 
 SEARCH_FIELDS = {
@@ -89,6 +91,7 @@ SEARCH_FIELDS = {
     "owner_decision_history": ("card_id", "axis", "decision"),
     "usage_sessions": ("session_id", "session_name"),
     "usage_samples": ("session_id", "model", "reasoning_effort", "service_tier"),
+    "workflow_admin_audit": ("actor_username", "table_name", "object_pk"),
 }
 
 FILTER_FIELDS = {
@@ -103,16 +106,19 @@ FILTER_FIELDS = {
     "coordination_quality_runs": ("outcome", "profile_code"),
     "coordination_validation_results": ("outcome", "validator_actor_id"),
     "usage_samples": ("session_id", "model", "reasoning_effort", "service_tier"),
+    "workflow_admin_audit": ("action_code", "table_name"),
 }
 
 FIELD_LABELS = {
     "actor_id": "معرّف الجلسة أو الجهة", "active": "نشط", "attempt_id": "معرّف محاولة التسليم",
+    "object_pk": "معرّف السجل",
     "attempt_number": "رقم المحاولة", "assigned_actor_id": "الجلسة المسندة إليها",
     "assigned_by_actor_id": "الجهة المسندة", "assigned_at": "وقت الإسناد",
     "available_at": "موعد الإتاحة", "axis": "محور القرار", "branch_name": "اسم الفرع",
     "card_id": "معرّف البطاقة", "card_type_code": "نوع البطاقة", "cause_code": "سبب العائق",
     "cause_resolution": "توضيح سبب العائق", "certificate": "الشهادة", "check_code": "رمز الفحص",
     "check_method": "طريقة التحقق", "charter": "ميثاق الجلسة", "checksum_sha256": "بصمة SHA-256",
+    "actor_username": "مستخدم الإدارة", "action_code": "نوع التغيير", "table_name": "الجدول المتأثر",
     "closed_at": "وقت الإغلاق", "codex_session_id": "معرّف جلسة Codex",
     "command_code": "رمز الأمر", "commit_sha": "معرّف الالتزام", "context_cache_write_input_tokens": "توكنز كتابة الذاكرة المؤقتة",
     "context_cached_input_tokens": "توكنز الإدخال من الذاكرة المؤقتة", "context_input_tokens": "توكنز الإدخال",

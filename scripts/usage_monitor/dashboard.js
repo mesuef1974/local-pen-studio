@@ -588,6 +588,7 @@
     const contextValues = activeMeasured.map(item => Number(item.sample.context?.used_percent)).filter(Number.isFinite);
     const total = measured.reduce((sum, item) => sum + (Number(item.sample.cumulative?.total_tokens) || 0), 0);
     $('total-tokens').textContent = formatTokens(total);
+    $('total-token-scope').textContent = `آخر قراءة لـ ${formatNumber(measured.length)} جلسات مسجلة؛ ${formatNumber(activeMeasured.length)} حالية`;
     $('session-count').textContent = formatNumber(activeMeasured.length);
     $('active-note').textContent = `من أصل ${formatNumber(specs.length)} جلسات حالية`;
     $('avg-context').textContent = contextValues.length
