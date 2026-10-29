@@ -34,7 +34,7 @@ def validate_physics(data):
 
 
 def validate_paths(paths,width,height):
-    if not isinstance(paths,list) or len(paths)>6000:raise ValueError('عدد مسارات التدقيق أكبر من الحد.')
+    if not isinstance(paths,list) or len(paths)>10_000:raise ValueError('عدد مسارات التدقيق أكبر من الحد.')
     count=0
     for path in paths:
         if not isinstance(path,list) or len(path)<2:raise ValueError('مسار غير صالح.')

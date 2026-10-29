@@ -65,8 +65,9 @@ class FidelityTests(unittest.TestCase):
         self.assertIn('not identity',result['scope'])
 
     def test_adversarial_coordinates_and_complexity_are_bounded(self):
-        for paths in ([[[float('nan'),0],[1,1]]],[[[-.6,0],[1,1]]],[[[1,1]]],[[[0,0],[1,1]]]*6001):
+        for paths in ([[[float('nan'),0],[1,1]]],[[[-.6,0],[1,1]]],[[[1,1]]],[[[0,0],[1,1]]]*10001):
             with self.subTest(paths=str(paths)[:50]),self.assertRaises(ValueError):validate_paths(paths,40,40)
+        validate_paths([[[0,0],[1,1]]]*6001,40,40)
         isolated=np.full((180,180),255,np.uint8);isolated[::2,::2]=0
         with self.assertRaisesRegex(ValueError,'التعقيد'):extract(settings(isolated))
         from path_fidelity import render_svg
