@@ -31,10 +31,15 @@ def main() -> None:
     from django.core.management import execute_from_command_line
 
     from codex_session_dispatcher import dispatch_loop
+    from git_integration_worker import integration_loop
     stop_dispatcher = threading.Event()
     dispatcher = threading.Thread(target=dispatch_loop, args=(args.database.expanduser().resolve(), stop_dispatcher),
                                   name="workflow-outbox-dispatcher", daemon=True)
     dispatcher.start()
+    integrator = threading.Thread(target=integration_loop,
+                                  args=(args.database.expanduser().resolve(), stop_dispatcher),
+                                  name="workflow-git-integration", daemon=True)
+    integrator.start()
     try:
         execute_from_command_line([
             "manage.py", "runserver", f"{args.host}:{args.port}", "--noreload",
@@ -42,6 +47,7 @@ def main() -> None:
     finally:
         stop_dispatcher.set()
         dispatcher.join(timeout=10)
+        integrator.join(timeout=10)
 
 
 if __name__ == "__main__":

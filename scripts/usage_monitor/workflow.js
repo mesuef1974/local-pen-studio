@@ -32,6 +32,7 @@
     git_commit: 'تسجيل الالتزام', git_push: 'تسجيل الدفع إلى Git', owner_decision_recorded: 'تسجيل قرار المالك',
     review_finding: 'نتيجة المراجعة', session_opinion_recorded: 'تسجيل رأي الجلسة',
     terminal_assignment_closed: 'إغلاق إسناد منتهٍ',
+    git_integration_state: 'تقدم الدمج الآلي', git_integration_completed: 'اكتمال الدمج ومزامنة main',
   };
   const issueLabels = {
     path_limit_mismatch: 'اختلاف حد المسارات', cpu_bound_centerline: 'بطء استخراج الخط المركزي',
@@ -541,6 +542,23 @@
       const detail = [item.commit_sha && `Commit ${item.commit_sha}`, item.summary, (item.changed_paths || []).join('، '), proof].filter(Boolean).join(' · ');
       return detailItem(`${item.branch_name || 'فرع غير محدد'} · المحاولة ${arabicNumber.format(item.attempt_number || item.attempt_id || 0)}`, detail, item.submitted_at);
     }, 'لا توجد تسليمات مسجلة.'));
+    const integrationLabels = {
+      pending: 'بانتظار المعالجة', processing: 'قيد المعالجة', awaiting_checks: 'بانتظار فحوص GitHub',
+      awaiting_review: 'بانتظار مراجعة GitHub', merged_sync_pending: 'دُمجت؛ بانتظار مزامنة main',
+      completed: 'اكتمل الدمج ومزامنة main', returned: 'أُعيدت للتنفيذ', blocked: 'متوقفة عند عائق',
+    };
+    root.append(section('الدمج ومزامنة main', data.git_integrations, item => {
+      const detail = [
+        item.pull_request_url && `PR ${item.pull_request_number}: ${item.pull_request_url}`,
+        item.head_branch && `الفرع ${item.head_branch}`,
+        item.head_sha && `Commit ${item.head_sha}`,
+        item.merge_sha && `Merge ${item.merge_sha}`,
+        item.local_main_sha && `main المحلي ${item.local_main_sha}`,
+        item.remote_main_sha && `origin/main ${item.remote_main_sha}`,
+        item.last_error_code && `رمز العائق ${item.last_error_code}`,
+      ].filter(Boolean).join(' · ');
+      return detailItem(integrationLabels[item.state_code] || safeText(item.state_code), detail, item.updated_at || item.created_at);
+    }, 'لا يوجد تكامل Git بانتظار التنفيذ.'));
     root.append(section('فحوص الجودة', data.validations, item => detailItem(`${criterionLabels[item.criterion || item.check_code] || 'فحص مسجل'} · ${outcomeLabels[item.outcome] || 'نتيجة غير محددة'}`, item.evidence_ref, item.recorded_at), 'لا توجد نتائج تحقق مسجلة.'));
     root.append(section('طابور إرسال التكليفات', data.outbox, outboxItem, 'لا توجد تكليفات في طابور الإرسال.'));
     $('workflow-detail-loading').hidden = true;

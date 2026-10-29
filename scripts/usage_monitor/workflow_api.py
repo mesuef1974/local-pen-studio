@@ -7,10 +7,13 @@ import json
 import re
 import sqlite3
 import statistics
+import subprocess
 import uuid
 from pathlib import Path
+from pathlib import PurePosixPath
 from typing import Any
 
+from coordination_repository import _event
 from usage_database import utc_now
 
 
@@ -288,6 +291,10 @@ def card_details(path: Path, card_id: str) -> dict[str, Any] | None:
         result["outbox"] = _rows(connection, "SELECT * FROM coordination_outbox WHERE card_id=? ORDER BY outbox_id", (card_id,))
         for item in result["outbox"]:
             item["target_actor_name"] = actor_names.get(item.get("target_actor_id"), "جلسة سابقة")
+        result["git_integrations"] = _rows(connection, """SELECT integration_id,attempt_id,repository,base_branch,
+            head_branch,head_sha,state_code,pull_request_number,pull_request_url,base_sha,merge_sha,
+            local_main_sha,remote_main_sha,last_error_code,created_at,updated_at
+            FROM coordination_git_integrations WHERE card_id=? ORDER BY integration_id""", (card_id,))
         return result
     finally:
         connection.close()
@@ -510,38 +517,7 @@ def transition_assigned_card(path: Path, card_id: str, actor_id: str,
                 transition_card(connection, card_id, "completed", actor_id=actor_id, stage_code="verification",
                                 note=summary, source_type="review_report")
             else:
-                if current in {"in_progress", "blocked"}:
-                    delivery = connection.execute("""SELECT commit_sha,remote_commit_sha,verified_at,outcome
-                        FROM coordination_delivery_attempts WHERE card_id=? ORDER BY attempt_number DESC LIMIT 1""", (card_id,)).fetchone()
-                    if not delivery or not delivery["verified_at"] or not delivery["commit_sha"] or \
-                            delivery["commit_sha"].lower() != (delivery["remote_commit_sha"] or "").lower() or delivery["outcome"] != "accepted":
-                        raise ValueError("لا تُغلق بطاقة التنفيذ قبل إثبات الدفع إلى origin.")
-                    transition_card(connection, card_id, "delivered", actor_id=actor_id, stage_code="delivery",
-                                    note="تسليم موثق على origin", source_type="session_lifecycle")
-                    current = "delivered"
-                if current == "delivered":
-                    transition_card(connection, card_id, "verifying", actor_id=actor_id, stage_code="quality",
-                                    note="بدأ التحقق من فحوص الجودة", source_type="session_lifecycle")
-                    current = "verifying"
-                if current != "verifying":
-                    raise ValueError("لا تُغلق بطاقة التنفيذ إلا من مرحلة فحوص الجودة.")
-                if connection.execute("SELECT 1 FROM coordination_issues WHERE card_id=? AND resolved_at IS NULL LIMIT 1", (card_id,)).fetchone():
-                    raise ValueError("لا تُغلق البطاقة مع وجود عائق غير محلول.")
-                quality = connection.execute("""SELECT quality_run_id,outcome FROM coordination_quality_runs
-                    WHERE card_id=? ORDER BY quality_run_id DESC LIMIT 1""", (card_id,)).fetchone()
-                if not quality or quality["outcome"] != "pass":
-                    raise ValueError("فحوص الجودة لم تجتز بعد؛ سجّل الحالة returned لإعادتها للتنفيذ.")
-                required = {row[0] for row in connection.execute(
-                    "SELECT criterion_code FROM coordination_card_criteria WHERE card_id=? AND required=1", (card_id,))}
-                passed = {row[0] for row in connection.execute("""SELECT check_code FROM coordination_quality_checks
-                    WHERE quality_run_id=? AND outcome='pass' UNION SELECT criterion FROM coordination_validation_results
-                    WHERE card_id=? AND outcome='pass'""", (quality["quality_run_id"], card_id))}
-                if not required.issubset(passed):
-                    raise ValueError("بعض معايير الإنجاز المطلوبة لم تجتز.")
-                if len(summary) < 20:
-                    raise ValueError("أضف خلاصة التسليم قبل إكمال بطاقة التنفيذ.")
-                transition_card(connection, card_id, "completed", actor_id=actor_id, stage_code="quality",
-                                note=summary, source_type="session_lifecycle")
+                raise ValueError("إكمال بطاقة التنفيذ آلي بعد مراجعة GitHub ودمجها ومزامنة main؛ سجّل التسليم وفحوص الجودة في المصنع.")
             parent = connection.execute("SELECT parent_card_id FROM coordination_cards WHERE card_id=?", (card_id,)).fetchone()[0]
             if parent:
                 remaining = connection.execute("SELECT 1 FROM coordination_cards WHERE parent_card_id=? AND current_status_code<>'completed' LIMIT 1", (parent,)).fetchone()
@@ -550,5 +526,201 @@ def transition_assigned_card(path: Path, card_id: str, actor_id: str,
                     transition_card(connection, parent, "completed", actor_id=actor_id, stage_code="rollup",
                                     note="اكتملت جميع بطاقات الجلسات التابعة", source_type="session_rollup")
         return {"card_id": card_id, "status_code": status_code, "updated": True}
+    finally:
+        connection.close()
+
+
+def _assigned_card(connection: sqlite3.Connection, card_id: str, actor_id: str) -> sqlite3.Row:
+    row = connection.execute("""SELECT c.assigned_actor_id,c.current_status_code,c.card_type_code,
+        a.active FROM coordination_cards c LEFT JOIN coordination_actors a ON a.actor_id=c.assigned_actor_id
+        WHERE c.card_id=?""", (card_id,)).fetchone()
+    if not row:
+        raise KeyError("البطاقة غير موجودة.")
+    if row["assigned_actor_id"] != actor_id or not row["active"]:
+        raise ValueError("هذه الجلسة ليست الجهة المسندة النشطة لهذه البطاقة.")
+    if not connection.execute("""SELECT 1 FROM coordination_assignments
+        WHERE card_id=? AND assigned_actor_id=? AND ended_at IS NULL""", (card_id, actor_id)).fetchone():
+        raise ValueError("لا يوجد إسناد نشط لهذه الجلسة على البطاقة.")
+    return row
+
+
+def _github_repository() -> str:
+    try:
+        completed = subprocess.run(["git", "-C", str(Path(__file__).resolve().parents[2]),
+                                    "remote", "get-url", "origin"], capture_output=True,
+                                   text=True, encoding="utf-8", timeout=10, check=False)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise RuntimeError("origin_remote_unavailable") from exc
+    if completed.returncode:
+        raise RuntimeError("origin_remote_unavailable")
+    match = re.search(r"github\.com[:/]([^/]+/[^/]+?)(?:\.git)?$", completed.stdout.strip(), re.I)
+    if not match:
+        raise ValueError("المستودع البعيد ليس مستودع GitHub مدعومًا.")
+    return match.group(1)
+
+
+def submit_delivery(path: Path, card_id: str, body: dict[str, Any]) -> dict[str, Any]:
+    actor_id = str(body.get("actor_id") or "").strip()
+    branch = str(body.get("branch_name") or "").strip()
+    remote = str(body.get("remote_name") or "origin").strip()
+    commit = str(body.get("commit_sha") or "").strip().lower()
+    summary = str(body.get("summary") or "").strip()
+    changed_paths = body.get("changed_paths")
+    if not actor_id or not branch or remote != "origin" or not re.fullmatch(r"[0-9a-f]{40,64}", commit):
+        raise ValueError("بيانات الفرع أو المستودع أو الالتزام غير صالحة.")
+    if not summary or not _contains_arabic(summary) or len(summary) > 4000:
+        raise ValueError("اكتب ملخص التسليم بالعربية وبحد أقصى 4000 حرف.")
+    if not isinstance(changed_paths, list) or not changed_paths or len(changed_paths) > 500:
+        raise ValueError("أرسل قائمة مسارات التغيير من الفرع.")
+    normalized_paths: list[str] = []
+    for value in changed_paths:
+        if not isinstance(value, str) or not value or len(value) > 500 or "\\" in value or "\x00" in value:
+            raise ValueError("أحد مسارات الملفات غير صالح.")
+        item = PurePosixPath(value)
+        if item.is_absolute() or not item.parts or item.as_posix() == "." or ".." in item.parts or ":" in value or "\n" in value:
+            raise ValueError("يجب أن تكون المسارات نسبية وآمنة داخل المستودع.")
+        normalized_paths.append(item.as_posix())
+    normalized_paths = sorted(set(normalized_paths))
+    repo_root = Path(__file__).resolve().parents[2]
+    check_ref = subprocess.run(["git", "-C", str(repo_root), "check-ref-format", "--branch", branch],
+                               capture_output=True, text=True, timeout=10, check=False)
+    if check_ref.returncode or branch in {"main", "staging", "production"}:
+        raise ValueError("يجب أن يكون التسليم على فرع مهمة غير محمي.")
+    try:
+        remote_check = subprocess.run(["git", "-C", str(repo_root), "ls-remote", remote,
+                                       f"refs/heads/{branch}"], capture_output=True, text=True,
+                                      encoding="utf-8", timeout=20, check=False)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise RuntimeError("remote_ref_unavailable") from exc
+    remote_sha = remote_check.stdout.split()[0].lower() if remote_check.returncode == 0 and remote_check.stdout.split() else None
+    verified = remote_sha == commit
+    connection = _connect(path, write=True)
+    try:
+        card = _assigned_card(connection, card_id, actor_id)
+        existing = connection.execute("""SELECT attempt_id,verified_at,remote_commit_sha FROM coordination_delivery_attempts
+            WHERE card_id=? AND branch_name=? AND commit_sha=? ORDER BY attempt_number DESC LIMIT 1""",
+            (card_id, branch, commit)).fetchone()
+        if existing and existing["verified_at"] and existing["remote_commit_sha"] == commit and \
+                card["current_status_code"] != "in_progress":
+            return {"card_id": card_id, "attempt_id": existing["attempt_id"], "commit_sha": commit,
+                    "remote_commit_sha": commit, "verified": True, "duplicate": True}
+        if card["current_status_code"] != "in_progress":
+            raise ValueError("يجب أن تكون البطاقة قيد التنفيذ قبل تسجيل التسليم.")
+        with connection:
+            attempt_number = connection.execute("SELECT COALESCE(MAX(attempt_number),0)+1 FROM coordination_delivery_attempts WHERE card_id=?", (card_id,)).fetchone()[0]
+            now = utc_now()
+            event_id = _event(connection, card_id, "delivery_attempt", actor_id=actor_id,
+                stage_code="delivery", note=summary, source_type="delivery_attempt", source_id=str(attempt_number))
+            cursor = connection.execute("""INSERT INTO coordination_delivery_attempts
+                (card_id,attempt_number,submitted_by_actor_id,submitted_at,outcome,summary,source_event_id,
+                 branch_name,remote_name,commit_sha,remote_commit_sha,verified_at)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (card_id, attempt_number, actor_id, now, "accepted" if verified else "failed", summary,
+                 event_id, branch, remote, commit, remote_sha, now if verified else None))
+            attempt_id = int(cursor.lastrowid)
+            connection.executemany("INSERT INTO coordination_delivery_paths(attempt_id,path) VALUES(?,?)",
+                ((attempt_id, item) for item in normalized_paths))
+            _event(connection, card_id, "git_push", actor_id=actor_id, stage_code="git_delivery",
+                source_type="git", source_id=commit, note="دفع موثق على origin" if verified else "لم يتطابق SHA البعيد مع الالتزام المرسل")
+            connection.execute("""INSERT INTO coordination_git_events
+                (card_id,remote_name,branch_name,commit_sha,action,outcome,recorded_at)
+                VALUES(?,?,?,?,?,?,?)""", (card_id, remote, branch, commit, "push",
+                "verified" if verified else "sha_mismatch", now))
+            if verified:
+                from coordination_repository import transition_card
+                transition_card(connection, card_id, "delivered", actor_id=actor_id, stage_code="delivery",
+                                source_type="session_delivery", source_id=str(attempt_id),
+                                note="تأكد دفع الالتزام المطابق إلى origin")
+        return {"card_id": card_id, "attempt_id": attempt_id, "commit_sha": commit,
+                "remote_commit_sha": remote_sha, "verified": verified}
+    finally:
+        connection.close()
+
+
+def submit_quality(path: Path, card_id: str, body: dict[str, Any]) -> dict[str, Any]:
+    actor_id = str(body.get("actor_id") or "").strip()
+    try:
+        attempt_id = int(body.get("attempt_id"))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("معرّف محاولة التسليم غير صالح.") from exc
+    commit = str(body.get("commit_sha") or "").strip().lower()
+    profile = str(body.get("profile_code") or "").strip()
+    runner_name = str(body.get("runner_name") or "").strip()
+    runner_version = str(body.get("runner_version") or "").strip()
+    checks = body.get("checks")
+    if not actor_id or not re.fullmatch(r"[0-9a-f]{40,64}", commit) or not profile or not runner_name or not runner_version:
+        raise ValueError("بيانات تشغيل فحوص الجودة غير مكتملة.")
+    if len(profile) > 100 or len(runner_name) > 160 or len(runner_version) > 100:
+        raise ValueError("بيانات مشغل فحوص الجودة تجاوزت الحد.")
+    if not isinstance(checks, list) or len(checks) > 200:
+        raise ValueError("أرسل قائمة نتائج الفحوص بصيغة صحيحة.")
+    connection = _connect(path, write=True)
+    try:
+        card = _assigned_card(connection, card_id, actor_id)
+        delivery = connection.execute("""SELECT attempt_id,commit_sha,remote_commit_sha,verified_at,outcome,branch_name
+            FROM coordination_delivery_attempts WHERE card_id=? AND attempt_id=?""", (card_id, attempt_id)).fetchone()
+        if not delivery or delivery["outcome"] != "accepted" or not delivery["verified_at"] or \
+                delivery["commit_sha"] != commit or delivery["remote_commit_sha"] != commit:
+            raise ValueError("نتائج الجودة يجب أن ترتبط بالالتزام المدفوع والمتحقق منه نفسه.")
+        existing_integration = connection.execute("""SELECT integration_id,state_code,pull_request_number
+            FROM coordination_git_integrations WHERE attempt_id=?""", (attempt_id,)).fetchone()
+        if existing_integration:
+            return {"card_id": card_id, "attempt_id": attempt_id, "outcome": "pass",
+                    "integration_queued": True, "integration_id": existing_integration["integration_id"],
+                    "integration_state": existing_integration["state_code"], "duplicate": True}
+        if card["current_status_code"] != "delivered":
+            raise ValueError("لا تُسجل فحوص الجودة إلا بعد التحقق من الدفع.")
+        repository = _github_repository()
+        required = {row[0] for row in connection.execute("SELECT criterion_code FROM coordination_card_criteria WHERE card_id=? AND required=1", (card_id,))}
+        clean_checks: list[dict[str, Any]] = []
+        for item in checks:
+            if not isinstance(item, dict):
+                raise ValueError("تنسيق إحدى نتائج الفحص غير صالح.")
+            code = str(item.get("check_code") or "").strip()
+            outcome = str(item.get("outcome") or "").strip()
+            evidence = str(item.get("evidence_ref") or "").strip()
+            if not code or len(code) > 120 or outcome not in {"pass", "conditional", "fail", "skipped"} or len(evidence) > 2000:
+                raise ValueError("رمز الفحص أو نتيجته أو مرجع دليله غير صالح.")
+            duration = item.get("duration_ms")
+            if duration is not None and (not isinstance(duration, int) or isinstance(duration, bool) or duration < 0):
+                raise ValueError("مدة فحص الجودة يجب أن تكون عددًا صحيحًا غير سالب.")
+            clean_checks.append({"check_code": code, "outcome": outcome, "evidence_ref": evidence or None,
+                                 "duration_ms": duration, "message_code": str(item.get("message_code") or "")[:100]})
+        by_code = {item["check_code"]: item for item in clean_checks}
+        passed_required = all(code in by_code and by_code[code]["outcome"] == "pass" and by_code[code]["evidence_ref"] for code in required)
+        reported = str(body.get("outcome") or "").strip()
+        has_failure = any(item["outcome"] == "fail" for item in clean_checks)
+        outcome = "pass" if reported == "pass" and passed_required and not has_failure else "fail"
+        now = utc_now()
+        with connection:
+            cursor = connection.execute("""INSERT INTO coordination_quality_runs
+                (card_id,attempt_id,commit_sha,profile_code,runner_name,runner_version,outcome,started_at,finished_at,correlation_id)
+                VALUES(?,?,?,?,?,?,?,?,?,?)""", (card_id, attempt_id, commit, profile, runner_name,
+                runner_version, outcome, now, now, f"delivery-{attempt_id}"))
+            run_id = int(cursor.lastrowid)
+            for item in clean_checks:
+                connection.execute("""INSERT INTO coordination_quality_checks
+                    (quality_run_id,check_code,outcome,duration_ms,evidence_ref,message_code)
+                    VALUES(?,?,?,?,?,?)""", (run_id, item["check_code"], item["outcome"],
+                    item["duration_ms"], item["evidence_ref"], item["message_code"]))
+            _event(connection, card_id, "quality_run_recorded", actor_id=actor_id,
+                stage_code="quality", source_type="quality_run", source_id=str(run_id),
+                note="اجتازت الفحوص المطلوبة؛ بانتظار فحوص GitHub والدمج" if outcome == "pass" else "فشلت بعض فحوص الجودة؛ أُعيدت البطاقة للتنفيذ")
+            if outcome == "pass":
+                from coordination_repository import transition_card
+                transition_card(connection, card_id, "verifying", actor_id=actor_id, stage_code="quality",
+                                source_type="quality_run", source_id=str(run_id),
+                                note="اجتازت المعايير؛ انتقل التكامل الآلي لمراجعة GitHub ودمج main")
+                connection.execute("""INSERT INTO coordination_git_integrations
+                    (card_id,attempt_id,repository,base_branch,head_branch,head_sha,state_code,next_attempt_at,created_at,updated_at)
+                    VALUES(?,?,?,'main',?,?,'pending',?,?,?)""",
+                    (card_id, attempt_id, repository, delivery["branch_name"], commit, now, now, now))
+            else:
+                from coordination_repository import transition_card
+                transition_card(connection, card_id, "returned", actor_id=actor_id, stage_code="quality",
+                                reason_code="verification_failed", source_type="quality_run", source_id=str(run_id),
+                                note="فشل فحص مطلوب؛ تُستكمل البطاقة وتُرسل محاولة جديدة")
+        return {"card_id": card_id, "attempt_id": attempt_id, "quality_run_id": run_id,
+                "outcome": outcome, "integration_queued": outcome == "pass"}
     finally:
         connection.close()
