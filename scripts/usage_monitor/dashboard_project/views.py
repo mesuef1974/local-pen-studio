@@ -18,7 +18,9 @@ from workflow_api import board, card_details, create_command, metrics, submit_de
 
 
 ASSET_ROOT = Path(__file__).resolve().parent.parent
-SHARED_ASSETS = ASSET_ROOT.parent.parent / "docs" / "coordination" / "assets"
+BUNDLED_SHARED_ASSETS = ASSET_ROOT / "shared_identity"
+SOURCE_SHARED_ASSETS = ASSET_ROOT.parent.parent / "docs" / "coordination" / "assets"
+SHARED_ASSETS = BUNDLED_SHARED_ASSETS if BUNDLED_SHARED_ASSETS.is_dir() else SOURCE_SHARED_ASSETS
 IDENTITY_ASSETS = {
     "identity.css": SHARED_ASSETS / "identity.css",
     "cairo-arabic.woff2": SHARED_ASSETS / "fonts" / "cairo-arabic.woff2",

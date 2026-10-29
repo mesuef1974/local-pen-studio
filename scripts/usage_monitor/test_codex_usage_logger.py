@@ -60,6 +60,20 @@ class UsageLoggerTests(unittest.TestCase):
     def run_logger(self):
         return logger.run(self.sessions.parents[2], self.index, self.database, self.legacy, self.state)
 
+    def test_approved_identity_stylesheet_and_fonts_are_served(self):
+        client = Client(HTTP_HOST="127.0.0.1")
+        stylesheet = client.get("/identity.css")
+        self.assertEqual(stylesheet.status_code, 200)
+        stylesheet_content = b"".join(stylesheet.streaming_content)
+        self.assertIn(b'font-family: "Cairo"', stylesheet_content)
+        for font_name in ("cairo-arabic.woff2", "ibm-plex-sans-arabic.woff2",
+                          "manrope-latin.woff2", "plus-jakarta-sans-latin.woff2"):
+            with self.subTest(font=font_name):
+                response = client.get(f"/fonts/{font_name}")
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response["Content-Type"], "font/woff2")
+                self.assertGreater(len(b"".join(response.streaming_content)), 1000)
+
     def fetchone(self, query, parameters=()):
         connection = connect(self.database)
         try:
