@@ -2,7 +2,6 @@
   'use strict';
 
   const $ = id => document.getElementById(id);
-  const tabs = [$('tab-usage'), $('tab-workflow')];
   const stages = [
     { code: 'queued', label: 'في الطابور' },
     { code: 'assigned', label: 'مسندة' },
@@ -15,8 +14,11 @@
     { code: 'failed', label: 'فشلت' },
     { code: 'archived', label: 'مؤرشفة' },
   ];
-  const arabicNumber = new Intl.NumberFormat('ar-QA-u-nu-latn', { maximumFractionDigits: 1 });
-  const dateTime = new Intl.DateTimeFormat('ar-QA-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short' });
+  const arabicNumber = new Intl.NumberFormat('ar-QA', { maximumFractionDigits: 1, numberingSystem: 'latn' });
+  const dateTime = new Intl.DateTimeFormat('ar-QA', {
+    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    hourCycle: 'h23', numberingSystem: 'latn', timeZone: 'Asia/Qatar',
+  });
   const priorityLabels = { low: 'منخفضة', normal: 'عادية', high: 'عالية', urgent: 'عاجلة' };
   const eventLabels = {
     card_created: 'إنشاء البطاقة', card_assigned: 'إسناد إلى جلسة', blocker_observed: 'تسجيل عائق',
@@ -33,9 +35,7 @@
   let currentBoard = null;
   let currentCardId = null;
   let boardController = null;
-  let detailRequestId = 0;
   let searchTimer = 0;
-  let boardLoaded = false;
   let commandIdempotencyKey = null;
   let commandPayloadSignature = null;
 
@@ -95,6 +95,8 @@
     if (options.method && options.method !== 'GET') {
       headers.set('Content-Type', 'application/json');
       headers.set('X-Workflow-Request', '1');
+      const csrfCookie = document.cookie.split('; ').find((cookie) => cookie.startsWith('csrftoken='));
+      if (csrfCookie) headers.set('X-CSRFToken', decodeURIComponent(csrfCookie.slice('csrftoken='.length)));
     }
     const response = await fetch(url, { cache: 'no-store', ...options, headers });
     let data;
@@ -271,7 +273,6 @@
     try {
       const board = await requestJSON(url, { signal: boardController.signal });
       currentBoard = board;
-      boardLoaded = true;
       $('workflow-loading').hidden = true;
       $('workflow-error').hidden = true;
       $('workflow-board').setAttribute('aria-busy', 'false');
@@ -279,9 +280,8 @@
       $('workflow-refresh').removeAttribute('aria-busy');
       renderBoard(board);
       await loadMetrics();
-      return true;
     } catch (error) {
-      if (error.name === 'AbortError') return false;
+      if (error.name === 'AbortError') return;
       $('workflow-loading').hidden = true;
       $('workflow-board-scroll').hidden = true;
       $('workflow-empty').hidden = true;
@@ -291,19 +291,12 @@
       $('workflow-refresh').disabled = false;
       $('workflow-refresh').removeAttribute('aria-busy');
       setConnection('error', 'الخدمة غير متاحة');
-      return false;
     }
   }
 
-  async function refreshWorkflow({ showLoading = true } = {}) {
-    const loaded = await loadBoard({ showLoading });
-    if (loaded && currentCardId && $('workflow-detail-dialog').open) await loadCardDetails();
-  }
-
-  function section(title, items, renderItem, emptyText, note = '') {
+  function section(title, items, renderItem, emptyText) {
     const wrapper = element('section', undefined, 'workflow-detail-section');
     wrapper.append(element('h3', title));
-    if (note) wrapper.append(element('p', note, 'workflow-detail-note'));
     if (!Array.isArray(items) || items.length === 0) {
       wrapper.append(element('p', emptyText || 'لا توجد سجلات بعد.', 'workflow-detail-empty'));
       return wrapper;
@@ -361,16 +354,10 @@
     const session = (currentBoard?.sessions || []).find(actor => actor.actor_id === item.target_actor_id);
     const target = session ? safeText(session.display_name, session.actor_id) : safeText(item.target_actor_id, 'جلسة غير محددة');
     const count = Number.isFinite(Number(item.attempt_count)) ? arabicNumber.format(Number(item.attempt_count)) : '—';
-    const timing = item.sent_at
-      ? `وقت الإرسال: ${formatDate(item.sent_at)}`
-      : code === 'retry' && item.available_at
-        ? `موعد إعادة المحاولة: ${formatDate(item.available_at)}`
-        : code === 'pending' && item.available_at
-          ? `موعد الإتاحة: ${formatDate(item.available_at)}`
-          : '';
+    const timing = item.sent_at ? `وقت الإرسال: ${formatDate(item.sent_at)}` : item.available_at ? `متاح للإرسال: ${formatDate(item.available_at)}` : '';
     const command = item.command_code === 'card_assignment' ? 'إسناد بطاقة' : safeText(item.command_code, 'إرسال تكليف');
     const detail = [`الجهة: ${target}`, `عدد المحاولات: ${count}`, timing, item.last_error_code && `رمز الخطأ: ${item.last_error_code}`].filter(Boolean).join(' · ');
-    const row = detailItem(command, detail);
+    const row = detailItem(command, detail, item.sent_at || item.available_at);
     row.insertBefore(element('span', label, `workflow-outbox-state is-${style}`), row.firstChild);
     return row;
   }
@@ -410,7 +397,7 @@
       return detailItem(`${item.branch_name || 'فرع غير محدد'} · المحاولة ${arabicNumber.format(item.attempt_number || item.attempt_id || 0)}`, detail, item.submitted_at);
     }, 'لا توجد تسليمات مسجلة.'));
     root.append(section('فحوص الجودة', data.validations, item => detailItem(`${item.criterion || item.check_code || 'فحص'} · ${outcomeLabels[item.outcome] || item.outcome || 'نتيجة غير محددة'}`, item.evidence_ref, item.recorded_at), 'لا توجد نتائج تحقق مسجلة.'));
-    root.append(section('طابور إرسال التكليفات', data.outbox, outboxItem, 'لا توجد تكليفات في طابور الإرسال.', 'حالة «وُضع في الجلسة» تعني أن Codex قبل إدراج التكليف في الجلسة؛ لا تعني اكتمال البطاقة.'));
+    root.append(section('طابور إرسال التكليفات', data.outbox, outboxItem, 'لا توجد تكليفات في طابور الإرسال.'));
     $('workflow-detail-loading').hidden = true;
     $('workflow-detail-error').hidden = true;
     root.hidden = false;
@@ -428,12 +415,11 @@
 
   async function loadCardDetails() {
     const cardId = currentCardId;
-    const requestId = ++detailRequestId;
     try {
       const data = await requestJSON(`/api/workflow/cards/${encodeURIComponent(cardId)}`);
-      if (cardId === currentCardId && requestId === detailRequestId) renderCardDetails(data);
+      if (cardId === currentCardId) renderCardDetails(data);
     } catch (error) {
-      if (cardId !== currentCardId || requestId !== detailRequestId) return;
+      if (cardId !== currentCardId) return;
       $('workflow-detail-loading').hidden = true;
       $('workflow-detail-content').hidden = true;
       $('workflow-detail-error').hidden = false;
@@ -510,34 +496,8 @@
     }
   }
 
-  function switchTab(index, focus = false) {
-    tabs.forEach((tab, i) => {
-      const active = i === index;
-      tab.classList.toggle('is-active', active);
-      tab.setAttribute('aria-selected', String(active));
-      tab.tabIndex = active ? 0 : -1;
-      $(tab.getAttribute('aria-controls')).hidden = !active;
-    });
-    if (focus) tabs[index].focus();
-    if (index === 0) window.dispatchEvent(new Event('resize'));
-    if (index === 1 && !boardLoaded) loadBoard();
-  }
-
-  tabs.forEach((tab, index) => {
-    tab.addEventListener('click', () => switchTab(index));
-    tab.addEventListener('keydown', event => {
-      let next = index;
-      if (event.key === 'ArrowLeft') next = (index + 1) % tabs.length;
-      else if (event.key === 'ArrowRight') next = (index - 1 + tabs.length) % tabs.length;
-      else if (event.key === 'Home') next = 0;
-      else if (event.key === 'End') next = tabs.length - 1;
-      else return;
-      event.preventDefault();
-      switchTab(next, true);
-    });
-  });
-  $('workflow-refresh').addEventListener('click', () => refreshWorkflow());
-  $('workflow-retry').addEventListener('click', () => refreshWorkflow());
+  $('workflow-refresh').addEventListener('click', () => loadBoard());
+  $('workflow-retry').addEventListener('click', () => loadBoard());
   $('workflow-filters').addEventListener('submit', event => { event.preventDefault(); loadBoard(); });
   $('workflow-status').addEventListener('change', () => loadBoard());
   $('workflow-actor').addEventListener('change', () => loadBoard());
@@ -568,9 +528,11 @@
   $('workflow-command-form').addEventListener('keydown', event => {
     if (event.key === 'Escape') $('workflow-command-dialog').close();
   });
-  $('workflow-detail-dialog').addEventListener('close', () => { currentCardId = null; detailRequestId += 1; });
+  $('workflow-detail-dialog').addEventListener('close', () => { currentCardId = null; });
+
+  loadBoard();
 
   window.setInterval(() => {
-    if (!$('workflow-view').hidden && document.visibilityState === 'visible') refreshWorkflow({ showLoading: false });
+    loadBoard({ showLoading: false });
   }, 60000);
 })();

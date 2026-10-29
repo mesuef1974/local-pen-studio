@@ -2,16 +2,24 @@
   'use strict';
 
   const $ = id => document.getElementById(id);
-  const number = new Intl.NumberFormat('ar-QA-u-nu-latn', { maximumFractionDigits: 1 });
-  const wholeNumber = new Intl.NumberFormat('ar-QA-u-nu-latn', { maximumFractionDigits: 0 });
-  const dateTime = new Intl.DateTimeFormat('ar-QA-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short' });
-  const axisTime = new Intl.DateTimeFormat('ar-QA-u-nu-latn', { month: 'short', day: 'numeric', hour: '2-digit' });
+  const setDotState = (id, state) => {
+    const dot = $(id);
+    dot.classList.remove('is-current', 'is-stale', 'is-error');
+    dot.classList.add(state);
+  };
+  const number = new Intl.NumberFormat('ar-QA', { maximumFractionDigits: 1, numberingSystem: 'latn' });
+  const wholeNumber = new Intl.NumberFormat('ar-QA', { maximumFractionDigits: 0, numberingSystem: 'latn' });
+  const dateOnly = new Intl.DateTimeFormat('ar-QA', { dateStyle: 'medium', numberingSystem: 'latn', timeZone: 'Asia/Qatar' });
+  const clockTime = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23', numberingSystem: 'latn', timeZone: 'Asia/Qatar',
+  });
   const specs = [
     { id: '01a182be-0161-7e73-a20a-8491ca192c18', key: 'laser', name: 'ليزر', color: '#0072b2' },
     { id: '01a18383-0873-7df3-8b67-c1a1c8fe9607', key: 'brainstorm', name: 'عصف ذهني', color: '#d55e00' },
     { id: '01a17e81-dc37-7d93-8a62-4adeac385b20', key: 'pen', name: 'مسار القلم', color: '#009e73' },
     { id: '01a1836f-d720-7950-834a-035a0052411e', key: 'svg', name: 'تنسيق إنتاج SVG', color: '#8a4fa3' },
   ];
+  const activeSessionIds = new Set(specs.map(spec => spec.id));
   let latestData = null;
   let request = null;
   let manualRefreshQueued = false;
@@ -22,8 +30,9 @@
   const formatDate = value => {
     if (!value) return '—';
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? '—' : dateTime.format(date);
+    return Number.isNaN(date.getTime()) ? '—' : `${dateOnly.format(date)} · ${clockTime.format(date)}`;
   };
+  const formatAxisTime = value => clockTime.format(value);
   const lastSample = session => (session?.samples || []).reduce((latest, sample) => {
     const time = Date.parse(sample?.timestamp || '');
     return Number.isFinite(time) && (!latest || time > Date.parse(latest.timestamp)) ? sample : latest;
@@ -71,7 +80,8 @@
     const body = $('sessions-body');
     const empty = $('sessions-empty');
     body.replaceChildren();
-    const current = sessions.map(session => ({ session, sample: lastSample(session) }))
+    const current = sessions.filter(session => activeSessionIds.has(session.session_id))
+      .map(session => ({ session, sample: lastSample(session) }))
       .filter(item => item.sample)
       .sort((a, b) => (Number(b.sample.cumulative?.total_tokens) || 0) - (Number(a.sample.cumulative?.total_tokens) || 0));
 
@@ -202,7 +212,7 @@
     context.fillStyle = '#526a7b';
     context.textAlign = 'center';
     for (const index of [...new Set([0, Math.floor((times.length - 1) / 2), times.length - 1])]) {
-      context.fillText(axisTime.format(new Date(times[index])), x(index), height - 6);
+      context.fillText(formatAxisTime(new Date(times[index])), x(index), height - 6);
     }
 
     const summaries = series.map(item => {
@@ -291,7 +301,7 @@
       .filter(point => Number.isFinite(point.value));
     context.beginPath();
     contextPoints.forEach((point, index) => index ? context.lineTo(x(point.index), yContext(point.value)) : context.moveTo(x(point.index), yContext(point.value)));
-    context.strokeStyle = '#16865d';
+    context.strokeStyle = '#a63f60';
     context.lineWidth = 2.5;
     context.stroke();
 
@@ -299,7 +309,7 @@
     context.textAlign = 'center';
     const ticks = [...new Set([0, Math.floor((samples.length - 1) / 2), samples.length - 1])];
     for (const index of ticks) {
-      context.fillText(axisTime.format(new Date(samples[index].timestamp)), x(index), height - 5);
+      context.fillText(formatAxisTime(new Date(samples[index].timestamp)), x(index), height - 5);
     }
   }
 
@@ -445,7 +455,7 @@
           if (Number.isFinite(value)) dot.style.top = `${state.y(value) - state.padding.top}px`;
           return `${item.spec.name}: ${Number.isFinite(value) ? `${formatTokens(value)} توكن` : 'لا توجد عينة'}`;
         });
-        tooltip.textContent = `${dateTime.format(new Date(timestamp))} · ${rows.join(' · ')}`;
+        tooltip.textContent = `${formatDate(timestamp)} · ${rows.join(' · ')}`;
       } else {
         const sample = state.samples[selectedIndex];
         const tokenY = state.yTotal(sample.cumulative?.total_tokens) + canvasRect.top - parentRect.top;
@@ -456,7 +466,7 @@
         contextDot.hidden = !hasContext;
         tokenDot.style.top = `${state.yTotal(sample.cumulative?.total_tokens) - state.padding.top}px`;
         if (hasContext) contextDot.style.top = `${state.yContext(contextValue) - state.padding.top}px`;
-        tooltip.textContent = `${dateTime.format(new Date(sample.timestamp))} · التوكنز: ${formatTokens(sample.cumulative?.total_tokens)} · ضغط السياق: ${formatPercent(contextValue)}`;
+        tooltip.textContent = `${formatDate(sample.timestamp)} · التوكنز: ${formatTokens(sample.cumulative?.total_tokens)} · ضغط السياق: ${formatPercent(contextValue)}`;
       }
       guide.hidden = false;
       guide.style.left = `${localX}px`;
@@ -572,32 +582,43 @@
   function render(data) {
     latestData = data;
     const sessions = Array.isArray(data.sessions) ? data.sessions : [];
+    const activeSessions = sessions.filter(session => activeSessionIds.has(session.session_id));
     const measured = sessions.map(session => ({ session, sample: lastSample(session) })).filter(item => item.sample);
-    const contextValues = measured.map(item => Number(item.sample.context?.used_percent)).filter(Number.isFinite);
+    const activeMeasured = activeSessions.map(session => ({ session, sample: lastSample(session) })).filter(item => item.sample);
+    const contextValues = activeMeasured.map(item => Number(item.sample.context?.used_percent)).filter(Number.isFinite);
     const total = measured.reduce((sum, item) => sum + (Number(item.sample.cumulative?.total_tokens) || 0), 0);
     $('total-tokens').textContent = formatTokens(total);
-    $('session-count').textContent = formatNumber(measured.length);
-    $('active-note').textContent = `من أصل ${formatNumber(sessions.length)} ملف جلسة`;
+    $('session-count').textContent = formatNumber(activeMeasured.length);
+    $('active-note').textContent = `من أصل ${formatNumber(specs.length)} جلسات حالية`;
     $('avg-context').textContent = contextValues.length
       ? formatPercent(contextValues.reduce((sum, value) => sum + value, 0) / contextValues.length)
       : '—';
     $('peak-context').textContent = contextValues.length ? formatPercent(Math.max(...contextValues)) : '—';
     renderBreakdown(sessions);
-    renderSessionTable(sessions);
+    renderSessionTable(activeSessions);
     renderWeekly(data.weekly);
     drawTrend(sessions);
     renderSessionCharts(sessions);
-    $('generated-at').textContent = `توليد البيانات: ${formatDate(data.generated_at)}`;
-    $('updated-badge').textContent = `${formatNumber(measured.length)} جلسة`;
-    $('live-status').textContent = 'مزامنة محلية تلقائية كل دقيقة';
+    $('generated-at').textContent = `توليد استجابة اللوحة: ${formatDate(data.generated_at)}`;
+    $('updated-badge').textContent = `${formatNumber(activeMeasured.length)} جلسات نشطة`;
 
-    const generated = Date.parse(data.generated_at);
-    const fresh = Number.isFinite(generated) && Date.now() - generated < 150000;
-    $('usage-status-state').textContent = fresh ? 'القياس محدث' : 'البيانات قديمة';
-    $('usage-status-dot').style.background = fresh ? '#2d8a70' : '#9a5b10';
-    $('usage-status-updated').textContent = Number.isFinite(generated)
-      ? `آخر تحديث ${formatDate(data.generated_at)}`
-      : 'لا يوجد وقت تحديث';
+    const sampleTimes = activeSessions.map(session => Date.parse(lastSample(session)?.timestamp || ''));
+    if (data.weekly?.timestamp) sampleTimes.push(Date.parse(data.weekly.timestamp));
+    const validSampleTimes = sampleTimes.filter(Number.isFinite);
+    const latestSampleTime = validSampleTimes.length ? Math.max(...validSampleTimes) : NaN;
+    const sampleAge = Date.now() - latestSampleTime;
+    const fresh = Number.isFinite(latestSampleTime) && sampleAge >= 0 && sampleAge < 150000;
+    const latestSampleText = Number.isFinite(latestSampleTime) ? formatDate(latestSampleTime) : null;
+
+    setDotState('live-status-dot', 'is-current');
+    setDotState('usage-status-dot', fresh ? 'is-current' : 'is-stale');
+    $('live-status').textContent = latestSampleText
+      ? `قاعدة البيانات متصلة · آخر عينة ${latestSampleText}`
+      : 'قاعدة البيانات متصلة · لا توجد عينات محفوظة';
+    $('usage-status-state').textContent = fresh ? 'العينة حديثة' : 'العينة قديمة';
+    $('usage-status-updated').textContent = latestSampleText
+      ? `آخر عينة SQLite: ${latestSampleText}`
+      : 'لا توجد عينة محفوظة في SQLite';
   }
 
   async function refresh(manual = false) {
@@ -624,9 +645,10 @@
         }
       } catch (error) {
         $('live-status').textContent = 'تعذر تحميل القياس المحلي';
+        setDotState('live-status-dot', 'is-error');
         $('announcement').textContent = 'تعذر تحميل القياس المحلي. استخدم زر تحديث الآن للمحاولة مجددًا.';
         $('usage-status-state').textContent = 'تعذر التحديث';
-        $('usage-status-dot').style.background = '#a63f3f';
+        setDotState('usage-status-dot', 'is-error');
         $('usage-status-updated').textContent = 'تحقق من أن المسجل المحلي يعمل ثم أعد المحاولة.';
         if (!latestData) $('sessions-empty').hidden = false;
       } finally {
@@ -644,6 +666,9 @@
   }
 
   $('refresh').addEventListener('click', () => refresh(true));
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refresh(false);
+  });
   setupChartInteraction($('trend'), $('tooltip-trend'), 'اتجاه الإجمالي');
   for (const spec of specs) setupChartInteraction($(`chart-${spec.key}`), $(`tooltip-${spec.key}`), spec.name);
   window.addEventListener('resize', () => {

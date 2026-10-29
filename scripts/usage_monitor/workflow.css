@@ -13,4 +13,3 @@
 @media(prefers-reduced-motion:reduce){.workflow-spinner{animation:none}.workflow-card{transition:none}}
 
 .workflow-outbox-state{display:inline-flex;align-items:center;width:max-content;margin:0 0 3px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800}.workflow-outbox-state.is-pending{background:#eef2f5;color:#536b7a}.workflow-outbox-state.is-processing{background:#fff4d9;color:#805710}.workflow-outbox-state.is-sent{background:#e8f4ef;color:#27684c}.workflow-outbox-state.is-retry{background:#fff4d9;color:#805710}.workflow-outbox-state.is-failed{background:#fff0ed;color:#9b4034}
-.workflow-detail-note{margin:0 0 10px;color:#526a7b;font-size:11px;line-height:1.6}

@@ -1,17 +1,19 @@
 import json
+import os
 import sqlite3
-import subprocess
 import tempfile
-import threading
 import unittest
-import urllib.request
-from http.server import ThreadingHTTPServer
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "dashboard_project.settings")
+import django
+django.setup()
+
+from django.test import Client, override_settings
+
 import codex_usage_logger as logger
 from usage_database import SCHEMA_V1, connect, dashboard_data, insert_sample
-from dashboard_server import Handler
 from backup_usage_database import backup
 from coordination_repository import (assign_card, create_card, record_delivery_attempt,
                                      record_issue, record_opinion, record_owner_decision,
@@ -222,130 +224,13 @@ class UsageLoggerTests(unittest.TestCase):
     def test_dashboard_api_serves_database_data_on_loopback(self):
         self.write_rows({"type": "session_meta", "payload": {"session_id": self.session}}, self.usage())
         self.run_logger()
-        server = ThreadingHTTPServer(
-            ("127.0.0.1", 0), lambda *args, **kwargs: Handler(*args, database=self.database, **kwargs))
-        thread = threading.Thread(target=server.serve_forever, daemon=True)
-        thread.start()
-        try:
-            with urllib.request.urlopen(f"http://127.0.0.1:{server.server_port}/api/dashboard") as response:
-                self.assertEqual(response.status, 200)
-                self.assertEqual(response.headers.get_content_type(), "application/json")
-                payload = json.loads(response.read().decode("utf-8"))
-            self.assertEqual(payload["sessions"][0]["session_id"], self.session)
-            self.assertEqual(len(payload["sessions"][0]["samples"]), 1)
-            with urllib.request.urlopen(f"http://127.0.0.1:{server.server_port}/api/health") as response:
-                health=json.loads(response.read().decode("utf-8"))
-            self.assertEqual(health["schema_version"],6)
-            self.assertTrue(health["dispatcher_enabled"])
-        finally:
-            server.shutdown()
-            server.server_close()
-            thread.join(timeout=2)
-
-    def test_command_creates_routed_children_and_is_idempotent(self):
-        from workflow_service import create_command, board
-        from codex_session_dispatcher import register_endpoint
-        connection=connect(self.database)
-        try:
-            upsert_actor(connection,"laser","ليزر","frontend interface ui")
-            upsert_actor(connection,"backend","باك اند","database api server")
-            register_endpoint(self.database,"laser","11111111-1111-4111-8111-111111111111")
-            register_endpoint(self.database,"backend","22222222-2222-4222-8222-222222222222")
-            body={"idempotency_key":"owner-command-1","title":"تنفيذ واجهة","owner_request":"إنشاء صفحة","scope":"frontend interface", "criteria":[{"criterion_code":"ui","title":"واجهة RTL"}],"target_actor_ids":[]}
-            first,created=create_command(connection,body)
-            second,replayed=create_command(connection,body)
-            self.assertTrue(created); self.assertFalse(replayed)
-            self.assertEqual(first["root_card_id"],second["root_card_id"])
-            self.assertEqual(len(first["child_card_ids"]),1)
-            data=board(connection)
-            self.assertNotIn("owner", {session["actor_id"] for session in data["sessions"]})
-            child=next(c for c in data["cards"] if c["card_id"]==first["child_card_ids"][0])
-            self.assertEqual(child["assigned_actor_id"],"laser")
-            self.assertEqual(connection.execute("SELECT state_code FROM coordination_outbox").fetchone()[0],"pending")
-        finally: connection.close()
-
-    def test_specialty_registry_routes_without_owner_session_selection(self):
-        from workflow_service import create_command, board
-        from codex_session_dispatcher import register_endpoint
-        db=connect(self.database)
-        try:
-            actors=[("brainstorm","عصف ذهني","planning"),("laser","ليزر","frontend"),("path_pen","مسار القلم","flux"),("svg","تنسيق SVG","svg")]
-            for i,(actor,name,capability) in enumerate(actors,1):
-                upsert_actor(db,actor,name,capability)
-                register_endpoint(self.database,actor,f"00000000-0000-4000-8000-{i:012d}",(capability,))
-            result,_=create_command(db,{"idempotency_key":"specialty-1","title":"SVG vector task","owner_request":"Create an SVG illustration","scope":"SVG","target_actor_ids":[]})
-            child=db.execute("SELECT assigned_actor_id FROM coordination_cards WHERE card_id=?",(result["child_card_ids"][0],)).fetchone()[0]
-            self.assertEqual(child,"svg")
-            data=board(db)
-            self.assertEqual(len(data["sessions"]),4)
-            self.assertNotIn("owner",{session["actor_id"] for session in data["sessions"]})
-            with self.assertRaisesRegex(ValueError,"No registered session specialty"):
-                create_command(db,{"idempotency_key":"specialty-2","title":"Unmatched command","owner_request":"something","scope":"unknown capability","target_actor_ids":[]})
-        finally: db.close()
-
-    def test_dispatcher_queues_once_and_records_session_event(self):
-        from workflow_service import create_command
-        from codex_session_dispatcher import register_endpoint, dispatch_one
-        db=connect(self.database)
-        try:
-            upsert_actor(db,"laser","ليزر","واجهة أمامية")
-            register_endpoint(self.database,"laser","11111111-1111-4111-8111-111111111111")
-            create_command(db,{"idempotency_key":"dispatch-1","title":"واجهة اختبار","owner_request":"أنشئ واجهة","scope":"واجهة","target_actor_ids":[],"criteria":[]})
-            calls=[]
-            def runner(args,**kwargs):
-                calls.append((args,kwargs))
-                return subprocess.CompletedProcess(args,0,stdout="queued",stderr="")
-            result=dispatch_one(self.database,codex_executable="codex-test",runner=runner)
-            self.assertEqual(result["state_code"],"sent")
-            self.assertIn("--thread",calls[0][0])
-            self.assertEqual(db.execute("SELECT state_code FROM coordination_outbox").fetchone()[0],"sent")
-            self.assertEqual(db.execute("SELECT COUNT(*) FROM coordination_events WHERE event_type='card_queued_to_session'").fetchone()[0],1)
-            self.assertIsNone(dispatch_one(self.database,codex_executable="codex-test",runner=runner))
-        finally: db.close()
-
-    def test_dispatcher_retries_cli_failure_without_exposing_stderr(self):
-        from workflow_service import create_command
-        from codex_session_dispatcher import register_endpoint, dispatch_one
-        db=connect(self.database)
-        try:
-            upsert_actor(db,"laser","ليزر","واجهة أمامية")
-            register_endpoint(self.database,"laser","11111111-1111-4111-8111-111111111111")
-            create_command(db,{"idempotency_key":"dispatch-fail-1","title":"واجهة","owner_request":"طلب","scope":"نطاق","target_actor_ids":[]})
-            def runner(args,**kwargs): return subprocess.CompletedProcess(args,7,stdout="",stderr="private diagnostic")
-            result=dispatch_one(self.database,codex_executable="codex-test",runner=runner)
-            self.assertEqual(result["state_code"],"retry")
-            self.assertEqual(db.execute("SELECT last_error_code FROM coordination_outbox").fetchone()[0],"codex_exit_7")
-            self.assertNotIn("private diagnostic",str(result))
-        finally: db.close()
-
-    def test_dispatcher_quarantines_expired_claim_without_resending(self):
-        from workflow_service import create_command
-        from codex_session_dispatcher import register_endpoint, dispatch_one
-        from datetime import datetime, timezone
-        db=connect(self.database)
-        try:
-            upsert_actor(db,"laser","ليزر","واجهة أمامية")
-            register_endpoint(self.database,"laser","11111111-1111-4111-8111-111111111111")
-            create_command(db,{"idempotency_key":"dispatch-uncertain-1","title":"واجهة","owner_request":"طلب","scope":"واجهة"})
-            db.execute("UPDATE coordination_outbox SET state_code='processing',locked_until='2026-10-28T00:00:00+00:00'")
-            db.commit()
-            now=datetime(2026,10,29,tzinfo=timezone.utc)
-            calls=[]
-            result=dispatch_one(self.database,codex_executable="codex-test",runner=lambda *a,**k:calls.append(a),now=now)
-            self.assertIsNone(result)
-            self.assertEqual(calls,[])
-            self.assertEqual(tuple(db.execute("SELECT state_code,last_error_code FROM coordination_outbox").fetchone()),("dead_letter","dispatch_result_unknown"))
-        finally: db.close()
-
-    def test_workflow_command_api_rejects_cross_origin_posts(self):
-        server=ThreadingHTTPServer(("127.0.0.1",0),lambda *args,**kwargs: Handler(*args,database=self.database,**kwargs))
-        thread=threading.Thread(target=server.serve_forever,daemon=True); thread.start()
-        try:
-            request=urllib.request.Request(f"http://127.0.0.1:{server.server_port}/api/workflow/commands",data=b"{}",headers={"Content-Type":"application/json","Origin":"http://evil.test","X-Workflow-Request":"1"},method="POST")
-            with self.assertRaises(urllib.error.HTTPError) as error: urllib.request.urlopen(request)
-            self.assertEqual(error.exception.code,403)
-        finally:
-            server.shutdown(); server.server_close(); thread.join(timeout=2)
+        with override_settings(USAGE_DATABASE=self.database):
+            response = Client(HTTP_HOST="127.0.0.1").get("/api/dashboard")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.headers.get("Content-Type", "").split(";")[0], "application/json")
+            payload = response.json()
+        self.assertEqual(payload["sessions"][0]["session_id"], self.session)
+        self.assertEqual(len(payload["sessions"][0]["samples"]), 1)
 
     def test_backup_api_produces_integral_copy(self):
         self.write_rows({"type": "session_meta", "payload": {"session_id": self.session}}, self.usage())

@@ -12,9 +12,6 @@ LEGACY_STATUS = {
     "draft", "accepted", "in_progress", "blocked", "delivered", "accepted_by_owner", "archived",
 }
 COARSE_STATUS = {
-    "queued": "in_progress",
-    "assigned": "in_progress",
-    "returned": "in_progress",
     "needs_clarification": "in_progress",
     "reassignment_requested": "in_progress",
     "awaiting_owner": "in_progress",
@@ -102,19 +99,12 @@ def transition_card(connection: sqlite3.Connection, card_id: str, next_status: s
         if not card:
             raise KeyError(f"Unknown coordination card: {card_id}")
         status = connection.execute(
-            "SELECT version,terminal FROM workflow_status_definitions WHERE status_code=? AND retired_at IS NULL "
+            "SELECT version FROM workflow_status_definitions WHERE status_code=? AND retired_at IS NULL "
             "ORDER BY version DESC LIMIT 1", (next_status,),
         ).fetchone()
         if not status:
             raise ValueError(f"Unknown or retired workflow status: {next_status}")
         previous = card["current_status_code"]
-        transition = connection.execute(
-            """SELECT 1 FROM workflow_transition_rules
-            WHERE from_status_code=? AND to_status_code=? AND version=? AND enabled=1""",
-            (previous, next_status, status["version"]),
-        ).fetchone()
-        if not transition:
-            raise ValueError(f"Workflow transition is not allowed: {previous} -> {next_status}")
         event_id = _event(connection, card_id, "status_transition", actor_id=actor_id,
                           owner_actor_id=owner_actor_id, stage_code=stage_code,
                           previous_status=previous, next_status=next_status,
@@ -122,14 +112,10 @@ def transition_card(connection: sqlite3.Connection, card_id: str, next_status: s
                           note=note, related_event_id=related_event_id,
                           source_type=source_type, source_id=source_id)
         legacy = next_status if next_status in LEGACY_STATUS else COARSE_STATUS.get(next_status, "in_progress")
-        now = utc_now()
-        started_at = now if next_status == "in_progress" else None
-        closed_at = now if status["terminal"] else None
         connection.execute(
-            """UPDATE coordination_cards SET current_status_code=?,current_status_version=?,status=?,updated_at=?,
-            started_at=COALESCE(started_at,?),closed_at=CASE WHEN ? IS NULL THEN closed_at ELSE ? END
+            """UPDATE coordination_cards SET current_status_code=?,current_status_version=?,status=?,updated_at=?
             WHERE card_id=?""",
-            (next_status, status["version"], legacy, now, started_at, closed_at, closed_at, card_id),
+            (next_status, status["version"], legacy, utc_now(), card_id),
         )
     return event_id
 

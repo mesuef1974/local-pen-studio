@@ -1,6 +1,6 @@
 # CPU-only test dependencies; no model runtimes or weights.
 numpy==2.4.6
-Pillow==12.1.1
+Pillow==13.0.0
 opencv-contrib-python-headless==4.10.0.84
-CairoSVG==2.9.0
+CairoSVG==2.9.1
 requests==2.33.1

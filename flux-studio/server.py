@@ -22,9 +22,6 @@ ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/largest-case-cprofile.txt']
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/cuda-results.json']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'cuda-results.json'
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/webgpu-direct-fixed-heldout-comparison.json']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'webgpu-direct-fixed-heldout-comparison.json'
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/benchmark_cuda_path.py']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'benchmark_cuda_path.py'
-for _shared_name in ("typography.css", "assets/fonts/fonts.css", *[f"assets/fonts/{p.name}" for p in (ROOT.parent/"assets/fonts").glob("*.woff2")]):
-    ASSETS["/" + _shared_name] = ROOT.parent / _shared_name
-
 GATE=threading.Lock()
 ASSETS['/api-client.js']=ROOT/'api-client.js'
 ASSETS['/audit']=ROOT/'pipeline-review-ar.html'
