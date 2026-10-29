@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from usage_database import connect, utc_now
-from workflow_api import create_command
+from workflow_api import board, create_command
 
 
 class WorkflowCommandRoutingTests(unittest.TestCase):
@@ -57,6 +57,24 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
         try:
             self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 7)
             self.assertIsNotNone(db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='workflow_admin_audit'").fetchone())
+        finally:
+            db.close()
+
+    def test_board_counts_passing_quality_checks_once_per_criterion(self):
+        db = connect(self.path)
+        now = utc_now()
+        try:
+            with db:
+                db.execute("INSERT INTO coordination_cards(card_id,title,owner_request,scope,status,created_at,updated_at) VALUES('CARD-1','Card','Request','Scope','in_progress',?,?)", (now, now))
+                db.executemany("INSERT INTO coordination_card_criteria(card_id,criterion_code,title,created_at) VALUES('CARD-1',?,?,?)", [(f'criterion_{i}', f'Criterion {i}', now) for i in range(1, 7)])
+                run_id = db.execute("INSERT INTO coordination_quality_runs(card_id,profile_code,runner_name,runner_version,outcome,started_at,finished_at) VALUES('CARD-1','focused','unittest','1','pass',?,?)", (now, now)).lastrowid
+                db.executemany("INSERT INTO coordination_quality_checks(quality_run_id,check_code,outcome) VALUES(?,?,'pass')", [(run_id, f'criterion_{i}') for i in range(1, 6)])
+                # Duplicate evidence for one criterion must not inflate the progress count.
+                db.execute("INSERT INTO coordination_validation_results(card_id,outcome,criterion,recorded_at) VALUES('CARD-1','pass','criterion_1',?)", (now,))
+            result = board(self.path)
+            card = next(card for card in result['cards'] if card['card_id'] == 'CARD-1')
+            self.assertEqual(card['criteria_total'], 6)
+            self.assertEqual(card['criteria_passed'], 5)
         finally:
             db.close()
 

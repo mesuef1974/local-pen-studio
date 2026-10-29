@@ -97,9 +97,13 @@ def board(path: Path, *, status: str = "", actor_id: str = "", query: str = "") 
                    s.display_name AS status_label,c.assigned_actor_id,a.display_name AS assigned_actor_name,
                    c.parent_card_id,c.card_type_code,c.priority_code,c.created_at,c.updated_at,
                    (SELECT COUNT(*) FROM coordination_card_criteria cr WHERE cr.card_id=c.card_id) AS criteria_total,
-                   (SELECT SUM(CASE WHEN v.outcome='pass' THEN 1 ELSE 0 END)
-                    FROM coordination_card_criteria cr LEFT JOIN coordination_validation_results v
-                      ON v.card_id=cr.card_id AND v.criterion=cr.criterion_code WHERE cr.card_id=c.card_id) AS criteria_passed,
+                   (SELECT COUNT(*) FROM coordination_card_criteria cr WHERE cr.card_id=c.card_id AND (
+                      EXISTS (SELECT 1 FROM coordination_validation_results v
+                        WHERE v.card_id=cr.card_id AND v.criterion=cr.criterion_code AND v.outcome='pass')
+                      OR EXISTS (SELECT 1 FROM coordination_quality_checks qc
+                        JOIN coordination_quality_runs qr ON qr.quality_run_id=qc.quality_run_id
+                        WHERE qr.card_id=cr.card_id AND qc.check_code=cr.criterion_code AND qc.outcome='pass')
+                   )) AS criteria_passed,
                    (SELECT d.branch_name FROM coordination_delivery_attempts d WHERE d.card_id=c.card_id
                     ORDER BY d.attempt_number DESC LIMIT 1) AS branch_name,
                    (SELECT d.commit_sha FROM coordination_delivery_attempts d WHERE d.card_id=c.card_id
