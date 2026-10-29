@@ -44,6 +44,8 @@ ADMIN_TABLES = {
     "workflow_status_definitions": "تعريفات حالات الفلو",
     "workflow_transition_rules": "قواعد انتقال الحالات",
     "workflow_admin_audit": "سجل تغييرات الإدارة",
+    "workflow_text_originals": "النصوص الأصلية المحفوظة",
+    "workflow_text_localizations": "الترجمات العربية لسجلات التدفق",
 }
 
 DISPLAY_COLUMNS = {
@@ -79,6 +81,8 @@ DISPLAY_COLUMNS = {
     "workflow_status_definitions": ("status_code", "version", "display_name", "terminal"),
     "workflow_transition_rules": ("from_status_code", "to_status_code", "version", "enabled"),
     "workflow_admin_audit": ("audit_id", "actor_username", "table_name", "object_pk", "action_code", "recorded_at"),
+    "workflow_text_originals": ("table_name", "record_key", "field_name", "original_text", "localized_at"),
+    "workflow_text_localizations": ("table_name", "record_key", "field_name", "localized_text"),
 }
 
 SEARCH_FIELDS = {
@@ -92,6 +96,8 @@ SEARCH_FIELDS = {
     "usage_sessions": ("session_id", "session_name"),
     "usage_samples": ("session_id", "model", "reasoning_effort", "service_tier"),
     "workflow_admin_audit": ("actor_username", "table_name", "object_pk"),
+    "workflow_text_originals": ("table_name", "record_key", "field_name"),
+    "workflow_text_localizations": ("table_name", "record_key", "field_name"),
 }
 
 FILTER_FIELDS = {
@@ -107,6 +113,8 @@ FILTER_FIELDS = {
     "coordination_validation_results": ("outcome", "validator_actor_id"),
     "usage_samples": ("session_id", "model", "reasoning_effort", "service_tier"),
     "workflow_admin_audit": ("action_code", "table_name"),
+    "workflow_text_originals": ("table_name",),
+    "workflow_text_localizations": ("table_name",),
 }
 
 FIELD_LABELS = {
@@ -119,6 +127,8 @@ FIELD_LABELS = {
     "cause_resolution": "توضيح سبب العائق", "certificate": "الشهادة", "check_code": "رمز الفحص",
     "check_method": "طريقة التحقق", "charter": "ميثاق الجلسة", "checksum_sha256": "بصمة SHA-256",
     "actor_username": "مستخدم الإدارة", "action_code": "نوع التغيير", "table_name": "الجدول المتأثر",
+    "record_key": "معرّف السجل", "field_name": "الحقل", "original_text": "النص الأصلي المحفوظ",
+    "localized_text": "النص العربي المعروض", "localized_at": "وقت التعريب",
     "closed_at": "وقت الإغلاق", "codex_session_id": "معرّف جلسة Codex",
     "command_code": "رمز الأمر", "commit_sha": "معرّف الالتزام", "context_cache_write_input_tokens": "توكنز كتابة الذاكرة المؤقتة",
     "context_cached_input_tokens": "توكنز الإدخال من الذاكرة المؤقتة", "context_input_tokens": "توكنز الإدخال",

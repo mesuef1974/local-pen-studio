@@ -10,11 +10,11 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib.staticfiles import finders
 from django.http import FileResponse, HttpRequest, HttpResponse, JsonResponse
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 
 from usage_database import dashboard_data
-from workflow_api import board, card_details, create_command, metrics
+from workflow_api import board, card_details, create_command, metrics, transition_assigned_card
 
 
 ASSET_ROOT = Path(__file__).resolve().parent.parent
@@ -106,6 +106,30 @@ def workflow_commands_api(request: HttpRequest) -> JsonResponse:
         return _json({"error": {"message": str(exc)}}, status=400)
     except (OSError, RuntimeError, sqlite3.Error) as exc:
         return _service_error("تعذر تسجيل الأمر في قاعدة البيانات", exc)
+
+
+@csrf_exempt
+@require_POST
+def workflow_card_lifecycle_api(request: HttpRequest, card_id: str) -> JsonResponse:
+    expected_origin = f"http://{request.get_host()}"
+    if request.headers.get("Origin") != expected_origin or request.headers.get("X-Workflow-Request") != "1":
+        return _json({"error": {"message": "الطلب المحلي غير موثّق."}}, status=403)
+    try:
+        if not request.body or len(request.body) > 16_000:
+            raise ValueError("حجم الطلب غير صالح.")
+        payload = json.loads(request.body)
+        if not isinstance(payload, dict):
+            raise ValueError("صيغة تحديث الحالة غير صالحة.")
+        result = transition_assigned_card(settings.USAGE_DATABASE, card_id,
+            str(payload.get("actor_id") or "").strip(), str(payload.get("status_code") or "").strip(),
+            str(payload.get("summary") or ""))
+        return _json(result)
+    except KeyError as exc:
+        return _json({"error": {"message": str(exc.args[0])}}, status=404)
+    except (ValueError, json.JSONDecodeError) as exc:
+        return _json({"error": {"message": str(exc)}}, status=400)
+    except (OSError, RuntimeError, sqlite3.Error) as exc:
+        return _service_error("تعذر تحديث حالة البطاقة", exc)
 
 
 @require_GET

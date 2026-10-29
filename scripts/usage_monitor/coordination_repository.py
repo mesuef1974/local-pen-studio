@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from typing import Any
 
 from usage_database import utc_now
+
+
+def _require_arabic(value: str | None, field: str, *, optional: bool = False) -> None:
+    text = str(value or "").strip()
+    if (text or not optional) and not re.search(r"[\u0600-\u06ff]", text):
+        raise ValueError(f"اكتب {field} باللغة العربية.")
 
 
 LEGACY_STATUS = {
@@ -58,6 +65,9 @@ def create_card(connection: sqlite3.Connection, *, card_id: str, title: str, own
                 scope: str, status_code: str = "draft", assigned_actor_id: str | None = None,
                 coordinator_actor_id: str | None = None, owner_actor_id: str | None = None,
                 source_type: str = "owner_card", source_id: str | None = None) -> int:
+    _require_arabic(title, "عنوان البطاقة")
+    _require_arabic(owner_request, "طلب المالك")
+    _require_arabic(scope, "نطاق البطاقة")
     now = utc_now()
     legacy = status_code if status_code in LEGACY_STATUS else COARSE_STATUS.get(status_code, "in_progress")
     with connection:
@@ -159,6 +169,8 @@ def assign_card(connection: sqlite3.Connection, card_id: str, assigned_actor_id:
 
 def record_opinion(connection: sqlite3.Connection, card_id: str, actor_id: str, opinion: str,
                    recommendation: str | None = None) -> int:
+    _require_arabic(opinion, "رأي الجلسة")
+    _require_arabic(recommendation, "التوصية", optional=True)
     now = utc_now()
     with connection:
         event_id = _event(connection, card_id, "session_opinion_recorded", actor_id=actor_id,
@@ -179,6 +191,7 @@ def record_opinion(connection: sqlite3.Connection, card_id: str, actor_id: str, 
 
 def record_owner_decision(connection: sqlite3.Connection, card_id: str, axis: str, decision: str, *,
                           owner_actor_id: str, notes: str | None = None) -> int:
+    _require_arabic(notes, "ملاحظات قرار المالك", optional=True)
     now = utc_now()
     with connection:
         previous = connection.execute("SELECT decision FROM owner_decisions WHERE card_id=? AND axis=?",
@@ -207,6 +220,7 @@ def record_owner_decision(connection: sqlite3.Connection, card_id: str, axis: st
 def record_issue(connection: sqlite3.Connection, card_id: str, *, stage_code: str,
                  cause_resolution: str, impact_summary: str, cause_code: str | None = None,
                  actor_id: str | None = None) -> int:
+    _require_arabic(impact_summary, "وصف العائق")
     if cause_resolution not in {"confirmed", "unresolved"}:
         raise ValueError("cause_resolution must be confirmed or unresolved")
     now = utc_now()
@@ -227,6 +241,7 @@ def record_issue(connection: sqlite3.Connection, card_id: str, *, stage_code: st
 def record_delivery_attempt(connection: sqlite3.Connection, card_id: str, *,
                             submitted_by_actor_id: str | None, outcome: str = "submitted",
                             summary: str = "") -> int:
+    _require_arabic(summary, "ملخص التسليم", optional=True)
     with connection:
         attempt = connection.execute(
             "SELECT COALESCE(MAX(attempt_number),0)+1 FROM coordination_delivery_attempts WHERE card_id=?",
