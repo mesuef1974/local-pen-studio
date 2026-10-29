@@ -1,0 +1,13 @@
+"""Arabic Qatar dates and 24-hour times with Latin digits."""
+
+DATE_FORMAT = "Y-m-d"
+DATETIME_FORMAT = "Y-m-d H:i"
+SHORT_DATE_FORMAT = "Y-m-d"
+SHORT_DATETIME_FORMAT = "Y-m-d H:i"
+TIME_FORMAT = "H:i"
+YEAR_MONTH_FORMAT = "Y-m"
+MONTH_DAY_FORMAT = "m-d"
+DECIMAL_SEPARATOR = "."
+THOUSAND_SEPARATOR = ","
+NUMBER_GROUPING = 3
+USE_THOUSAND_SEPARATOR = True

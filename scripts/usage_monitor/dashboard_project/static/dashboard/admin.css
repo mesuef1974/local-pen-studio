@@ -1,0 +1,405 @@
+/* Django Admin uses the same central identity palette and font system as the dashboard. */
+html[data-theme="light"],
+html[data-theme="auto"] {
+  --primary: var(--identity-teal);
+  --secondary: var(--identity-blue);
+  --accent: var(--identity-gold);
+  --primary-fg: #fff;
+  --body-fg: var(--identity-ink);
+  --body-bg: var(--identity-paper);
+  --body-quiet-color: #496672;
+  --body-medium-color: #496672;
+  --body-loud-color: var(--identity-ink);
+  --header-color: #fff;
+  --header-branding-color: #fff;
+  --header-bg: var(--identity-blue-dark);
+  --header-link-color: #fff;
+  --breadcrumbs-fg: #e7f0ef;
+  --breadcrumbs-link-fg: #fff;
+  --breadcrumbs-bg: var(--identity-teal);
+  --link-fg: var(--identity-blue);
+  --link-hover-color: var(--identity-teal);
+  --hairline-color: #718a8c;
+  --border-color: #718a8c;
+  --darkened-bg: var(--identity-soft);
+  --selected-bg: var(--identity-teal-soft);
+  --selected-row: var(--identity-teal-soft);
+  --button-fg: #fff;
+  --button-bg: var(--identity-teal);
+  --button-hover-bg: #105b55;
+  --default-button-bg: var(--identity-blue);
+  --default-button-hover-bg: var(--identity-blue-dark);
+  --close-button-bg: var(--identity-muted);
+  --close-button-hover-bg: var(--identity-blue-dark);
+  --delete-button-bg: var(--identity-red);
+  --delete-button-hover-bg: #713128;
+  --object-tools-fg: #fff;
+  --object-tools-bg: var(--identity-blue);
+  --object-tools-hover-bg: var(--identity-teal);
+  --font-family-primary: "Cairo", "Manrope", "IBM Plex Sans Arabic", "Plus Jakarta Sans", sans-serif;
+  --font-family-monospace: "Manrope", "IBM Plex Sans Arabic", monospace;
+  --border-radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] {
+    --body-fg: #e5efeb;
+    --body-bg: #14232a;
+    --body-quiet-color: #bacbc9;
+    --body-medium-color: #d0ddda;
+    --body-loud-color: #f3f7f5;
+    --header-bg: #10242b;
+    --breadcrumbs-bg: #155d5a;
+    --link-fg: #9dd8cd;
+    --link-hover-color: #c2eee4;
+    --hairline-color: #3b5056;
+    --border-color: #4a6065;
+    --darkened-bg: #1e3036;
+    --selected-bg: #24423f;
+    --selected-row: #283c40;
+    --hairline-color: #6d8387;
+    --border-color: #6d8387;
+  }
+}
+
+html[data-theme="dark"] {
+  --body-fg: #e5efeb;
+  --body-bg: #14232a;
+  --body-quiet-color: #bacbc9;
+  --body-medium-color: #d0ddda;
+  --body-loud-color: #f3f7f5;
+  --header-bg: #10242b;
+  --breadcrumbs-bg: #155d5a;
+  --link-fg: #9dd8cd;
+  --link-hover-color: #c2eee4;
+  --hairline-color: #6d8387;
+  --border-color: #6d8387;
+  --darkened-bg: #1e3036;
+  --selected-bg: #24423f;
+  --selected-row: #283c40;
+}
+
+html[lang^="ar"] body { color: var(--body-fg); background: var(--body-bg); }
+html[lang^="ar"] #header { padding: 14px 24px; }
+html[lang^="ar"] #branding h1 { font-weight: 800; }
+html[lang^="ar"] #content { max-width: 1680px; }
+html[lang^="ar"] .breadcrumbs { padding: 12px 24px; }
+html[lang^="ar"] #nav-sidebar {
+  min-width: 260px;
+  position: static;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  overscroll-behavior: auto;
+}
+html[lang^="ar"] .results, html[lang^="ar"] .results table { width: 100%; }
+html[lang^="ar"] .results th, html[lang^="ar"] .results td { vertical-align: middle; }
+html[lang^="ar"] .results td, html[lang^="ar"] .results th { overflow-wrap: anywhere; }
+html[lang^="ar"] #changelist .results thead th {
+  color: #183547 !important;
+  background: #edf4f3 !important;
+  border-bottom: 2px solid #718a8c !important;
+}
+html[lang^="ar"] #changelist #result_list thead th,
+html[lang^="ar"] #changelist #result_list thead th.sorted { color: #183547 !important; background: #edf4f3 !important; }
+html[lang^="ar"] #changelist .results thead th a:link,
+html[lang^="ar"] #changelist .results thead th a:visited { color: #214c67 !important; }
+html[lang^="ar"] #changelist .results tbody tr:nth-child(odd) { background: #fbfcfa !important; }
+html[lang^="ar"] #changelist .results tbody tr:nth-child(even) { background: #edf4f3 !important; }
+html[lang^="ar"] #changelist #result_list tbody tr:nth-child(odd) > td,
+html[lang^="ar"] #changelist #result_list tbody tr:nth-child(odd) > th { background: #fbfcfa !important; }
+html[lang^="ar"] #changelist #result_list tbody tr:nth-child(even) > td,
+html[lang^="ar"] #changelist #result_list tbody tr:nth-child(even) > th { background: #edf4f3 !important; }
+html[lang^="ar"] #changelist .results tbody tr.selected,
+html[lang^="ar"] #changelist .results tbody tr.selected:nth-child(even) { background: #e8f3ef !important; }
+html[lang^="ar"] #changelist #result_list tbody tr.selected > td,
+html[lang^="ar"] #changelist #result_list tbody tr.selected > th { background: #e8f3ef !important; }
+html[lang^="ar"] #changelist .results tbody td,
+html[lang^="ar"] #changelist .results tbody th { color: #183547 !important; border-bottom: 1px solid #718a8c !important; }
+html[lang^="ar"] #changelist #result_list tbody a:link,
+html[lang^="ar"] #changelist #result_list tbody a:visited { color: #214c67 !important; }
+html[lang^="ar"] #changelist-filter,
+html[lang^="ar"] #nav-sidebar { color: var(--body-fg); background: var(--body-bg); }
+html[lang^="ar"] #changelist-filter { border-inline-start: 1px solid var(--border-color); }
+html[lang^="ar"] #nav-sidebar { border-inline-end: 1px solid var(--border-color); }
+html[lang^="ar"] #changelist-filter a,
+html[lang^="ar"] #nav-sidebar a { color: var(--link-fg); }
+html[lang^="ar"] #nav-sidebar table,
+html[lang^="ar"] #nav-sidebar table th,
+html[lang^="ar"] #nav-sidebar table td { color: #183547 !important; background: #fbfcfa !important; border-color: #526d75 !important; }
+html[lang^="ar"] #nav-sidebar table thead th { background: #edf4f3 !important; }
+html[lang^="ar"] #nav-sidebar table a:link,
+html[lang^="ar"] #nav-sidebar table a:visited { color: #214c67 !important; background: transparent !important; }
+html[lang^="ar"] #nav-sidebar .module caption { background: #214c67 !important; }
+html[lang^="ar"] #nav-sidebar .module caption a:link,
+html[lang^="ar"] #nav-sidebar .module caption a:visited { color: #fff !important; }
+html[lang^="ar"] #changelist-filter li.selected a,
+html[lang^="ar"] #nav-sidebar .current-app .section:link { color: var(--body-fg); }
+html[lang^="ar"] #changelist .results input[type="checkbox"] { accent-color: var(--primary); }
+html[lang^="ar"] #changelist .paginator,
+html[lang^="ar"] #changelist .actions { color: var(--body-fg); }
+html[lang^="ar"] .paginator, html[lang^="ar"] .object-tools { font-variant-numeric: lining-nums tabular-nums; }
+
+html[data-theme="dark"] #changelist .results thead th,
+html[data-theme="dark"] #changelist .results thead th a:link,
+html[data-theme="dark"] #changelist .results thead th a:visited { color: #e5efeb !important; background: #263a40 !important; }
+html[data-theme="dark"] #changelist #result_list thead th,
+html[data-theme="dark"] #changelist #result_list thead th.sorted { color: #e5efeb !important; background: #263a40 !important; }
+html[data-theme="dark"] #changelist .results tbody tr:nth-child(odd) { background: #14232a !important; }
+html[data-theme="dark"] #changelist .results tbody tr:nth-child(even) { background: #1e3036 !important; }
+html[data-theme="dark"] #changelist #result_list tbody tr:nth-child(odd) > td,
+html[data-theme="dark"] #changelist #result_list tbody tr:nth-child(odd) > th { background: #14232a !important; }
+html[data-theme="dark"] #changelist #result_list tbody tr:nth-child(even) > td,
+html[data-theme="dark"] #changelist #result_list tbody tr:nth-child(even) > th { background: #1e3036 !important; }
+html[data-theme="dark"] #changelist .results tbody tr.selected,
+html[data-theme="dark"] #changelist .results tbody tr.selected:nth-child(even) { background: #24423f !important; }
+html[data-theme="dark"] #changelist #result_list tbody tr.selected > td,
+html[data-theme="dark"] #changelist #result_list tbody tr.selected > th { background: #24423f !important; }
+html[data-theme="dark"] #changelist .results tbody td,
+html[data-theme="dark"] #changelist .results tbody th { color: #e5efeb !important; border-color: #6d8387 !important; }
+html[data-theme="dark"] #changelist #result_list tbody a:link,
+html[data-theme="dark"] #changelist #result_list tbody a:visited { color: #9dd8cd !important; }
+html[data-theme="dark"] #nav-sidebar table,
+html[data-theme="dark"] #nav-sidebar table th,
+html[data-theme="dark"] #nav-sidebar table td,
+html[data-theme="dark"] #changelist-filter { color: #e5efeb !important; background: #1e3036 !important; border-color: #6d8387 !important; }
+html[data-theme="dark"] #nav-sidebar table thead th { background: #263a40 !important; }
+html[data-theme="dark"] #nav-sidebar table a:link,
+html[data-theme="dark"] #nav-sidebar table a:visited,
+html[data-theme="dark"] #changelist-filter a { color: #9dd8cd !important; }
+html[data-theme="dark"] #nav-sidebar .module caption { background: #263a40 !important; }
+html[data-theme="dark"] #nav-sidebar .module caption a:link,
+html[data-theme="dark"] #nav-sidebar .module caption a:visited { color: #fff !important; }
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] #changelist .results thead th,
+  html[data-theme="auto"] #changelist .results thead th a:link,
+  html[data-theme="auto"] #changelist .results thead th a:visited { color: #e5efeb !important; background: #263a40 !important; }
+  html[data-theme="auto"] #changelist #result_list thead th,
+  html[data-theme="auto"] #changelist #result_list thead th.sorted { color: #e5efeb !important; background: #263a40 !important; }
+  html[data-theme="auto"] #changelist .results tbody tr:nth-child(odd) { background: #14232a !important; }
+  html[data-theme="auto"] #changelist .results tbody tr:nth-child(even) { background: #1e3036 !important; }
+  html[data-theme="auto"] #changelist #result_list tbody tr.selected > td,
+  html[data-theme="auto"] #changelist #result_list tbody tr.selected > th { background: #24423f !important; }
+  html[data-theme="auto"] #changelist #result_list tbody tr:nth-child(odd) > td,
+  html[data-theme="auto"] #changelist #result_list tbody tr:nth-child(odd) > th { background: #14232a !important; }
+  html[data-theme="auto"] #changelist #result_list tbody tr:nth-child(even) > td,
+  html[data-theme="auto"] #changelist #result_list tbody tr:nth-child(even) > th { background: #1e3036 !important; }
+  html[data-theme="auto"] #changelist .results tbody td,
+  html[data-theme="auto"] #changelist .results tbody th { color: #e5efeb !important; border-color: #6d8387 !important; }
+  html[data-theme="auto"] #changelist #result_list tbody a:link,
+  html[data-theme="auto"] #changelist #result_list tbody a:visited { color: #9dd8cd !important; }
+  html[data-theme="auto"] #nav-sidebar table,
+  html[data-theme="auto"] #nav-sidebar table th,
+  html[data-theme="auto"] #nav-sidebar table td,
+  html[data-theme="auto"] #changelist-filter { color: #e5efeb !important; background: #1e3036 !important; border-color: #6d8387 !important; }
+  html[data-theme="auto"] #nav-sidebar table thead th { background: #263a40 !important; }
+  html[data-theme="auto"] #nav-sidebar table a:link,
+  html[data-theme="auto"] #nav-sidebar table a:visited,
+  html[data-theme="auto"] #changelist-filter a { color: #9dd8cd !important; }
+  html[data-theme="auto"] #nav-sidebar .module caption { background: #263a40 !important; }
+  html[data-theme="auto"] #nav-sidebar .module caption a:link,
+  html[data-theme="auto"] #nav-sidebar .module caption a:visited { color: #fff !important; }
+}
+html[lang^="ar"] a:focus-visible, html[lang^="ar"] button:focus-visible,
+html[lang^="ar"] input:focus-visible, html[lang^="ar"] select:focus-visible {
+  outline: 3px solid #176d68;
+  outline-offset: 2px;
+}
+html[data-theme="dark"] a:focus-visible, html[data-theme="dark"] button:focus-visible,
+html[data-theme="dark"] input:focus-visible, html[data-theme="dark"] select:focus-visible { outline-color: #58b4a5; }
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] a:focus-visible, html[data-theme="auto"] button:focus-visible,
+  html[data-theme="auto"] input:focus-visible, html[data-theme="auto"] select:focus-visible { outline-color: #58b4a5; }
+}
+@media (max-width: 767px) {
+  html[lang^="ar"] #content { padding-inline: 14px; }
+  html[lang^="ar"] #nav-sidebar { min-width: 0; }
+  html[lang^="ar"] .results { overflow-x: auto; }
+}
+
+/* Stronger table separation and text contrast in both admin themes. */
+html[lang^="ar"] #changelist #result_list thead th,
+html[lang^="ar"] #changelist #result_list thead th a:link,
+html[lang^="ar"] #changelist #result_list thead th a:visited {
+  color: #102a3a !important;
+  background: #dce8e8 !important;
+}
+html[lang^="ar"] #changelist #result_list tbody tr:nth-child(odd) > td,
+html[lang^="ar"] #changelist #result_list tbody tr:nth-child(odd) > th {
+  color: #102a3a !important;
+  background: #fff !important;
+  border-color: #526d75 !important;
+}
+html[lang^="ar"] #changelist #result_list tbody tr:nth-child(even) > td,
+html[lang^="ar"] #changelist #result_list tbody tr:nth-child(even) > th {
+  color: #102a3a !important;
+  background: #cad9dd !important;
+  border-color: #526d75 !important;
+}
+html[lang^="ar"] #changelist #result_list tbody tr.selected > td,
+html[lang^="ar"] #changelist #result_list tbody tr.selected > th { background: #d0e5dd !important; }
+html[lang^="ar"] #changelist #result_list tbody a:link,
+html[lang^="ar"] #changelist #result_list tbody a:visited { color: #17435c !important; }
+html[lang^="ar"] #nav-sidebar .module tbody tr:nth-child(odd) > th,
+html[lang^="ar"] #nav-sidebar .module tbody tr:nth-child(odd) > td {
+  color: #102a3a !important;
+  background: #fff !important;
+}
+html[lang^="ar"] #nav-sidebar .module tbody tr:nth-child(even) > th,
+html[lang^="ar"] #nav-sidebar .module tbody tr:nth-child(even) > td {
+  color: #102a3a !important;
+  background: #cad9dd !important;
+}
+html[lang^="ar"] #nav-sidebar .module tbody a:link,
+html[lang^="ar"] #nav-sidebar .module tbody a:visited { color: #17435c !important; }
+
+/* Make the Django index tables as readable as changelists. */
+html[lang^="ar"] #content-main .module table th,
+html[lang^="ar"] #content-main .module table td {
+  color: #102a3a !important;
+  background: #fff !important;
+  border-bottom: 1px solid #526d75 !important;
+}
+html[lang^="ar"] #content-main .module table tr:nth-child(even) th,
+html[lang^="ar"] #content-main .module table tr:nth-child(even) td { background: #cad9dd !important; }
+html[lang^="ar"] #content-main .module table a:link,
+html[lang^="ar"] #content-main .module table a:visited { color: #123c55 !important; }
+html[lang^="ar"] #content-main .module caption,
+html[lang^="ar"] #content-main .module caption a:link,
+html[lang^="ar"] #content-main .module caption a:visited { color: #fff !important; background: #214c67 !important; }
+
+html[data-theme="dark"] #changelist #result_list thead th,
+html[data-theme="dark"] #changelist #result_list thead th a:link,
+html[data-theme="dark"] #changelist #result_list thead th a:visited,
+html[data-theme="dark"] #nav-sidebar .module caption,
+html[data-theme="dark"] #nav-sidebar .module caption a:link,
+html[data-theme="dark"] #nav-sidebar .module caption a:visited {
+  color: #fff !important;
+  background: #263a40 !important;
+}
+html[data-theme="dark"] #changelist #result_list tbody tr:nth-child(odd) > td,
+html[data-theme="dark"] #changelist #result_list tbody tr:nth-child(odd) > th,
+html[data-theme="dark"] #nav-sidebar .module tbody tr:nth-child(odd) > th,
+html[data-theme="dark"] #nav-sidebar .module tbody tr:nth-child(odd) > td {
+  color: #f4f8f8 !important;
+  background: #101b21 !important;
+  border-color: #70878c !important;
+}
+html[data-theme="dark"] #changelist #result_list tbody tr:nth-child(even) > td,
+html[data-theme="dark"] #changelist #result_list tbody tr:nth-child(even) > th,
+html[data-theme="dark"] #nav-sidebar .module tbody tr:nth-child(even) > th,
+html[data-theme="dark"] #nav-sidebar .module tbody tr:nth-child(even) > td {
+  color: #f4f8f8 !important;
+  background: #263940 !important;
+  border-color: #70878c !important;
+}
+html[data-theme="dark"] #changelist #result_list tbody tr.selected > td,
+html[data-theme="dark"] #changelist #result_list tbody tr.selected > th { background: #244f48 !important; }
+html[data-theme="dark"] #changelist #result_list tbody a:link,
+html[data-theme="dark"] #changelist #result_list tbody a:visited,
+html[data-theme="dark"] #nav-sidebar .module tbody a:link,
+html[data-theme="dark"] #nav-sidebar .module tbody a:visited { color: #a8eee3 !important; }
+html[data-theme="dark"] #changelist #result_list tbody tr:nth-child(even) > td,
+html[data-theme="dark"] #changelist #result_list tbody tr:nth-child(even) > th,
+html[data-theme="dark"] #nav-sidebar .module tbody tr:nth-child(even) > th,
+html[data-theme="dark"] #nav-sidebar .module tbody tr:nth-child(even) > td,
+html[data-theme="dark"] #content-main .module table tr:nth-child(even) th,
+html[data-theme="dark"] #content-main .module table tr:nth-child(even) td { background: #30474f !important; }
+html[data-theme="dark"] #content-main .module table th,
+html[data-theme="dark"] #content-main .module table td {
+  color: #f4f8f8 !important;
+  background: #101b21 !important;
+  border-bottom: 1px solid #91a8ad !important;
+}
+html[data-theme="dark"] #content-main .module table a:link,
+html[data-theme="dark"] #content-main .module table a:visited { color: #a8eee3 !important; }
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] #changelist #result_list thead th,
+  html[data-theme="auto"] #changelist #result_list thead th a:link,
+  html[data-theme="auto"] #changelist #result_list thead th a:visited,
+  html[data-theme="auto"] #nav-sidebar .module caption,
+  html[data-theme="auto"] #nav-sidebar .module caption a:link,
+  html[data-theme="auto"] #nav-sidebar .module caption a:visited {
+    color: #fff !important;
+    background: #263a40 !important;
+  }
+  html[data-theme="auto"] #changelist #result_list tbody tr:nth-child(odd) > td,
+  html[data-theme="auto"] #changelist #result_list tbody tr:nth-child(odd) > th,
+  html[data-theme="auto"] #nav-sidebar .module tbody tr:nth-child(odd) > th,
+  html[data-theme="auto"] #nav-sidebar .module tbody tr:nth-child(odd) > td {
+    color: #f4f8f8 !important;
+    background: #101b21 !important;
+    border-color: #70878c !important;
+  }
+  html[data-theme="auto"] #changelist #result_list tbody tr:nth-child(even) > td,
+  html[data-theme="auto"] #changelist #result_list tbody tr:nth-child(even) > th,
+  html[data-theme="auto"] #nav-sidebar .module tbody tr:nth-child(even) > th,
+  html[data-theme="auto"] #nav-sidebar .module tbody tr:nth-child(even) > td {
+    color: #f4f8f8 !important;
+    background: #263940 !important;
+    border-color: #70878c !important;
+  }
+  html[data-theme="auto"] #changelist #result_list tbody tr.selected > td,
+  html[data-theme="auto"] #changelist #result_list tbody tr.selected > th { background: #244f48 !important; }
+  html[data-theme="auto"] #changelist #result_list tbody a:link,
+  html[data-theme="auto"] #changelist #result_list tbody a:visited,
+  html[data-theme="auto"] #nav-sidebar .module tbody a:link,
+  html[data-theme="auto"] #nav-sidebar .module tbody a:visited { color: #a8eee3 !important; }
+  html[data-theme="auto"] #changelist #result_list tbody tr:nth-child(even) > td,
+  html[data-theme="auto"] #changelist #result_list tbody tr:nth-child(even) > th,
+  html[data-theme="auto"] #nav-sidebar .module tbody tr:nth-child(even) > th,
+  html[data-theme="auto"] #nav-sidebar .module tbody tr:nth-child(even) > td,
+  html[data-theme="auto"] #content-main .module table tr:nth-child(even) th,
+  html[data-theme="auto"] #content-main .module table tr:nth-child(even) td { background: #30474f !important; }
+  html[data-theme="auto"] #content-main .module table th,
+  html[data-theme="auto"] #content-main .module table td {
+    color: #f4f8f8 !important;
+    background: #101b21 !important;
+    border-bottom: 1px solid #91a8ad !important;
+  }
+  html[data-theme="auto"] #content-main .module table a:link,
+  html[data-theme="auto"] #content-main .module table a:visited { color: #a8eee3 !important; }
+}
+
+/* Final theme overrides come last so Django's light table defaults cannot win. */
+html[data-theme="dark"] #changelist #result_list tbody tr:nth-child(odd) > td,
+html[data-theme="dark"] #changelist #result_list tbody tr:nth-child(odd) > th,
+html[data-theme="dark"] #nav-sidebar .module tbody tr:nth-child(odd) > td,
+html[data-theme="dark"] #nav-sidebar .module tbody tr:nth-child(odd) > th,
+html[data-theme="dark"] #content-main .module table tr:nth-child(odd) > td,
+html[data-theme="dark"] #content-main .module table tr:nth-child(odd) > th { color: #f4f8f8 !important; background: #101b21 !important; }
+html[data-theme="dark"] #changelist #result_list tbody tr:nth-child(even) > td,
+html[data-theme="dark"] #changelist #result_list tbody tr:nth-child(even) > th,
+html[data-theme="dark"] #nav-sidebar .module tbody tr:nth-child(even) > td,
+html[data-theme="dark"] #nav-sidebar .module tbody tr:nth-child(even) > th,
+html[data-theme="dark"] #content-main .module table tr:nth-child(even) > td,
+html[data-theme="dark"] #content-main .module table tr:nth-child(even) > th { color: #f4f8f8 !important; background: #30474f !important; border-color: #91a8ad !important; }
+html[data-theme="dark"] #content-main .module table a:link,
+html[data-theme="dark"] #content-main .module table a:visited,
+html[data-theme="dark"] #changelist #result_list tbody a:link,
+html[data-theme="dark"] #changelist #result_list tbody a:visited,
+html[data-theme="dark"] #nav-sidebar .module tbody a:link,
+html[data-theme="dark"] #nav-sidebar .module tbody a:visited { color: #a8eee3 !important; }
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] #changelist #result_list tbody tr:nth-child(odd) > td,
+  html[data-theme="auto"] #changelist #result_list tbody tr:nth-child(odd) > th,
+  html[data-theme="auto"] #nav-sidebar .module tbody tr:nth-child(odd) > td,
+  html[data-theme="auto"] #nav-sidebar .module tbody tr:nth-child(odd) > th,
+  html[data-theme="auto"] #content-main .module table tr:nth-child(odd) > td,
+  html[data-theme="auto"] #content-main .module table tr:nth-child(odd) > th { color: #f4f8f8 !important; background: #101b21 !important; }
+  html[data-theme="auto"] #changelist #result_list tbody tr:nth-child(even) > td,
+  html[data-theme="auto"] #changelist #result_list tbody tr:nth-child(even) > th,
+  html[data-theme="auto"] #nav-sidebar .module tbody tr:nth-child(even) > td,
+  html[data-theme="auto"] #nav-sidebar .module tbody tr:nth-child(even) > th,
+  html[data-theme="auto"] #content-main .module table tr:nth-child(even) > td,
+  html[data-theme="auto"] #content-main .module table tr:nth-child(even) > th { color: #f4f8f8 !important; background: #30474f !important; border-color: #91a8ad !important; }
+  html[data-theme="auto"] #content-main .module table a:link,
+  html[data-theme="auto"] #content-main .module table a:visited,
+  html[data-theme="auto"] #changelist #result_list tbody a:link,
+  html[data-theme="auto"] #changelist #result_list tbody a:visited,
+  html[data-theme="auto"] #nav-sidebar .module tbody a:link,
+  html[data-theme="auto"] #nav-sidebar .module tbody a:visited { color: #a8eee3 !important; }
+}

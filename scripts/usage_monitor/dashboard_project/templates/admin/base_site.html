@@ -1,0 +1,12 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="/identity.css">
+{% endblock %}
+
+{% block responsive %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'dashboard/admin.css' %}?v=20261029-contrast9">
+{% endblock %}

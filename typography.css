@@ -1,0 +1,36 @@
+/* Central visual identity: typography, palette, and shared interaction tokens. */
+@import url("./assets/fonts/fonts.css?v=20261029-2");
+:root {
+  color-scheme: light;
+  --brand-primary: #176b76;
+  --brand-primary-strong: #105761;
+  --brand-accent: #d49a35;
+  --brand-ink: #203746;
+  --brand-muted: #657987;
+  --brand-surface: #ffffff;
+  --brand-canvas: #f4f7f8;
+  --brand-border: #dce5e9;
+  --brand-radius-sm: 8px;
+  --brand-radius-md: 14px;
+  --brand-radius-lg: 20px;
+  --brand-shadow: 0 8px 24px rgb(23 51 75 / 8%);
+  --font-ar-body: "IBM Plex Sans Arabic", sans-serif;
+  --font-ar-display: "Cairo", "IBM Plex Sans Arabic", sans-serif;
+  --font-en-body: "Plus Jakarta Sans", sans-serif;
+  --font-en-display: "Manrope", "Plus Jakarta Sans", sans-serif;
+  --font-code: ui-monospace, "Cascadia Code", "Segoe UI Mono", monospace;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+html { font-synthesis: none; }
+body, button, input, select, textarea { font-family: var(--font-ar-body), var(--font-en-body), sans-serif !important; }
+:lang(ar) { font-family: var(--font-ar-body), sans-serif !important; }
+:lang(ar) :is(h1,h2,h3,h4,h5,h6) { font-family: var(--font-ar-display), sans-serif !important; }
+:lang(en), :dir(ltr) { font-family: var(--font-en-body), sans-serif !important; }
+:lang(en):is(h1,h2,h3,h4,h5,h6), :dir(ltr):is(h1,h2,h3,h4,h5,h6), :lang(en) :is(h1,h2,h3,h4,h5,h6), :dir(ltr) :is(h1,h2,h3,h4,h5,h6) { font-family: var(--font-en-display), sans-serif !important; }
+:lang(ar) :where(code,pre,kbd,samp), :lang(en) :where(code,pre,kbd,samp), :where(code,pre,kbd,samp) { font-family: var(--font-code) !important; }
+:where(input,textarea,select,button) { font-variant-numeric: lining-nums tabular-nums; font-feature-settings: "lnum" 1, "tnum" 1; }
+:where([dir="ltr"], [data-numeric], .numeric, time, output) { direction: ltr; unicode-bidi: isolate; font-variant-numeric: lining-nums tabular-nums; font-feature-settings: "lnum" 1, "tnum" 1; }
+:where(a,button,input,select,textarea,summary,[tabindex]):focus-visible { outline: 3px solid var(--brand-accent); outline-offset: 3px; }
+::selection { color: #fff; background: var(--brand-primary); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }

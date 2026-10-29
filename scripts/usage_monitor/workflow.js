@@ -95,6 +95,8 @@
     if (options.method && options.method !== 'GET') {
       headers.set('Content-Type', 'application/json');
       headers.set('X-Workflow-Request', '1');
+      const csrfCookie = document.cookie.split('; ').find((cookie) => cookie.startsWith('csrftoken='));
+      if (csrfCookie) headers.set('X-CSRFToken', decodeURIComponent(csrfCookie.slice('csrftoken='.length)));
     }
     const response = await fetch(url, { cache: 'no-store', ...options, headers });
     let data;

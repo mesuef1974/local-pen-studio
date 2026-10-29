@@ -1,16 +1,19 @@
 import json
+import os
 import sqlite3
 import tempfile
-import threading
 import unittest
-import urllib.request
-from http.server import ThreadingHTTPServer
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "dashboard_project.settings")
+import django
+django.setup()
+
+from django.test import Client, override_settings
+
 import codex_usage_logger as logger
 from usage_database import SCHEMA_V1, connect, dashboard_data, insert_sample
-from dashboard_server import Handler
 from backup_usage_database import backup
 from coordination_repository import (assign_card, create_card, record_delivery_attempt,
                                      record_issue, record_opinion, record_owner_decision,
@@ -221,21 +224,13 @@ class UsageLoggerTests(unittest.TestCase):
     def test_dashboard_api_serves_database_data_on_loopback(self):
         self.write_rows({"type": "session_meta", "payload": {"session_id": self.session}}, self.usage())
         self.run_logger()
-        server = ThreadingHTTPServer(
-            ("127.0.0.1", 0), lambda *args, **kwargs: Handler(*args, database=self.database, **kwargs))
-        thread = threading.Thread(target=server.serve_forever, daemon=True)
-        thread.start()
-        try:
-            with urllib.request.urlopen(f"http://127.0.0.1:{server.server_port}/api/dashboard") as response:
-                self.assertEqual(response.status, 200)
-                self.assertEqual(response.headers.get_content_type(), "application/json")
-                payload = json.loads(response.read().decode("utf-8"))
-            self.assertEqual(payload["sessions"][0]["session_id"], self.session)
-            self.assertEqual(len(payload["sessions"][0]["samples"]), 1)
-        finally:
-            server.shutdown()
-            server.server_close()
-            thread.join(timeout=2)
+        with override_settings(USAGE_DATABASE=self.database):
+            response = Client(HTTP_HOST="127.0.0.1").get("/api/dashboard")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.headers.get("Content-Type", "").split(";")[0], "application/json")
+            payload = response.json()
+        self.assertEqual(payload["sessions"][0]["session_id"], self.session)
+        self.assertEqual(len(payload["sessions"][0]["samples"]), 1)
 
     def test_backup_api_produces_integral_copy(self):
         self.write_rows({"type": "session_meta", "payload": {"session_id": self.session}}, self.usage())

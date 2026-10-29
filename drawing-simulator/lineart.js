@@ -1,6 +1,6 @@
 import {createImageEditor} from './image-editor.js';
 import {$,setupTools} from './lineart-tools.js';
-import {setActivity,setSummary} from './lineart-layout.js';
+import {setActivity,setSummary} from './lineart-layout.js?v=20261029';
 let source='',raw='',result='',busy=false,revision=0,timer,pending=false,cacheKey='',sourceVersion=0,metrics=null,paths=[],deleted=new Set(),pathRevision=0;
 let selectedPath=-1,pathHistory=[],pathTimer;
 function pathLength(p){let n=0;for(let k=1;k<p.length;k++)n+=Math.hypot(p[k][0]-p[k-1][0],p[k][1]-p[k-1][1]);return n;}

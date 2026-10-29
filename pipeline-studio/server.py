@@ -9,6 +9,9 @@ ROOT=Path(__file__).resolve().parent
 DRAW=ROOT.parent/'drawing-simulator';TRACE=ROOT.parent/'trace-studio'
 sys.path[:0]=[str(TRACE),str(DRAW)]
 ASSETS={'/':ROOT/'index.html','/prepare':ROOT/'index.html','/model':ROOT/'index.html','/paths':ROOT/'index.html','/app.js':ROOT/'app.js','/styles.css':ROOT/'styles.css','/workflow.js':ROOT/'workflow.js','/geometry.js':ROOT/'geometry.js','/sample.png':DRAW/'photo-lineart-comparison/original.png','/sample-art.png':TRACE/'sample.png','/image-editor.js':DRAW/'image-editor.js','/image-editor.css':DRAW/'image-editor.css'}
+for _shared_name in ("typography.css", "assets/fonts/fonts.css", *[f"assets/fonts/{p.name}" for p in (ROOT.parent/"assets/fonts").glob("*.woff2")]):
+    ASSETS["/" + _shared_name] = ROOT.parent / _shared_name
+
 GATE=threading.Lock();MODEL_CACHE=OrderedDict()
 from generation import Jobs
 GENERATION=Jobs(GATE)
