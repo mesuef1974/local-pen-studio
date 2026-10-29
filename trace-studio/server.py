@@ -7,6 +7,9 @@ from processing import OUTPUT_FILES
 
 ROOT=Path(__file__).resolve().parent
 ASSETS={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/preparation-ui.js':'preparation-ui.js','/styles.css':'styles.css','/sample.png':'sample.png','/photo.png':'photo.png'}
+SHARED_ASSETS = {"/typography.css": ROOT.parent / "typography.css", "/assets/fonts/fonts.css": ROOT.parent / "assets/fonts/fonts.css"}
+SHARED_ASSETS.update({f"/assets/fonts/{p.name}": p for p in (ROOT.parent / "assets/fonts").glob("*.woff2")})
+
 GATE=threading.Lock()
 
 
@@ -24,9 +27,25 @@ class Handler(SimpleHTTPRequestHandler):
         if path in ASSETS:return ASSETS[path]
         match=re.fullmatch(r'/output/([0-9a-f]{32})/(trace-(?:vector\.svg|master\.svg|preview\.png|validation\.json))',path)
         if match and match[2] in OUTPUT_FILES.values():return 'output/'+match[1]+'/'+match[2]
+    def serve_shared(self, path, head=False):
+        target = SHARED_ASSETS.get(path)
+        if not target or not target.is_file():
+            self.send_error(404)
+            return
+        raw = target.read_bytes()
+        content_type = "text/css; charset=utf-8" if target.suffix == ".css" else "font/woff2"
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(raw)))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.end_headers()
+        if not head:
+            self.wfile.write(raw)
     def do_GET(self):
         if not self.host_ok():self.reply(403,{'error':'عنوان غير مسموح.'});return
-        if urlsplit(self.path).path=='/api/status':self.reply(200,{'service':'trace-studio','skill':'trace-mascot-svg'});return
+        path=urlsplit(self.path).path
+        if path in SHARED_ASSETS:return self.serve_shared(path)
+        if path=='/api/status':self.reply(200,{'service':'trace-studio','skill':'trace-mascot-svg'});return
         if urlsplit(self.path).path=='/favicon.ico':self.send_response(204);self.end_headers();return
         target=self.route()
         if not target:self.reply(404,{'error':'غير موجود.'});return
@@ -36,8 +55,11 @@ class Handler(SimpleHTTPRequestHandler):
             raw=file.read_bytes();self.send_response(200);self.send_header('Content-Type',mimetypes.guess_type(file.name)[0] or 'application/octet-stream');self.send_header('Content-Disposition',f'attachment; filename="{file.name}"');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw);return
         self.path='/'+target;super().do_GET()
     def do_HEAD(self):
+        path=urlsplit(self.path).path
+        if not self.host_ok():self.send_error(404);return
+        if path in SHARED_ASSETS:return self.serve_shared(path,head=True)
         target=self.route()
-        if not self.host_ok() or not target:self.send_error(404);return
+        if not target:self.send_error(404);return
         self.path='/'+target;super().do_HEAD()
     def do_POST(self):
         if not self.host_ok() or self.headers.get('Origin') not in {f'http://127.0.0.1:{self.server.server_port}',f'http://localhost:{self.server.server_port}'}:self.reply(403,{'error':'استخدم الصفحة المحلية.'});return

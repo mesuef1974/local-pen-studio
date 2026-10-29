@@ -24,10 +24,11 @@
     .btn:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #165f9a;outline-offset:3px}
     .btn:disabled{cursor:wait;opacity:.72}
     .chart-summary{margin:9px 0;color:#40596b;font-size:12px;line-height:1.65}
-    .chart-tooltip{position:absolute;z-index:5;max-width:min(270px,calc(100% - 16px));padding:8px 10px;border:1px solid #c9dce0;border-radius:9px;background:#123d51;color:#fff;box-shadow:0 8px 24px #123d5133;font-size:12px;line-height:1.55;pointer-events:none;direction:rtl;font-variant-numeric:tabular-nums}.chart-tooltip[hidden],.chart-hover-guide[hidden]{display:none}.chart-hover-guide{position:absolute;z-index:2;top:0;width:1px;border-left:1px dashed #294b5b;pointer-events:none}.chart-hover-dot{position:absolute;left:-5px;width:9px;height:9px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #24465b;transform:translateY(-50%)}.token-dot{background:#087f8c}.context-dot{background:#a63f60}canvas:focus-visible{outline:3px solid #165f9a;outline-offset:2px;border-radius:4px}    .usage-status-title .dot{flex:none}
+    .chart-tooltip{position:absolute;z-index:5;max-width:min(270px,calc(100% - 16px));padding:8px 10px;border:1px solid #c9dce0;border-radius:9px;background:#123d51;color:#fff;box-shadow:0 8px 24px #123d5133;font-size:12px;line-height:1.55;pointer-events:none;direction:rtl;font-variant-numeric:tabular-nums}.chart-tooltip[hidden],.chart-hover-guide[hidden]{display:none}.chart-hover-guide{position:absolute;z-index:2;top:0;width:1px;border-left:1px dashed #294b5b;pointer-events:none}.chart-hover-dot{position:absolute;left:-5px;width:9px;height:9px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #24465b;transform:translateY(-50%)}.token-dot{background:#087f8c}.context-dot{background:#16865d}canvas:focus-visible{outline:3px solid #165f9a;outline-offset:2px;border-radius:4px}    .usage-status-title .dot{flex:none}
     .weekly-empty{color:#754b0c}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
+<link rel="stylesheet" href="../../typography.css?v=20261029-2">
 </head>
 <body>
 <a class="skip-link" href="#summary">تجاوز إلى ملخص الاستهلاك</a>
@@ -63,7 +64,7 @@
   </section>
   <section class="session-section" aria-labelledby="session-charts-title">
     <div class="section-head"><div><h2 id="session-charts-title">استهلاك وضغط الجلسات الأربع</h2><p>الأيمن: التوكنز التراكمية · الأيسر: ضغط السياق من 0 إلى 100٪. الحصة الأسبوعية مشتركة وتظهر في الشريط العام.</p></div></div>
-    <div class="multi-legend" aria-label="مفتاح الرسم"><span><i class="line-key session-series" aria-hidden="true"></i>التوكنز التراكمية، بلون مختلف لكل جلسة</span><span><i class="line-key" style="--key:#a63f60" aria-hidden="true"></i>ضغط السياق</span></div>
+    <div class="multi-legend" aria-label="مفتاح الرسم"><span><i class="line-key session-series" aria-hidden="true"></i>التوكنز التراكمية، بلون مختلف لكل جلسة</span><span><i class="line-key" style="--key:#16865d" aria-hidden="true"></i>ضغط السياق</span></div>
     <div class="featured-grid">
       <article class="chart-card" data-session-id="01a182be-0161-7e73-a20a-8491ca192c18"><div class="chart-card-head"><div><h3>ليزر</h3><div class="sub" id="meta-laser">تحميل قياسات الجلسة…</div></div><div class="session-total" id="total-laser">—</div></div><div class="session-chart"><canvas id="chart-laser" role="img" aria-label="مخطط جلسة ليزر: إجمالي التوكنز وضغط السياق" aria-describedby="summary-laser" tabindex="0" aria-keyshortcuts="ArrowLeft ArrowRight Home End"></canvas><div class="chart-tooltip" id="tooltip-laser" role="tooltip" hidden></div><div class="chart-empty" id="empty-laser">لا توجد قياسات لهذه الجلسة بعد.</div></div><p class="chart-summary" id="summary-laser">جارٍ إعداد ملخص ليزر…</p></article>
       <article class="chart-card" data-session-id="01a18383-0873-7df3-8b67-c1a1c8fe9607"><div class="chart-card-head"><div><h3>عصف ذهني</h3><div class="sub" id="meta-brainstorm">تحميل قياسات الجلسة…</div></div><div class="session-total" id="total-brainstorm">—</div></div><div class="session-chart"><canvas id="chart-brainstorm" role="img" aria-label="مخطط جلسة العصف الذهني: إجمالي التوكنز وضغط السياق" aria-describedby="summary-brainstorm" tabindex="0" aria-keyshortcuts="ArrowLeft ArrowRight Home End"></canvas><div class="chart-tooltip" id="tooltip-brainstorm" role="tooltip" hidden></div><div class="chart-empty" id="empty-brainstorm">لا توجد قياسات لهذه الجلسة بعد.</div></div><p class="chart-summary" id="summary-brainstorm">جارٍ إعداد ملخص عصف ذهني…</p></article>
@@ -132,7 +133,7 @@
   </section>
 </main>
 <span id="chart-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
-<script src="dashboard.js" defer></script>
-<script src="workflow.js" defer></script>
+<script src="dashboard.js?v=20261029" defer></script>
+<script src="workflow.js?v=20261029" defer></script>
 </body>
 </html>

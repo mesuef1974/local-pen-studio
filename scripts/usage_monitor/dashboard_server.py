@@ -18,6 +18,10 @@ import workflow_service
 ROOT = Path(__file__).resolve().parent
 DEFAULT_DATABASE = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")) / "usage-logs" / "usage.sqlite3"
 
+REPO_ROOT = ROOT.parents[1]
+SHARED_ASSETS = {"/typography.css": REPO_ROOT / "typography.css", "/assets/fonts/fonts.css": REPO_ROOT / "assets/fonts/fonts.css"}
+SHARED_ASSETS.update({f"/assets/fonts/{path.name}": path for path in (REPO_ROOT / "assets/fonts").glob("*.woff2")})
+
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, database: Path, **kwargs):
@@ -26,6 +30,19 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlsplit(self.path)
+        if parsed.path in SHARED_ASSETS:
+            target = SHARED_ASSETS[parsed.path]
+            if not target.is_file():
+                return self.send_error(404)
+            raw = target.read_bytes()
+            content_type = "text/css; charset=utf-8" if target.suffix == ".css" else "font/woff2"
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(raw)))
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.end_headers()
+            self.wfile.write(raw)
+            return
         if parsed.path == "/api/health":
             try:
                 db=self._connect()

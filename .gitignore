@@ -1,6 +1,12 @@
 # Keep source, project documentation and intentional fixtures only.
 /*
 !/.gitignore
+!/typography.css
+!/assets/
+!/assets/fonts/
+!/assets/fonts/*.woff2
+!/assets/fonts/*.txt
+!/assets/fonts/fonts.css
 !/README.md
 !/*.py
 !/*.html

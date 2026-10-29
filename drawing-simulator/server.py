@@ -7,6 +7,8 @@ import argparse,json,urllib.request,urllib.error,base64,binascii,subprocess,thre
 ROOT=Path(__file__).resolve().parent
 ASSETS={'/':'lineart.html','/simulator.html':'index.html','/index.html':'index.html','/app.js':'app.js','/styles.css':'styles.css','/trace-worker.js':'trace-worker.js','/path-refinement.js':'path-refinement.js','/reference-benchmark/reference.png':'reference-benchmark/reference.png','/reference-benchmark/report-ar.html':'reference-benchmark/report-ar.html','/reference-benchmark/edges-render.png':'reference-benchmark/edges-render.png','/reference-benchmark/centerline-render.png':'reference-benchmark/centerline-render.png','/reference-benchmark/reference.svg':'reference-benchmark/reference.svg','/reference-benchmark/centerline-output.svg':'reference-benchmark/centerline-output.svg','/reference-benchmark/results.json':'reference-benchmark/results.json','/reference-benchmark/provenance.json':'reference-benchmark/provenance.json','/reference-benchmark/centerline-paths.json':'reference-benchmark/centerline-paths.json'}
 ASSETS.update({'/image-editor.js':'image-editor.js','/image-editor.css':'image-editor.css','/lineart.html':'lineart.html','/lineart.js':'lineart.js','/lineart-tools.js':'lineart-tools.js','/lineart-layout.js':'lineart-layout.js','/lineart-controls.js':'lineart-controls.js','/lineart.css':'lineart.css','/photo-lineart-comparison/original.png':'photo-lineart-comparison/original.png'})
+SHARED_ASSETS = {"/typography.css": ROOT.parent / "typography.css", "/assets/fonts/fonts.css": ROOT.parent / "assets/fonts/fonts.css"}
+SHARED_ASSETS.update({f"/assets/fonts/{p.name}": p for p in (ROOT.parent / "assets/fonts").glob("*.woff2")})
 LINEART_GATE=threading.Lock()
 BACKGROUND_GATE=threading.Lock()
 class Handler(SimpleHTTPRequestHandler):
@@ -24,9 +26,24 @@ class Handler(SimpleHTTPRequestHandler):
         return self.headers.get('Host') in {f'127.0.0.1:{port}',f'localhost:{port}'}
     def reply(self,status,data):
         raw=json.dumps(data,ensure_ascii=False).encode('utf-8');self.send_response(status);self.send_header('Content-Type','application/json; charset=utf-8');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
+    def serve_shared(self, path, head=False):
+        target = SHARED_ASSETS.get(path)
+        if not target or not target.is_file():
+            self.send_error(404)
+            return
+        raw = target.read_bytes()
+        content_type = "text/css; charset=utf-8" if target.suffix == ".css" else "font/woff2"
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(raw)))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.end_headers()
+        if not head:
+            self.wfile.write(raw)
     def do_GET(self):
         if not self.valid_host():self.reply(403,{'error':'عنوان المضيف غير مسموح.'});return
         path=urlsplit(self.path).path
+        if path in SHARED_ASSETS:return self.serve_shared(path)
         if path=='/favicon.ico':self.send_response(204);self.end_headers();return
         if path=='/api/status':self.reply(200,{'ok':True,'service':'drawing-simulator','lm_destination':'127.0.0.1:1234'});return
         if path not in ASSETS:self.reply(404,{'error':'غير موجود.'});return
@@ -34,6 +51,7 @@ class Handler(SimpleHTTPRequestHandler):
     def do_HEAD(self):
         if not self.valid_host():self.reply(403,{'error':'عنوان المضيف غير مسموح.'});return
         path=urlsplit(self.path).path
+        if path in SHARED_ASSETS:return self.serve_shared(path,head=True)
         if path not in ASSETS:self.reply(404,{'error':'غير موجود.'});return
         self.path='/'+ASSETS[path];super().do_HEAD()
     def do_POST(self):

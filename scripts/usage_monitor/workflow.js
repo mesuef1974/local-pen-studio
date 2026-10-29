@@ -15,8 +15,8 @@
     { code: 'failed', label: 'فشلت' },
     { code: 'archived', label: 'مؤرشفة' },
   ];
-  const arabicNumber = new Intl.NumberFormat('ar-QA', { maximumFractionDigits: 1 });
-  const dateTime = new Intl.DateTimeFormat('ar-QA', { dateStyle: 'medium', timeStyle: 'short' });
+  const arabicNumber = new Intl.NumberFormat('ar-QA-u-nu-latn', { maximumFractionDigits: 1 });
+  const dateTime = new Intl.DateTimeFormat('ar-QA-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short' });
   const priorityLabels = { low: 'منخفضة', normal: 'عادية', high: 'عالية', urgent: 'عاجلة' };
   const eventLabels = {
     card_created: 'إنشاء البطاقة', card_assigned: 'إسناد إلى جلسة', blocker_observed: 'تسجيل عائق',

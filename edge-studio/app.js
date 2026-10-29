@@ -177,7 +177,7 @@ async function work(){
   output=data;$('resultImage').src=view==='overlay'?data.overlay:data.image;$('resultImage').hidden=false;$('resultPlaceholder').hidden=true;
   sourcePreview();
   $('timing').textContent=data.milliseconds<1000?`${Math.round(data.milliseconds)} مللي ثانية`:`${(data.milliseconds/1000).toFixed(2)} ثانية`;
-  $('coverage').textContent=data.coverage+'%';$('removed').textContent=data.removedComponents.toLocaleString('ar');$('size').textContent=`${data.width} × ${data.height}`;$('engine').textContent=`OpenCV ${data.opencv} / CPU`;
+  $('coverage').textContent=data.coverage+'%';$('removed').textContent=data.removedComponents.toLocaleString('ar-u-nu-latn');$('size').textContent=`${data.width} × ${data.height}`;$('engine').textContent=`OpenCV ${data.opencv} / CPU`;
   $('dimensions').textContent=`${data.width} × ${data.height} px`+(method==='canny'?` / ${data.low}–${data.high}`:'');shell.dataset.stale='false';$('save').disabled=false;showError('');
  }catch(error){if(job===revision)showError(error.message||'تعذر الاتصال بالسيرفر المحلي.');}
  finally{busy=false;$('progress').hidden=true;$('workspace').setAttribute('aria-busy','false');$('run').disabled=!source;requestAnimationFrame(fit);if(pending){pending=false;work();}}
