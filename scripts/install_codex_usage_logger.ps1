@@ -6,11 +6,19 @@ param(
 $ErrorActionPreference = 'Stop'
 $rootPath = (Resolve-Path -LiteralPath $Root).Path
 $sourceMonitor = Join-Path $rootPath 'scripts\usage_monitor'
+$sourceIdentity = Join-Path $rootPath 'docs\coordination\assets'
 $databaseSource = Join-Path $sourceMonitor 'usage_database.py'
 $loggerSource = Join-Path $sourceMonitor 'codex_usage_logger.py'
 $python = (Get-Command python.exe -ErrorAction Stop).Source
 foreach ($required in @($databaseSource, $loggerSource, (Join-Path $sourceMonitor 'dashboard_server.py'))) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "ملف القياس المطلوب غير موجود: $required" }
+}
+foreach ($required in @((Join-Path $sourceIdentity 'identity.css'),
+        (Join-Path $sourceIdentity 'fonts\cairo-arabic.woff2'),
+        (Join-Path $sourceIdentity 'fonts\ibm-plex-sans-arabic.woff2'),
+        (Join-Path $sourceIdentity 'fonts\manrope-latin.woff2'),
+        (Join-Path $sourceIdentity 'fonts\plus-jakarta-sans-latin.woff2'))) {
+    if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "أصل الهوية المشتركة غير موجود: $required" }
 }
 
 $schemaMatch = [regex]::Match((Get-Content -LiteralPath $databaseSource -Raw), '(?m)^SCHEMA_VERSION\s*=\s*(\d+)')
@@ -33,20 +41,26 @@ if ($sourceSchema -lt $databaseSchema) {
 $runtimeRoot = Join-Path $codexHome 'usage-monitor-runtime'
 $releaseRoot = Join-Path $runtimeRoot 'releases'
 New-Item -ItemType Directory -Force -Path $releaseRoot | Out-Null
-function Get-ContentFingerprint([string]$Path) {
+function Get-ContentFingerprint([string]$Path, [string]$IdentityPath) {
     $basePath = (Resolve-Path -LiteralPath $Path).Path
-    $files = Get-ChildItem -LiteralPath $basePath -File -Recurse |
+    $identityBasePath = (Resolve-Path -LiteralPath $IdentityPath).Path
+    $runtimeFiles = Get-ChildItem -LiteralPath $basePath -File -Recurse |
         Where-Object { $_.FullName -notmatch '[\\/]__pycache__([\\/]|$)' -and $_.Extension -ne '.pyc' -and $_.Name -ne 'runtime.json' } |
-        Sort-Object { $_.FullName.Substring($basePath.Length) }
+        Where-Object { $_.FullName -notmatch '[\\/]shared_identity([\\/]|$)' } |
+        ForEach-Object { [pscustomobject]@{ RelativePath = 'runtime/' + $_.FullName.Substring($basePath.Length).Replace('\','/'); File = $_ } }
+    $identityFiles = Get-ChildItem -LiteralPath $identityBasePath -File -Recurse |
+        Where-Object { $_.FullName -notmatch '[\\/]__pycache__([\\/]|$)' -and $_.Extension -ne '.pyc' } |
+        ForEach-Object { [pscustomobject]@{ RelativePath = 'shared_identity/' + $_.FullName.Substring($identityBasePath.Length).Replace('\','/'); File = $_ } }
+    $files = @($runtimeFiles) + @($identityFiles) | Sort-Object RelativePath
     $fingerprintInput = ($files | ForEach-Object {
-        '{0}:{1}' -f $_.FullName.Substring($basePath.Length).Replace('\','/'),
-            (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+        '{0}:{1}' -f $_.RelativePath,
+            (Get-FileHash -LiteralPath $_.File.FullName -Algorithm SHA256).Hash
     }) -join "`n"
     $sha = [Security.Cryptography.SHA256]::Create()
     try { return [Convert]::ToHexString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($fingerprintInput))).ToLowerInvariant() }
     finally { $sha.Dispose() }
 }
-$fingerprint = Get-ContentFingerprint $sourceMonitor
+$fingerprint = Get-ContentFingerprint $sourceMonitor $sourceIdentity
 $releaseName = 'schema-{0}-{1}' -f $sourceSchema, $fingerprint.Substring(0, 16)
 $releasePath = Join-Path $releaseRoot $releaseName
 $activePath = Join-Path $runtimeRoot 'active.json'
@@ -68,11 +82,16 @@ if (-not (Test-Path -LiteralPath $releasePath -PathType Container)) {
             if ($item.Name -eq '__pycache__') { continue }
             Copy-Item -LiteralPath $item.FullName -Destination $stagePath -Recurse -Force
         }
+        $identityStagePath = Join-Path $stagePath 'shared_identity'
+        New-Item -ItemType Directory -Path $identityStagePath | Out-Null
+        foreach ($item in Get-ChildItem -LiteralPath $sourceIdentity -Force) {
+            Copy-Item -LiteralPath $item.FullName -Destination $identityStagePath -Recurse -Force
+        }
         $stagedSchemaMatch = [regex]::Match((Get-Content -LiteralPath (Join-Path $stagePath 'usage_database.py') -Raw), '(?m)^SCHEMA_VERSION\s*=\s*(\d+)')
         if (-not $stagedSchemaMatch.Success -or [int]$stagedSchemaMatch.Groups[1].Value -ne $sourceSchema) {
             throw 'نسخة القياس المنسوخة لا تطابق إصدار المخطط الذي جرى التحقق منه.'
         }
-        if ((Get-ContentFingerprint $stagePath) -ne $fingerprint) {
+        if ((Get-ContentFingerprint $stagePath (Join-Path $stagePath 'shared_identity')) -ne $fingerprint) {
             throw 'بصمة ملفات نسخة القياس المرحلية لا تطابق المصدر؛ لم يُفعّل الإصدار.'
         }
         $stageFull = [IO.Path]::GetFullPath($stagePath)
@@ -89,7 +108,7 @@ if (-not (Test-Path -LiteralPath $releasePath -PathType Container)) {
         }
         throw
     }
-} elseif ((Get-ContentFingerprint $releasePath) -ne $fingerprint) {
+} elseif ((Get-ContentFingerprint $releasePath (Join-Path $releasePath 'shared_identity')) -ne $fingerprint) {
     throw 'محتويات الإصدار الموجود لا تطابق بصمته؛ أوقف التثبيت لحماية النسخة النشطة.'
 }
 
