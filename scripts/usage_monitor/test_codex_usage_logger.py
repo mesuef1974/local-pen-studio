@@ -290,8 +290,19 @@ class UsageLoggerTests(unittest.TestCase):
     def test_two_writers_do_not_duplicate_the_same_sample(self):
         self.write_rows({"type": "session_meta", "payload": {"session_id": self.session}}, self.usage())
         connect(self.database).close()
+
+        def run_once():
+            try:
+                return self.run_logger()
+            except RuntimeError as exc:
+                # A concurrent run may be rejected by the collector lease. That is
+                # the expected outcome; the winning run must still record the sample.
+                self.assertIn("run_id=", str(exc))
+                return None
+
         with ThreadPoolExecutor(max_workers=2) as pool:
-            list(pool.map(lambda _: self.run_logger(), range(2)))
+            results = list(pool.map(lambda _: run_once(), range(2)))
+        self.assertTrue(any(result is not None for result in results))
         self.assertEqual(self.fetchone("SELECT COUNT(*) FROM usage_samples")[0], 1)
 
     def test_weekly_snapshot_rejects_out_of_range_and_non_finite_values(self):
