@@ -23,7 +23,7 @@ export function setActivity(phase='info'){
  $('editorPreview').setAttribute('aria-busy',String(phase==='busy'));if(phase==='busy')$('nextStep').disabled=true;
 }
 export function setSummary(count=null,ink=0,seconds=0,available=false){
- $('summaryStrokes').textContent=count===null?'—':count.toLocaleString('ar');
+ $('summaryStrokes').textContent=count===null?'—':count.toLocaleString('ar-u-nu-latn');
  $('summaryInk').textContent=count===null?'—':ink.toFixed(2)+' م';
  const total=Math.round(seconds);$('summaryTime').textContent=count===null?'—':Math.floor(total/60)+':'+String(total%60).padStart(2,'0');
  $('pathEmpty').hidden=available;$('pathCanvas').hidden=!available;
