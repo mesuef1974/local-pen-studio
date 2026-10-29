@@ -78,12 +78,20 @@ def _message(row: sqlite3.Row, criteria: list[sqlite3.Row]) -> str:
             "إذا تعذر التنفيذ، سجّل سببًا واضحًا كعائق عبر الطلب المحلي:",
             f'$body = @{{ actor_id = "{actor_id}"; status_code = "blocked"; summary = "اكتب هنا سبب التعذر" }} | ConvertTo-Json -Compress',
             f'Invoke-RestMethod -Uri "{lifecycle}" -Method Post -Headers $headers -ContentType "application/json" -Body $body',
-            "بعد الإنجاز ادفع التغييرات، وسجّل التسليم وفحوص الجودة وأدلتها في المصنع. بعد اجتياز المعايير المطلوبة حدّث الحالة إلى مكتملة:",
-            f'$body = @{{ actor_id = "{actor_id}"; status_code = "completed"; summary = "اكتب خلاصة الدفع ونتيجة الفحوص" }} | ConvertTo-Json -Compress',
-            f'Invoke-RestMethod -Uri "{lifecycle}" -Method Post -Headers $headers -ContentType "application/json" -Body $body',
-            "إذا فشلت الفحوص بعد الدفع، أعد البطاقة للتنفيذ بدل تركها في حالة مسندة:",
-            f'$body = @{{ actor_id = "{actor_id}"; status_code = "returned"; summary = "اكتب الفحوص التي فشلت والعمل المطلوب" }} | ConvertTo-Json -Compress',
-            f'Invoke-RestMethod -Uri "{lifecycle}" -Method Post -Headers $headers -ContentType "application/json" -Body $body',
+            "عند الإنجاز: احفظ التزامًا محدود النطاق على فرع البطاقة، وادفعه إلى origin. لا تدمج main ولا تغلق البطاقة بنفسك.",
+            "سجّل التسليم الموثق في قاعدة المصنع؛ يجب أن يكون commit_sha هو HEAD على origin وأن تطابق المسارات التغيير المقصود:",
+            f'$branch = (git branch --show-current).Trim(); $sha = (git rev-parse HEAD).Trim(); $paths = @(git diff --name-only origin/main...HEAD)',
+            f'$delivery = @{{ actor_id = "{actor_id}"; branch_name = $branch; remote_name = "origin"; commit_sha = $sha; summary = "اكتب خلاصة التسليم بالعربية"; changed_paths = $paths }} | ConvertTo-Json -Depth 5 -Compress',
+            f'$deliveryResult = Invoke-RestMethod -Uri "{base_url}/api/workflow/cards/{row["card_id"]}/delivery" -Method Post -Headers $headers -ContentType "application/json" -Body $delivery',
+            "بعد التحقق من الدفع شغّل فحوص البطاقة المطلوبة. أرسل كل معيار مطلوب كفحص ناجح مع دليل محلي أو رابط CI؛ استخدم criterion_code نفسه من القائمة أعلاه:",
+            f'$checks = @(' + ", ".join(
+                f'@{{ check_code = "{c["criterion_code"]}"; outcome = "pass"; evidence_ref = "اكتب مسار الدليل أو رابط CI" }}'
+                for c in criteria if c["required"]
+            ) + ')',
+            f'$quality = @{{ actor_id = "{actor_id}"; attempt_id = $deliveryResult.attempt_id; commit_sha = $sha; outcome = "pass"; profile_code = "card_acceptance"; runner_name = "Codex session"; runner_version = "current"; checks = $checks }} | ConvertTo-Json -Depth 8 -Compress',
+            f'Invoke-RestMethod -Uri "{base_url}/api/workflow/cards/{row["card_id"]}/quality" -Method Post -Headers $headers -ContentType "application/json" -Body $quality',
+            "إذا فشل معيار مطلوب، سجّله outcome=fail مع الدليل والملخص المناسب؛ سيُعاد الفلو تلقائيًا للتنفيذ.",
+            "لا ترسل رسائل تنسيق ولا تحدّث البطاقة إلى مكتملة؛ قاعدة البيانات تسجل الخط الزمني، والعامل ينشئ PR ويراقب CI والمراجعة ثم يدمج main ويزامنه محليًا. سجّل العائق من lifecycle إذا تعذر أي شرط.",
         ])
     lines.append(f"مرجع منع التكرار: {row['idempotency_key']}")
     return "\n".join(lines)

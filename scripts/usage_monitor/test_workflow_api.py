@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import subprocess
 from pathlib import Path
+from unittest.mock import patch
 
 from coordination_repository import transition_card
 from usage_database import connect, utc_now
-from workflow_api import board, card_details, create_command, transition_assigned_card
+from workflow_api import board, card_details, create_command, submit_delivery, submit_quality, transition_assigned_card
 
 
 class WorkflowCommandRoutingTests(unittest.TestCase):
@@ -159,10 +161,10 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
         result = create_command(self.path, self.payload())
         card_id = result["child_card_ids"][0]
         transition_assigned_card(self.path, card_id, "laser", "in_progress")
-        with self.assertRaisesRegex(ValueError, "إثبات الدفع إلى origin"):
+        with self.assertRaisesRegex(ValueError, "إكمال بطاقة التنفيذ آلي"):
             transition_assigned_card(self.path, card_id, "laser", "completed", "مراجعة مكتملة مع نتائج مفصلة للفحص")
 
-    def test_implementation_closes_after_verified_push_and_all_required_checks_pass(self):
+    def test_implementation_cannot_complete_before_github_merge_and_local_sync(self):
         result = create_command(self.path, self.payload())
         card_id = result["child_card_ids"][0]
         transition_assigned_card(self.path, card_id, "laser", "in_progress")
@@ -181,12 +183,64 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
                 db.execute("INSERT INTO coordination_quality_checks(quality_run_id,check_code,outcome) VALUES(?,?,'pass')", (run_id, criterion))
         finally:
             db.close()
-        result_status = transition_assigned_card(self.path, card_id, "laser", "completed", "تم الدفع والتحقق من جميع معايير الجودة المطلوبة بنجاح.")
-        self.assertEqual(result_status["status_code"], "completed")
+        with self.assertRaisesRegex(ValueError, "مزامنة main"):
+            transition_assigned_card(self.path, card_id, "laser", "completed", "تم الدفع والتحقق من جميع معايير الجودة المطلوبة بنجاح.")
         db = connect(self.path)
         try:
             transitions = [tuple(row) for row in db.execute("SELECT previous_status,next_status FROM coordination_events WHERE card_id=? AND event_type='status_transition' ORDER BY event_id", (card_id,))]
-            self.assertEqual(transitions, [("assigned", "in_progress"), ("in_progress", "delivered"), ("delivered", "verifying"), ("verifying", "completed")])
+            self.assertEqual(transitions, [("assigned", "in_progress")])
+            self.assertEqual(db.execute("SELECT current_status_code FROM coordination_cards WHERE card_id=?", (card_id,)).fetchone()[0], "in_progress")
+        finally:
+            db.close()
+
+    def test_verified_delivery_and_quality_create_database_integration(self):
+        result = create_command(self.path, self.payload())
+        card_id = result["child_card_ids"][0]
+        transition_assigned_card(self.path, card_id, "laser", "in_progress")
+        sha = "a" * 40
+
+        def git_result(args, **kwargs):
+            if "ls-remote" in args:
+                stdout = f"{sha}\trefs/heads/codex/card-delivery\n"
+            elif "get-url" in args:
+                stdout = "https://github.com/example/project.git\n"
+            else:
+                stdout = ""
+            return subprocess.CompletedProcess(args, 0, stdout, "")
+
+        with patch("workflow_api.subprocess.run", side_effect=git_result):
+            delivery = submit_delivery(self.path, card_id, {
+                "actor_id": "laser", "branch_name": "codex/card-delivery", "remote_name": "origin",
+                "commit_sha": sha, "summary": "تم دفع التعديل المحدود إلى فرع البطاقة.",
+                "changed_paths": ["docs/example.md"],
+            })
+        self.assertTrue(delivery["verified"])
+        db = connect(self.path)
+        try:
+            criterion = db.execute("SELECT criterion_code FROM coordination_card_criteria WHERE card_id=? AND required=1", (card_id,)).fetchone()[0]
+        finally:
+            db.close()
+        quality_body = {
+            "actor_id": "laser", "attempt_id": delivery["attempt_id"], "commit_sha": sha,
+            "outcome": "pass", "profile_code": "card_acceptance", "runner_name": "unittest",
+            "runner_version": "1", "checks": [{"check_code": criterion, "outcome": "pass",
+                                                      "evidence_ref": "docs/example.md"}],
+        }
+        with patch("workflow_api._github_repository", return_value="example/project"):
+            quality = submit_quality(self.path, card_id, quality_body)
+            duplicate = submit_quality(self.path, card_id, quality_body)
+        self.assertTrue(quality["integration_queued"])
+        self.assertTrue(duplicate["duplicate"])
+        detail = card_details(self.path, card_id)
+        self.assertEqual(detail["card"]["current_status_code"], "verifying")
+        self.assertEqual(detail["git_integrations"][0]["state_code"], "pending")
+        with self.assertRaisesRegex(ValueError, "مزامنة main"):
+            transition_assigned_card(self.path, card_id, "laser", "completed", "تم الدفع والتحقق من جميع معايير الجودة المطلوبة بنجاح.")
+        db = connect(self.path)
+        try:
+            transitions = [tuple(row) for row in db.execute("SELECT previous_status,next_status FROM coordination_events WHERE card_id=? AND event_type='status_transition' ORDER BY event_id", (card_id,))]
+            self.assertEqual(transitions, [("assigned", "in_progress"), ("in_progress", "delivered"), ("delivered", "verifying")])
+            self.assertEqual(db.execute("SELECT current_status_code FROM coordination_cards WHERE card_id=?", (card_id,)).fetchone()[0], "verifying")
         finally:
             db.close()
 
@@ -214,8 +268,9 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
     def test_admin_audit_schema_is_created_by_migration(self):
         db = connect(self.path)
         try:
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 12)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 13)
             self.assertIsNotNone(db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='workflow_admin_audit'").fetchone())
+            self.assertIsNotNone(db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='coordination_git_integrations'").fetchone())
         finally:
             db.close()
 

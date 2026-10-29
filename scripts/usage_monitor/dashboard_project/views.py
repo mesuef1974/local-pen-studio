@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 
 from usage_database import dashboard_data
-from workflow_api import board, card_details, create_command, metrics, transition_assigned_card
+from workflow_api import board, card_details, create_command, metrics, submit_delivery, submit_quality, transition_assigned_card
 
 
 ASSET_ROOT = Path(__file__).resolve().parent.parent
@@ -130,6 +130,50 @@ def workflow_card_lifecycle_api(request: HttpRequest, card_id: str) -> JsonRespo
         return _json({"error": {"message": str(exc)}}, status=400)
     except (OSError, RuntimeError, sqlite3.Error) as exc:
         return _service_error("تعذر تحديث حالة البطاقة", exc)
+
+
+@csrf_exempt
+@require_POST
+def workflow_card_delivery_api(request: HttpRequest, card_id: str) -> JsonResponse:
+    expected_origin = f"http://{request.get_host()}"
+    if request.headers.get("Origin") != expected_origin or request.headers.get("X-Workflow-Request") != "1":
+        return _json({"error": {"message": "الطلب المحلي غير موثّق."}}, status=403)
+    try:
+        if not request.body or len(request.body) > 64_000:
+            raise ValueError("حجم طلب التسليم غير صالح.")
+        payload = json.loads(request.body)
+        if not isinstance(payload, dict):
+            raise ValueError("صيغة التسليم غير صالحة.")
+        result = submit_delivery(settings.USAGE_DATABASE, card_id, payload)
+        return _json(result, status=201 if not result.get("duplicate") else 200)
+    except KeyError as exc:
+        return _json({"error": {"message": str(exc.args[0])}}, status=404)
+    except (ValueError, json.JSONDecodeError) as exc:
+        return _json({"error": {"message": str(exc)}}, status=400)
+    except (OSError, RuntimeError, sqlite3.Error) as exc:
+        return _service_error("تعذر تسجيل تسليم البطاقة", exc)
+
+
+@csrf_exempt
+@require_POST
+def workflow_card_quality_api(request: HttpRequest, card_id: str) -> JsonResponse:
+    expected_origin = f"http://{request.get_host()}"
+    if request.headers.get("Origin") != expected_origin or request.headers.get("X-Workflow-Request") != "1":
+        return _json({"error": {"message": "الطلب المحلي غير موثّق."}}, status=403)
+    try:
+        if not request.body or len(request.body) > 64_000:
+            raise ValueError("حجم طلب فحوص الجودة غير صالح.")
+        payload = json.loads(request.body)
+        if not isinstance(payload, dict):
+            raise ValueError("صيغة فحوص الجودة غير صالحة.")
+        result = submit_quality(settings.USAGE_DATABASE, card_id, payload)
+        return _json(result, status=201)
+    except KeyError as exc:
+        return _json({"error": {"message": str(exc.args[0])}}, status=404)
+    except (ValueError, json.JSONDecodeError) as exc:
+        return _json({"error": {"message": str(exc)}}, status=400)
+    except (OSError, RuntimeError, sqlite3.Error) as exc:
+        return _service_error("تعذر تسجيل فحوص الجودة", exc)
 
 
 @require_GET
