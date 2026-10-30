@@ -1,0 +1,552 @@
+{
+  "version": "essential-face/1.0",
+  "selectedIndices": [
+    0,
+    1,
+    4,
+    17,
+    33,
+    37,
+    61,
+    70,
+    84,
+    98,
+    105,
+    107,
+    133,
+    136,
+    145,
+    152,
+    159,
+    168,
+    172,
+    234,
+    263,
+    267,
+    291,
+    300,
+    314,
+    327,
+    334,
+    336,
+    362,
+    365,
+    374,
+    386,
+    397,
+    454
+  ],
+  "groups": {
+    "eyes": [
+      33,
+      159,
+      133,
+      145,
+      263,
+      386,
+      362,
+      374
+    ],
+    "brows": [
+      70,
+      105,
+      107,
+      336,
+      334,
+      300
+    ],
+    "nose": [
+      168,
+      4,
+      1,
+      98,
+      327
+    ],
+    "mouth": [
+      61,
+      37,
+      0,
+      267,
+      291,
+      314,
+      17,
+      84
+    ],
+    "jaw": [
+      234,
+      172,
+      136,
+      152,
+      365,
+      397,
+      454
+    ]
+  },
+  "selectionIsExperimental": true,
+  "detectorUnchanged": true,
+  "score": null,
+  "samples": [
+    {
+      "id": "astronaut",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/1.0",
+        "points": 34,
+        "rms": 0.030409483434446154,
+        "median": 0.021876285302647226,
+        "maximum": 0.07900496136327206,
+        "groupRMS": {
+          "eyes": 0.02184581839779886,
+          "brows": 0.019691202028653553,
+          "nose": 0.020108255882660003,
+          "mouth": 0.04584856462555234,
+          "jaw": 0.030374405435070948
+        },
+        "equalGroupMeanRMS": 0.02757364927394714,
+        "score": null,
+        "automaticApproval": false
+      }
+    },
+    {
+      "id": "astronaut-crop",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/1.0",
+        "points": 34,
+        "rms": 0.02359321620495673,
+        "median": 0.017152867276071886,
+        "maximum": 0.06265206392635121,
+        "groupRMS": {
+          "eyes": 0.008630042321402525,
+          "brows": 0.012830156362756326,
+          "nose": 0.024047142036460908,
+          "mouth": 0.03826066233312032,
+          "jaw": 0.0197842107135933
+        },
+        "equalGroupMeanRMS": 0.020710442753466674,
+        "score": null,
+        "automaticApproval": false
+      }
+    },
+    {
+      "id": "user-line-12",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "user-line-12-crop",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "user-line-13",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "user-line-13-crop",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "user-line-14",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "user-line-14-crop",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/1.0",
+        "points": 34,
+        "rms": 0.04250447865444509,
+        "median": 0.030404329643351165,
+        "maximum": 0.10032233383865374,
+        "groupRMS": {
+          "eyes": 0.02384645969979053,
+          "brows": 0.02727606548779037,
+          "nose": 0.02345380517208782,
+          "mouth": 0.029853029984164996,
+          "jaw": 0.07794895793449884
+        },
+        "equalGroupMeanRMS": 0.03647566365566651,
+        "score": null,
+        "automaticApproval": false
+      }
+    },
+    {
+      "id": "user-line-15",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "user-line-15-crop",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "user-line-16",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "user-line-16-crop",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-7",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-7-crop",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-8",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-8-crop",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-9",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-9-crop",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-10",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-10-crop",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-11",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-11-crop",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-12",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-12-crop",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/1.0",
+        "points": 34,
+        "rms": 0.02385471836698486,
+        "median": 0.014378745221978602,
+        "maximum": 0.05672357163321839,
+        "groupRMS": {
+          "eyes": 0.008115648335228745,
+          "brows": 0.011879518415185641,
+          "nose": 0.0268127804490769,
+          "mouth": 0.035490608003868114,
+          "jaw": 0.024792505335635383
+        },
+        "equalGroupMeanRMS": 0.02141821210779896,
+        "score": null,
+        "automaticApproval": false
+      }
+    },
+    {
+      "id": "sample-13",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-13-crop",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-14",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-14-crop",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-15",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-15-crop",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-16",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-16-crop",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-17",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-18",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-19",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-20",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-21",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-22",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-23",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-24",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-25",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-26",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-26-crop",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/1.0",
+        "points": 34,
+        "rms": 0.019870963218291404,
+        "median": 0.014666115580183752,
+        "maximum": 0.04385154884119876,
+        "groupRMS": {
+          "eyes": 0.011258163963107231,
+          "brows": 0.009243833487940679,
+          "nose": 0.018751948874578057,
+          "mouth": 0.019855216179241734,
+          "jaw": 0.03159204351126547
+        },
+        "equalGroupMeanRMS": 0.018140241203226635,
+        "score": null,
+        "automaticApproval": false
+      }
+    },
+    {
+      "id": "sample-27",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-27-crop",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/1.0",
+        "points": 34,
+        "rms": 0.01877359696692183,
+        "median": 0.015551313635734478,
+        "maximum": 0.040056193421181815,
+        "groupRMS": {
+          "eyes": 0.009730787533590721,
+          "brows": 0.008265288211718532,
+          "nose": 0.021024942334577492,
+          "mouth": 0.019051448246142674,
+          "jaw": 0.02854052727014512
+        },
+        "equalGroupMeanRMS": 0.01732259871923491,
+        "score": null,
+        "automaticApproval": false
+      }
+    },
+    {
+      "id": "sample-28",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/1.0",
+        "points": 34,
+        "rms": 0.013349869507666175,
+        "median": 0.010104721813780422,
+        "maximum": 0.028691187272946988,
+        "groupRMS": {
+          "eyes": 0.00831073862552228,
+          "brows": 0.005222899258279218,
+          "nose": 0.01268118901015174,
+          "mouth": 0.012547790191285485,
+          "jaw": 0.021645152491359357
+        },
+        "equalGroupMeanRMS": 0.012081553915319617,
+        "score": null,
+        "automaticApproval": false
+      }
+    },
+    {
+      "id": "sample-28-crop",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/1.0",
+        "points": 34,
+        "rms": 0.016054036798760576,
+        "median": 0.01060095219707051,
+        "maximum": 0.0396037276759068,
+        "groupRMS": {
+          "eyes": 0.006840311647212478,
+          "brows": 0.008278483930590108,
+          "nose": 0.010292006379656745,
+          "mouth": 0.013905231277983657,
+          "jaw": 0.029034221187843254
+        },
+        "equalGroupMeanRMS": 0.013670050884657248,
+        "score": null,
+        "automaticApproval": false
+      }
+    },
+    {
+      "id": "sample-29",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-30",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    },
+    {
+      "id": "sample-31",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      }
+    }
+  ]
+}
