@@ -1,0 +1,16 @@
+{
+  "version": "full-mesh-inspection/1.0",
+  "cases": 50,
+  "successfulComparisonViews": 8,
+  "allDetectedPointsRetained": true,
+  "visualReview": "Inspected overlays for all eight measurable views; coarse facial alignment visible, individual point accuracy not validated.",
+  "controlsTest": "50 selections, 50 table rows, point/edge toggles, numbering, zoom, navigation passed in mock DOM and canvas.",
+  "realBrowserInteractionTested": false,
+  "limitations": [
+    "Eight successful views include repeated sources and crop variants, not eight independent people.",
+    "Astronaut RMS changes from 0.0249 full frame to 0.0389 crop; preprocessing stability requires validation.",
+    "Raw errors are not calibrated similarity percentages.",
+    "Animal and object samples are outside the human face detector profile."
+  ],
+  "score": null
+}
