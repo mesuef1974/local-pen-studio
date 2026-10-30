@@ -1,0 +1,10 @@
+{
+  "pythonCommand": "python -m unittest test_generation test_quality test_line_corrector test_portrait_style_batch",
+  "pythonPassed": 45,
+  "nodeCommand": "node flux-studio/test_portrait_style_review.cjs <comparison.html>",
+  "nodeResult": "PASS: six groups and 18 ready outputs; stage, selection, persistence, glow and snapshot export contract",
+  "browserTestMode": "mock DOM/Canvas; no real native browser click or screenshot",
+  "artifactAudit": "PASS: six original hashes and 18 result chains; all historical prompts exact; transparent outputs and region-limited changes verified",
+  "pageSHA256": "0296aa45df049823aa2207efec8ed59839561870d811d510abce9af4901b1abc",
+  "automaticApproval": false
+}

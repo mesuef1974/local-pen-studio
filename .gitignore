@@ -90,6 +90,7 @@
 !/flux-studio/*.py
 !/flux-studio/*.js
 !/flux-studio/test_line_correction_preview.cjs
+!/flux-studio/test_portrait_style_review.cjs
 !/flux-studio/*.mjs
 !/flux-studio/*.css
 !/flux-studio/*.html

@@ -103,7 +103,7 @@ jobs:
         working-directory: trace-studio
       - run: python -m unittest test_generation test_server
         working-directory: pipeline-studio
-      - run: python -m unittest test_generation test_quality test_line_corrector
+      - run: python -m unittest test_generation test_quality test_line_corrector test_portrait_style_batch
         working-directory: flux-studio
       - name: Physical pen raster fidelity (Cairo on Linux)
         if: runner.os == 'Linux'
