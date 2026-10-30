@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import json
 import re
 import sqlite3
@@ -62,6 +63,12 @@ def _connect(path: Path, *, write: bool = False) -> sqlite3.Connection:
 
 def _rows(connection: sqlite3.Connection, query: str, args: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
     return [dict(row) for row in connection.execute(query, args).fetchall()]
+
+
+def _require_proposal_schema(connection: sqlite3.Connection) -> None:
+    version = connection.execute("PRAGMA user_version").fetchone()[0]
+    if version < 16:
+        raise RuntimeError("يتطلب مسار توصيات المتابعة مخطط قاعدة البيانات 16 وتحديث جامع القياس؛ لم تُجر أي كتابة.")
 
 
 def board(path: Path, *, status: str = "", actor_id: str = "", query: str = "") -> dict[str, Any]:
@@ -179,6 +186,27 @@ def board(path: Path, *, status: str = "", actor_id: str = "", query: str = "") 
             GROUP BY a.actor_id,a.display_name,a.active
             ORDER BY a.active DESC,a.display_name,a.actor_id
         """)
+        proposal_workflow_available = connection.execute("PRAGMA user_version").fetchone()[0] >= 16
+        proposals = _rows(connection, """SELECT p.proposal_id,p.source_card_id,source.title AS source_card_title,
+            p.proposed_by_actor_id,proposer.display_name AS proposed_by_name,p.title,p.owner_request,p.scope,
+            p.rationale,p.suggested_assignee_actor_id,suggested.display_name AS suggested_assignee_name,
+            p.status_code,p.decision_notes,p.decided_by_actor_id,p.decided_at,p.issued_root_card_id,
+            p.created_at,p.updated_at,h.opinion AS source_opinion,h.recommendation AS session_recommendation
+            FROM coordination_card_proposals p
+            JOIN coordination_cards source ON source.card_id=p.source_card_id
+            JOIN coordination_actors proposer ON proposer.actor_id=p.proposed_by_actor_id
+            JOIN coordination_opinion_history h ON h.opinion_history_id=p.source_opinion_history_id
+            LEFT JOIN coordination_actors suggested ON suggested.actor_id=p.suggested_assignee_actor_id
+            ORDER BY CASE p.status_code WHEN 'pending_owner' THEN 0 WHEN 'approved' THEN 1 ELSE 2 END,
+                     p.created_at DESC,p.proposal_id""") if proposal_workflow_available else []
+        proposal_criteria = _rows(connection, """SELECT proposal_id,criterion_code,title,description,required,
+            check_method,sort_order FROM coordination_card_proposal_criteria
+            ORDER BY proposal_id,sort_order,proposal_criterion_id""") if proposal_workflow_available else []
+        criteria_by_proposal: dict[str, list[dict[str, Any]]] = {}
+        for criterion in proposal_criteria:
+            criteria_by_proposal.setdefault(criterion["proposal_id"], []).append(criterion)
+        for proposal in proposals:
+            proposal["criteria"] = criteria_by_proposal.get(proposal["proposal_id"], [])
         return {
             "cards": cards,
             "owner_cards": owner_cards,
@@ -191,8 +219,176 @@ def board(path: Path, *, status: str = "", actor_id: str = "", query: str = "") 
             },
             "session_history_groups": session_history_groups,
             "status_groups": status_groups,
+            "proposal_workflow_available": proposal_workflow_available,
+            "card_proposals": proposals,
             "generated_at": utc_now(),
         }
+    finally:
+        connection.close()
+
+
+def criterion_catalog(path: Path) -> dict[str, Any]:
+    connection = _connect(path)
+    try:
+        return {"criteria": _rows(connection, """SELECT criterion_code,category_code,title,description,
+            check_method,default_required,sort_order FROM workflow_criterion_catalog
+            WHERE active=1 ORDER BY category_code,sort_order,criterion_code""")}
+    finally:
+        connection.close()
+
+
+def submit_card_proposal(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    """Persist a session opinion and its follow-up card proposal atomically."""
+    actor_id = str(payload.get("actor_id", "")).strip()
+    card_id = str(payload.get("source_card_id", "")).strip()
+    title = str(payload.get("title", "")).strip()
+    owner_request = str(payload.get("owner_request", "")).strip()
+    scope = str(payload.get("scope", "")).strip()
+    opinion = str(payload.get("opinion", "")).strip()
+    recommendation = str(payload.get("recommendation", "")).strip()
+    rationale = str(payload.get("rationale", "")).strip()
+    key = str(payload.get("idempotency_key", "")).strip()
+    suggested = str(payload.get("suggested_assignee_actor_id", "")).strip() or None
+    if not all((actor_id, card_id, title, owner_request, scope, opinion, recommendation, rationale, key)):
+        raise ValueError("أكمل الرأي والتوصية والبطاقة المقترحة ونطاقها وسببها.")
+    if not all(_contains_arabic(value) for value in (title, owner_request, scope, opinion, recommendation, rationale)):
+        raise ValueError("اكتب الرأي ومحتوى البطاقة المقترحة باللغة العربية.")
+    if len(title) > 240 or len(owner_request) > 12000 or len(scope) > 12000 or len(opinion) > 8000 \
+            or len(recommendation) > 8000 or len(rationale) > 4000 or len(key) > 200:
+        raise ValueError("تجاوز أحد الحقول الحد المسموح به.")
+    raw_criteria = payload.get("criteria", [])
+    if not isinstance(raw_criteria, list) or len(raw_criteria) > 50:
+        raise ValueError("معايير البطاقة المقترحة غير صالحة.")
+    criteria: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for index, item in enumerate(raw_criteria):
+        if not isinstance(item, dict):
+            raise ValueError("صيغة أحد معايير البطاقة المقترحة غير صالحة.")
+        criterion_title = str(item.get("title", "")).strip()
+        if not criterion_title or not _contains_arabic(criterion_title):
+            raise ValueError("يجب أن يكون لكل معيار عنوان عربي واضح.")
+        code = str(item.get("criterion_code") or f"proposal_{uuid.uuid4().hex[:12]}").strip()
+        if code in seen:
+            raise ValueError("لا تكرر معيارًا في البطاقة المقترحة.")
+        seen.add(code)
+        criteria.append({"criterion_code": code[:120], "title": criterion_title[:300],
+            "description": str(item.get("description") or "").strip()[:2000],
+            "required": int(bool(item.get("required", True))),
+            "check_method": str(item.get("check_method") or "manual_evidence").strip()[:100],
+            "sort_order": index})
+    request_hash = hashlib.sha256(json.dumps({
+        "actor_id": actor_id, "source_card_id": card_id, "title": title,
+        "owner_request": owner_request, "scope": scope, "opinion": opinion,
+        "recommendation": recommendation, "rationale": rationale,
+        "suggested_assignee_actor_id": suggested, "criteria": criteria,
+    }, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+    connection = _connect(path, write=True)
+    try:
+        connection.execute("BEGIN IMMEDIATE")
+        _require_proposal_schema(connection)
+        duplicate = connection.execute("SELECT proposal_id,request_hash_sha256 FROM coordination_card_proposals WHERE idempotency_key=?", (key,)).fetchone()
+        if duplicate:
+            if duplicate["request_hash_sha256"] != request_hash:
+                raise ValueError("مفتاح منع التكرار مستخدم مع محتوى توصية مختلف.")
+            connection.commit()
+            return {"created": False, "proposal_id": duplicate["proposal_id"]}
+        actor = connection.execute("SELECT actor_id FROM coordination_actors WHERE actor_id=? AND active=1 AND actor_id<>'owner'", (actor_id,)).fetchone()
+        if not actor:
+            raise ValueError("الجلسة المرسلة غير نشطة أو غير صالحة لتقديم توصية.")
+        source = connection.execute("SELECT assigned_actor_id FROM coordination_cards WHERE card_id=?", (card_id,)).fetchone()
+        if not source:
+            raise KeyError("البطاقة الأصلية غير موجودة.")
+        if source["assigned_actor_id"] != actor_id:
+            raise ValueError("لا يمكن للجلسة اقتراح متابعة على بطاقة غير مسندة إليها.")
+        if suggested:
+            valid_suggestion = connection.execute("SELECT 1 FROM coordination_actors WHERE actor_id=? AND active=1 AND actor_id<>'owner'", (suggested,)).fetchone()
+            if not valid_suggestion:
+                raise ValueError("الجلسة المقترحة غير نشطة؛ يمكن تركها فارغة.")
+        now = utc_now()
+        event_cursor = connection.execute("""INSERT INTO coordination_events
+            (card_id,actor_id,event_type,details,recorded_at,stage_code,source_type,source_id,sensitivity)
+            VALUES(?,?, 'session_opinion_recorded', ?, ?, 'advisory', 'session_opinion', ?, 'internal')""",
+            (card_id, actor_id, recommendation, now, key))
+        event_id = int(event_cursor.lastrowid)
+        connection.execute("""INSERT INTO coordination_opinions(card_id,actor_id,opinion,recommendation,recorded_at)
+            VALUES(?,?,?,?,?) ON CONFLICT(card_id,actor_id) DO UPDATE SET opinion=excluded.opinion,
+            recommendation=excluded.recommendation,recorded_at=excluded.recorded_at""",
+            (card_id, actor_id, opinion, recommendation, now))
+        opinion_id = connection.execute("SELECT opinion_id FROM coordination_opinions WHERE card_id=? AND actor_id=?", (card_id, actor_id)).fetchone()[0]
+        history_cursor = connection.execute("""INSERT INTO coordination_opinion_history
+            (card_id,actor_id,opinion,recommendation,recorded_at,source_event_id) VALUES(?,?,?,?,?,?)""",
+            (card_id, actor_id, opinion, recommendation, now, event_id))
+        history_id = int(history_cursor.lastrowid)
+        proposal_id = f"PROP-{dt.datetime.now(dt.timezone.utc):%Y%m%d}-{uuid.uuid4().hex[:10].upper()}"
+        proposal_event = connection.execute("""INSERT INTO coordination_events
+            (card_id,actor_id,event_type,details,recorded_at,stage_code,source_type,source_id,sensitivity)
+            VALUES(?,?, 'followup_card_proposed', ?, ?, 'advisory', 'card_proposal', ?, 'internal')""",
+            (card_id, actor_id, rationale, now, proposal_id))
+        connection.execute("""INSERT INTO coordination_card_proposals
+            (proposal_id,source_card_id,source_opinion_history_id,proposed_by_actor_id,title,owner_request,scope,
+             rationale,suggested_assignee_actor_id,status_code,source_event_id,idempotency_key,request_hash_sha256,created_at,updated_at)
+            VALUES(?,?,?,?,?,?,?,?,?,'pending_owner',?,?,?,?,?)""",
+            (proposal_id,card_id,history_id,actor_id,title,owner_request,scope,rationale,suggested,
+             proposal_event.lastrowid,key,request_hash,now,now))
+        for item in criteria:
+            connection.execute("""INSERT INTO coordination_card_proposal_criteria
+                (proposal_id,criterion_code,title,description,required,check_method,sort_order,created_at)
+                VALUES(?,?,?,?,?,?,?,?)""", (proposal_id,item["criterion_code"],item["title"],item["description"],
+                item["required"],item["check_method"],item["sort_order"],now))
+        connection.commit()
+        return {"created": True, "proposal_id": proposal_id, "opinion_id": opinion_id,
+                "opinion_history_id": history_id, "source_event_id": int(proposal_event.lastrowid)}
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def decide_card_proposal(path: Path, proposal_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    actor_id = str(payload.get("actor_id", "")).strip()
+    decision = str(payload.get("decision", "")).strip()
+    notes = str(payload.get("notes", "")).strip()
+    if actor_id != "owner":
+        raise ValueError("قرار التوصية من صلاحية المالك فقط.")
+    if decision not in {"approve", "reject"}:
+        raise ValueError("اختر قبول التوصية أو رفضها.")
+    if notes and not _contains_arabic(notes):
+        raise ValueError("اكتب ملاحظة قرار المالك باللغة العربية.")
+    if len(notes) > 4000:
+        raise ValueError("تجاوزت ملاحظة القرار الحد المسموح به.")
+    connection = _connect(path, write=True)
+    try:
+        connection.execute("BEGIN IMMEDIATE")
+        _require_proposal_schema(connection)
+        proposal = connection.execute("SELECT source_card_id,status_code,decided_by_actor_id,decision_notes FROM coordination_card_proposals WHERE proposal_id=?", (proposal_id,)).fetchone()
+        if not proposal:
+            raise KeyError("التوصية غير موجودة.")
+        desired = "approved" if decision == "approve" else "rejected"
+        if proposal["status_code"] == desired:
+            connection.commit()
+            return {"proposal_id": proposal_id, "status_code": desired, "updated": False}
+        if proposal["status_code"] != "pending_owner":
+            raise ValueError("لا يمكن تغيير توصية حُسم قرارها أو صدرت منها بطاقة.")
+        now = utc_now()
+        event = connection.execute("""INSERT INTO coordination_events
+            (card_id,actor_id,event_type,details,recorded_at,stage_code,source_type,source_id,sensitivity)
+            VALUES(?,'owner','owner_card_proposal_decided',?,?, 'owner_decision','card_proposal',?,'internal')""",
+            (proposal["source_card_id"],notes or ("اعتمد المالك التوصية" if desired == "approved" else "رفض المالك التوصية"),now,proposal_id))
+        axis = f"followup_proposal:{proposal_id}"
+        connection.execute("INSERT INTO owner_decisions(card_id,axis,decision,notes,decided_at) VALUES(?,?,?,?,?)",
+            (proposal["source_card_id"],axis,desired,notes,now))
+        connection.execute("""INSERT INTO owner_decision_history
+            (card_id,axis,decision,previous_decision,decided_by_actor_id,decided_at,source_event_id)
+            VALUES(?,?,?,NULL,'owner',?,?)""", (proposal["source_card_id"],axis,desired,now,event.lastrowid))
+        connection.execute("""UPDATE coordination_card_proposals SET status_code=?,decision_notes=?,
+            decided_by_actor_id='owner',decided_at=?,decision_event_id=?,updated_at=? WHERE proposal_id=? AND status_code='pending_owner'""",
+            (desired,notes,now,event.lastrowid,now,proposal_id))
+        connection.commit()
+        return {"proposal_id": proposal_id, "status_code": desired, "updated": True}
+    except Exception:
+        connection.rollback()
+        raise
     finally:
         connection.close()
 
@@ -329,24 +525,38 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(criteria, list) or len(criteria) > 50:
         raise ValueError("معايير الإنجاز غير صالحة.")
     for item in criteria:
-        if isinstance(item, dict) and str(item.get("title", "")).strip() and not _contains_arabic(str(item["title"])):
+        if not isinstance(item, dict):
+            raise ValueError("صيغة أحد معايير الإنجاز غير صالحة.")
+        if str(item.get("title", "")).strip() and not _contains_arabic(str(item["title"])):
             raise ValueError("اكتب عناوين معايير البطاقة باللغة العربية.")
-        if isinstance(item, dict) and str(item.get("description", "")).strip() and not _contains_arabic(str(item["description"])):
+        if str(item.get("description", "")).strip() and not _contains_arabic(str(item["description"])):
             raise ValueError("اكتب أوصاف معايير البطاقة باللغة العربية.")
     criteria = [
         item for item in criteria
-        if isinstance(item, dict)
-        and str(item.get("title", "")).strip()
+        if (str(item.get("criterion_code", "")).strip() or str(item.get("title", "")).strip())
         and str(item.get("criterion_code", "")).strip().casefold() != "owner_review"
         and str(item.get("check_method", "")).strip().casefold() != "owner_acceptance"
     ]
-    if not criteria:
-        criteria = [{"criterion_code": "automated_delivery_qa", "title": "التحقق الآلي من الإنجاز",
-                     "description": "تشغيل الفحوص المناسبة وتسجيل النتيجة مع البطاقة.",
-                     "required": True, "check_method": "automated_quality_gate"}]
     connection = _connect(path, write=True)
     try:
         connection.execute("BEGIN IMMEDIATE")
+        proposal_id = str(payload.get("proposal_id", "")).strip()
+        approved_proposal = None
+        if proposal_id:
+            _require_proposal_schema(connection)
+            approved_proposal = connection.execute("SELECT * FROM coordination_card_proposals WHERE proposal_id=?", (proposal_id,)).fetchone()
+            if not approved_proposal:
+                raise ValueError("اقتراح البطاقة غير موجود.")
+            prior_for_proposal = connection.execute("SELECT root_card_id FROM coordination_command_receipts WHERE idempotency_key=?", (key,)).fetchone()
+            if approved_proposal["status_code"] == "issued" and prior_for_proposal and \
+                    prior_for_proposal["root_card_id"] == approved_proposal["issued_root_card_id"]:
+                children = [row[0] for row in connection.execute(
+                    "SELECT card_id FROM coordination_command_cards WHERE idempotency_key=? AND role_code='session' ORDER BY card_id", (key,))]
+                connection.commit()
+                return {"created": False, "root_card_id": prior_for_proposal["root_card_id"],
+                        "child_card_ids": children, "session_card_ids": children, "proposal_id": proposal_id}
+            if approved_proposal["status_code"] != "approved":
+                raise ValueError("لا تصدر بطاقة من توصية قبل اعتماد المالك لها.")
         selected_actor = connection.execute("""SELECT a.actor_id FROM coordination_actors a
             WHERE a.actor_id=? AND a.active=1 AND a.actor_id<>'owner'
               AND EXISTS (SELECT 1 FROM coordination_actor_duties d WHERE d.actor_id=a.actor_id)
@@ -357,8 +567,51 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
             raise ValueError("الجلسة المختارة غير نشطة أو غير مهيأة لاستلام البطاقة.")
         targets = [selected_actor["actor_id"]]
 
+        catalog = {row["criterion_code"]: dict(row) for row in connection.execute(
+            "SELECT criterion_code,title,description,check_method,default_required FROM workflow_criterion_catalog WHERE active=1")}
+        normalized_criteria: list[dict[str, Any]] = []
+        seen_codes: set[str] = set()
+        for index, item in enumerate(criteria):
+            code = str(item.get("criterion_code") or "").strip()
+            template = catalog.get(code)
+            if template:
+                if code in seen_codes:
+                    raise ValueError("لا تكرر معيارًا من القائمة.")
+                normalized_criteria.append({
+                    "criterion_code": code, "title": template["title"], "description": template["description"],
+                    "check_method": template["check_method"],
+                    "required": int(bool(item.get("required", template["default_required"]))), "sort_order": index,
+                })
+                seen_codes.add(code)
+                continue
+            if code and not str(item.get("title") or "").strip():
+                raise ValueError("أحد المعايير المختارة لم يعد موجودًا في القائمة؛ حدّث الصفحة وحاول مجددًا.")
+            title_value = str(item.get("title") or "").strip()
+            if not title_value:
+                continue
+            if len(title_value) > 300 or len(str(item.get("description") or "")) > 2000:
+                raise ValueError("تجاوز اسم المعيار أو وصفه الحد المسموح به.")
+            code = code or f"custom_{uuid.uuid4().hex[:12]}"
+            if code in seen_codes:
+                raise ValueError("لا تكرر رمز معيار يدوي.")
+            normalized_criteria.append({
+                "criterion_code": code, "title": title_value, "description": str(item.get("description") or "").strip(),
+                "check_method": str(item.get("check_method") or "manual_evidence").strip()[:100],
+                "required": int(bool(item.get("required", True))), "sort_order": index,
+            })
+            seen_codes.add(code)
+        if not normalized_criteria:
+            default = catalog.get("automated_delivery_qa")
+            if not default:
+                raise RuntimeError("كتالوج المعايير لا يحتوي معيار الجودة الافتراضي.")
+            normalized_criteria.append({"criterion_code": "automated_delivery_qa", "title": default["title"],
+                "description": default["description"], "check_method": default["check_method"],
+                "required": 1, "sort_order": 0})
+
         prior = connection.execute("SELECT root_card_id FROM coordination_command_receipts WHERE idempotency_key=?", (key,)).fetchone()
         if prior:
+            if approved_proposal and prior["root_card_id"] != approved_proposal["issued_root_card_id"]:
+                raise ValueError("مفتاح التكرار مستخدم لأمر آخر؛ لم تُصدر بطاقة من التوصية.")
             children = [row["card_id"] for row in connection.execute(
                 "SELECT card_id FROM coordination_command_cards WHERE idempotency_key=? AND role_code='session' ORDER BY card_id", (key,))]
             connection.commit()
@@ -405,7 +658,19 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
                            (key, root_id, now))
         connection.execute("INSERT INTO coordination_command_cards(idempotency_key,card_id,role_code) VALUES(?,?, 'root')",
                            (key, root_id))
-        for criterion in criteria:
+        if approved_proposal:
+            if approved_proposal["issued_root_card_id"]:
+                raise ValueError("صدرت بطاقة بالفعل من هذا الاقتراح.")
+            connection.execute("""UPDATE coordination_card_proposals SET status_code='issued',issued_root_card_id=?,updated_at=?
+                WHERE proposal_id=? AND status_code='approved' AND issued_root_card_id IS NULL""",
+                (root_id,now,proposal_id))
+            if connection.execute("SELECT changes()").fetchone()[0] != 1:
+                raise ValueError("تعذر قفل الاقتراح للإصدار؛ حدّث اللوحة وحاول مجددًا.")
+            connection.execute("""INSERT INTO coordination_events
+                (card_id,actor_id,event_type,details,recorded_at,stage_code,source_type,source_id,sensitivity)
+                VALUES(?,'owner','followup_card_issued','أصدر المالك بطاقة المتابعة المعتمدة',?,'owner_decision','card_proposal',?,'internal')""",
+                (approved_proposal["source_card_id"],now,proposal_id))
+        for criterion in normalized_criteria:
             connection.execute("""INSERT INTO coordination_card_criteria
                 (card_id,criterion_code,title,description,required,check_method,sort_order,created_at)
                 VALUES(?,?,?,?,?,?,?,?)""", (root_id, str(criterion.get("criterion_code") or uuid.uuid4().hex[:10]),
@@ -419,7 +684,7 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
             assigned_event = insert_card(child_id, "assigned", parent=root_id, target=target)
             connection.execute("INSERT INTO coordination_command_cards(idempotency_key,card_id,role_code) VALUES(?,?, 'session')",
                 (key, child_id))
-            for criterion in criteria:
+            for criterion in normalized_criteria:
                 connection.execute("""INSERT INTO coordination_card_criteria
                     (card_id,criterion_code,title,description,required,check_method,sort_order,created_at)
                     VALUES(?,?,?,?,?,?,?,?)""", (child_id, str(criterion.get("criterion_code") or uuid.uuid4().hex[:10]),
@@ -435,7 +700,8 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
             children.append(child_id)
         connection.commit()
         return {"created": True, "root_card_id": root_id, "child_card_ids": children,
-                "session_card_ids": children, "event_id": root_event}
+                "session_card_ids": children, "event_id": root_event,
+                **({"proposal_id": proposal_id} if approved_proposal else {})}
     except Exception:
         connection.rollback()
         raise

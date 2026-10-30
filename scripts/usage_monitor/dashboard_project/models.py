@@ -18,6 +18,9 @@ ADMIN_TABLES = {
     "coordination_actors": "الجلسات والجهات",
     "coordination_assignments": "إسنادات البطاقات",
     "coordination_card_criteria": "معايير قبول البطاقات",
+    "coordination_card_proposals": "اقتراحات بطاقات المتابعة",
+    "coordination_card_proposal_criteria": "معايير اقتراحات المتابعة",
+    "workflow_criterion_catalog": "كتالوج معايير الإنجاز",
     "coordination_card_dependencies": "اعتماديات البطاقات",
     "coordination_cards": "البطاقات",
     "coordination_command_cards": "بطاقات أوامر المالك",
@@ -57,6 +60,9 @@ DISPLAY_COLUMNS = {
     "coordination_actors": ("actor_id", "display_name", "active"),
     "coordination_assignments": ("assignment_id", "card_id", "assigned_actor_id", "reason_code", "assigned_at"),
     "coordination_card_criteria": ("criterion_id", "card_id", "title", "required", "sort_order"),
+    "coordination_card_proposals": ("proposal_id", "source_card_id", "proposed_by_actor_id", "title", "status_code", "created_at"),
+    "coordination_card_proposal_criteria": ("proposal_criterion_id", "proposal_id", "title", "required", "sort_order"),
+    "workflow_criterion_catalog": ("criterion_code", "category_code", "title", "check_method", "default_required", "active", "sort_order"),
     "coordination_card_dependencies": ("card_id", "depends_on_card_id", "relation", "created_at"),
     "coordination_cards": ("card_id", "title", "status", "assigned_actor_id", "created_at"),
     "coordination_command_cards": ("idempotency_key", "card_id", "role_code"),
@@ -91,6 +97,9 @@ DISPLAY_COLUMNS = {
 
 SEARCH_FIELDS = {
     "coordination_actor_duties": ("actor_id", "assignment_scope", "flow_responsibility", "required_outputs"),
+    "workflow_criterion_catalog": ("criterion_code", "title", "description"),
+    "coordination_card_proposals": ("proposal_id", "source_card_id", "title", "owner_request", "rationale"),
+    "coordination_card_proposal_criteria": ("proposal_id", "title", "description"),
     "coordination_cards": ("card_id", "title", "owner_request"),
     "coordination_events": ("event_type", "card_id", "actor_id", "source_id"),
     "coordination_git_integrations": ("card_id", "repository", "pull_request_url", "last_error_code"),
@@ -108,7 +117,9 @@ SEARCH_FIELDS = {
 
 FILTER_FIELDS = {
     "coordination_actors": ("active",),
+    "coordination_card_proposals": ("status_code", "proposed_by_actor_id", "suggested_assignee_actor_id"),
     "coordination_assignments": ("assigned_actor_id", "reason_code"),
+    "workflow_criterion_catalog": ("category_code", "active", "default_required"),
     "coordination_cards": ("status", "assigned_actor_id", "priority_code", "card_type_code"),
     "coordination_events": ("event_type", "actor_id", "stage_code"),
     "coordination_delivery_attempts": ("outcome", "submitted_by_actor_id"),
@@ -183,6 +194,7 @@ FIELD_LABELS = {
     "weekly_resets_at": "موعد تجديد الحصة", "weekly_used_percent": "نسبة الحصة المستخدمة",
     "weekly_window_minutes": "مدة نافذة الحصة بالدقائق", "workflow_stage_code": "مرحلة الفلو",
     "actor_id": "الجلسة أو الجهة", "capability": "القدرة", "criterion_code": "رمز المعيار",
+    "category_code": "فئة المعيار", "default_required": "مطلوب افتراضيًا",
     "criterion_id": "معرّف المعيار", "decision": "قرار المالك", "decision_history_id": "معرّف سجل القرار",
     "decision_id": "معرّف القرار", "depends_on_card_id": "البطاقة المرتبطة", "event_id": "معرّف الحدث",
     "from_status_code": "من الحالة", "to_status_code": "إلى الحالة", "key": "المفتاح",
@@ -220,6 +232,12 @@ FIELD_LABELS = {
     "coordination_card_id": "البطاقة المرتبطة بالعينة", "criterion": "معيار التحقق",
     "cumulative_cache_write_input_tokens": "إجمالي توكنز كتابة الذاكرة",
     "target_actor_id": "الجهة المستهدفة",
+    "proposal_id": "معرّف اقتراح المتابعة", "source_card_id": "البطاقة الأصلية",
+    "source_opinion_history_id": "نسخة الرأي المرتبطة", "proposed_by_actor_id": "الجلسة المقترحة",
+    "rationale": "سبب الاقتراح", "suggested_assignee_actor_id": "الجلسة المقترحة للتنفيذ",
+    "status_code": "حالة الاقتراح", "decision_notes": "ملاحظة قرار المالك",
+    "issued_root_card_id": "أمر المالك الصادر", "request_hash_sha256": "بصمة طلب منع التكرار",
+    "proposal_criterion_id": "معرّف معيار الاقتراح",
 }
 
 DATETIME_COLUMNS = {
@@ -317,7 +335,8 @@ def _make_admin_models() -> dict[str, type[models.Model]]:
                 managed = False
                 verbose_name = label
                 verbose_name_plural = label
-                default_permissions = ("view",)
+                default_permissions = (("add", "change", "delete", "view")
+                                       if table_name == "workflow_criterion_catalog" else ("view",))
 
             attributes["Meta"] = Meta
             generated[table_name] = type(f"Admin_{table_name}", (models.Model,), attributes)

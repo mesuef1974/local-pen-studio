@@ -65,6 +65,7 @@
   let searchTimer = 0;
   let commandIdempotencyKey = null;
   let commandPayloadSignature = null;
+  let criteriaCatalog = null;
 
   function element(tag, text, className) {
     const node = document.createElement(tag);
@@ -192,6 +193,217 @@
       select.add(new Option(safeText(session.display_name, session.actor_id), session.actor_id));
     }
     if (available.some(session => session.actor_id === selected)) select.value = selected;
+    updateCommandPreview();
+  }
+
+  const criterionCategories = {
+    quality: 'الجودة والتحقق', delivery: 'التسليم والنطاق', research: 'المصادر والمحتوى',
+    interface: 'الواجهة وإمكانية الوصول', general: 'معايير عامة',
+  };
+  const criterionMethods = {
+    automated_quality_gate: 'بوابة جودة آلية', automated_tests: 'اختبارات آلية', scope_match: 'مراجعة نطاق التسليم',
+    manual_evidence: 'دليل يرفقه المنفذ', source_review: 'مراجعة المصادر', accessibility_review: 'مراجعة RTL وإمكانية الوصول',
+  };
+
+  function renderCriterionCatalog(items) {
+    const root = $('command-criteria-list');
+    root.replaceChildren();
+    const groups = new Map();
+    for (const item of items) {
+      if (!groups.has(item.category_code)) groups.set(item.category_code, []);
+      groups.get(item.category_code).push(item);
+    }
+    for (const [category, categoryItems] of groups) {
+      root.append(element('h4', criterionCategories[category] || category, 'workflow-criterion-category'));
+      for (const item of categoryItems) {
+        const card = element('article', undefined, 'workflow-criterion-card');
+        card.dataset.criterionCode = item.criterion_code;
+        const include = document.createElement('input');
+        include.type = 'checkbox'; include.checked = Boolean(item.default_required); include.dataset.role = 'include';
+        const title = element('span', item.title);
+        const main = element('label', undefined, 'workflow-criterion-main');
+        const includeId = `criterion-${item.criterion_code}`; include.id = includeId; main.htmlFor = includeId;
+        main.append(include, title);
+        card.append(main, element('p', item.description),
+          element('p', `طريقة التحقق: ${criterionMethods[item.check_method] || item.check_method}`));
+        const required = document.createElement('input');
+        required.type = 'checkbox'; required.checked = Boolean(item.default_required); required.disabled = !include.checked; required.dataset.role = 'required';
+        const requiredLabel = element('label', undefined, 'workflow-criterion-required');
+        requiredLabel.append(required, document.createTextNode('يُطلب اجتيازه لإكمال البطاقة'));
+        card.append(requiredLabel);
+        include.addEventListener('change', () => { required.disabled = !include.checked; updateCommandPreview(); });
+        required.addEventListener('change', updateCommandPreview);
+        root.append(card);
+      }
+    }
+    $('command-criteria-status').textContent = items.length
+      ? 'اختر ما ينطبق على المهمة. المعايير الافتراضية المطلوبة محددة مسبقًا؛ ويمكنك تعديل الإلزام لكل معيار.'
+      : 'لا توجد معايير نشطة في قاعدة البيانات؛ أضف معيارًا يدويًا أو راجع كتالوج الإدارة.';
+    updateCommandPreview();
+  }
+
+  function selectedCriteria() {
+    const templates = [...$('command-criteria-list').querySelectorAll('.workflow-criterion-card')]
+      .filter(card => card.querySelector('[data-role="include"]').checked)
+      .map(card => ({criterion_code: card.dataset.criterionCode,
+        required: card.querySelector('[data-role="required"]').checked}));
+    const custom = [...$('command-custom-criteria').querySelectorAll('.workflow-custom-row')]
+      .map(row => ({title: row.querySelector('[data-role="title"]').value.trim(),
+        description: row.querySelector('[data-role="description"]').value.trim(),
+        check_method: row.querySelector('[data-role="method"]').value,
+        required: row.querySelector('[data-role="required"]').checked}))
+      .filter(item => item.title);
+    return [...templates, ...custom];
+  }
+
+  function updateCommandPreview() {
+    const selectedId = $('command-target-actor')?.value;
+    const session = (currentBoard?.sessions || []).find(item => item.actor_id === selectedId);
+    const sessionPanel = $('command-session-duties');
+    if (session) {
+      sessionPanel.replaceChildren(element('strong', `${session.display_name} · اختصاصها المسجل`),
+        element('p', `النطاق: ${session.assignment_scope}`),
+        element('p', `مسؤوليتها: ${session.flow_responsibility}`),
+        element('p', `المخرجات: ${session.required_outputs}`));
+      sessionPanel.hidden = false;
+      $('command-preview-session').textContent = `الإسناد: ${session.display_name} — وفق الاختصاص والمسؤولية الظاهرة أعلاه.`;
+    } else {
+      sessionPanel.replaceChildren(); sessionPanel.hidden = true;
+      $('command-preview-session').textContent = 'اختر الجلسة لعرض اختصاصها.';
+    }
+    const items = selectedCriteria();
+    const requiredCount = items.filter(item => item.required).length;
+    const titles = [...$('command-criteria-list').querySelectorAll('.workflow-criterion-card')]
+      .filter(card => card.querySelector('[data-role="include"]').checked)
+      .map(card => card.querySelector('.workflow-criterion-main span').textContent)
+      .concat([...$('command-custom-criteria').querySelectorAll('[data-role="title"]')]
+        .map(input => input.value.trim()).filter(Boolean));
+    $('command-preview-criteria').textContent = items.length
+      ? `المعايير المختارة (${items.length}، إلزامي ${requiredCount}): ${titles.join('، ')}`
+      : 'لم تُحدد معايير؛ سيضيف النظام معيار التحقق الآلي الافتراضي.';
+  }
+
+  function addCustomCriterion(initial = null, suppressFocus = false) {
+    const row = element('div', undefined, 'workflow-custom-row');
+    const titleLabel = element('label', 'اسم المعيار', 'workflow-custom-title');
+    const title = document.createElement('input'); title.type = 'text'; title.maxLength = 300; title.required = true;
+    title.placeholder = 'مثال: توثيق كل مصدر خارجي'; title.dataset.role = 'title'; title.value = initial?.title || ''; titleLabel.append(title);
+    const descriptionLabel = element('label', 'طريقة الفحص أو الدليل المطلوب');
+    const description = document.createElement('textarea'); description.rows = 2; description.maxLength = 2000;
+    description.placeholder = 'ما الدليل الذي يثبت اجتياز هذا المعيار؟'; description.dataset.role = 'description'; description.value = initial?.description || ''; descriptionLabel.append(description);
+    const methodLabel = element('label', 'نوع التحقق');
+    const method = document.createElement('select'); method.dataset.role = 'method';
+    for (const [value, label] of [['manual_evidence','دليل يرفقه المنفذ'],['automated_quality_gate','فحص آلي'],['automated_tests','اختبارات آلية'],['github_checks','فحوص GitHub']]) method.add(new Option(label, value));
+    if (initial?.check_method) method.value = initial.check_method;
+    methodLabel.append(method);
+    const requiredLabel = element('label', undefined, 'workflow-check');
+    const required = document.createElement('input'); required.type = 'checkbox'; required.checked = initial?.required !== false; required.dataset.role = 'required';
+    requiredLabel.append(required, document.createTextNode('مطلوب اجتيازه'));
+    const remove = element('button', 'حذف المعيار', 'btn workflow-custom-remove'); remove.type = 'button';
+    remove.addEventListener('click', () => { row.remove(); updateCommandPreview(); });
+    for (const input of [title, description, method, required]) input.addEventListener('input', updateCommandPreview);
+    row.append(titleLabel, descriptionLabel, methodLabel, requiredLabel, remove);
+    $('command-custom-criteria').append(row);
+    if (!suppressFocus) title.focus();
+    updateCommandPreview();
+  }
+
+  function renderProposals(proposals, available = true) {
+    const root = $('wf-proposal-list');
+    const rows = Array.isArray(proposals) ? proposals : [];
+    root.replaceChildren();
+    if (!available) {
+      $('wf-proposal-count').textContent = 'بانتظار التحديث';
+      root.append(element('p', 'يتطلب هذا المسار تحديث مخطط قاعدة البيانات وجامع القياس قبل تفعيله. بقيت أوامر المالك المعتادة متاحة.', 'workflow-proposal-empty'));
+      return;
+    }
+    $('wf-proposal-count').textContent = `${arabicNumber.format(rows.filter(row => row.status_code === 'pending_owner').length)} بانتظار المالك`;
+    if (!rows.length) {
+      root.append(element('p', 'لا توجد توصيات متابعة مسجلة.', 'workflow-proposal-empty'));
+      return;
+    }
+    rows.forEach(proposal => {
+      const card = element('article', undefined, 'workflow-proposal-card');
+      card.dataset.proposalId = proposal.proposal_id;
+      const heading = element('div', undefined, 'workflow-proposal-heading');
+      heading.append(element('h4', safeText(proposal.title)), element('span', ({
+        pending_owner: 'بانتظار قرار المالك', approved: 'معتمدة · لم تصدر', rejected: 'مرفوضة', issued: 'صدرت منها بطاقة',
+      })[proposal.status_code] || proposal.status_code, `workflow-proposal-status is-${proposal.status_code}`));
+      const meta = element('p', undefined, 'workflow-proposal-meta');
+      meta.append(document.createTextNode(`من ${safeText(proposal.proposed_by_name)} · البطاقة الأصلية `));
+      const sourceButton = element('button', safeText(proposal.source_card_id), 'workflow-proposal-source');
+      sourceButton.type = 'button'; sourceButton.addEventListener('click', () => openCard(proposal.source_card_id));
+      meta.append(sourceButton);
+      if (proposal.suggested_assignee_name) meta.append(document.createTextNode(` · الجلسة المقترحة: ${proposal.suggested_assignee_name} (اقتراح فقط)`));
+      card.append(heading, meta, element('p', safeText(proposal.rationale), 'workflow-proposal-rationale'));
+      card.append(element('p', `رأي الجلسة: ${safeText(proposal.source_opinion)}`, 'workflow-proposal-opinion'));
+      card.append(element('p', `التوصية: ${safeText(proposal.session_recommendation)}`, 'workflow-proposal-recommendation'));
+      if (proposal.decision_notes) card.append(element('p', `ملاحظة المالك: ${proposal.decision_notes}`, 'workflow-proposal-owner-note'));
+      const request = element('details', undefined, 'workflow-proposal-details');
+      request.append(element('summary', 'تفاصيل المهمة والنطاق والمعايير'));
+      request.append(element('p', safeText(proposal.owner_request)));
+      request.append(element('p', `النطاق: ${safeText(proposal.scope)}`));
+      if (proposal.criteria?.length) {
+        const list = element('ul');
+        proposal.criteria.forEach(item => list.append(element('li', `${item.title}${item.required ? ' · مطلوب' : ''}${item.description ? ` — ${item.description}` : ''}`)));
+        request.append(list);
+      }
+      card.append(request);
+      if (proposal.status_code === 'pending_owner') {
+        const notes = document.createElement('textarea');
+        notes.className = 'workflow-proposal-notes'; notes.rows = 2; notes.maxLength = 4000;
+        notes.placeholder = 'ملاحظة قرار المالك (اختيارية)'; notes.setAttribute('aria-label', `ملاحظة قرار التوصية ${proposal.proposal_id}`);
+        const actions = element('div', undefined, 'workflow-proposal-actions');
+        const reject = element('button', 'رفض التوصية', 'btn'); reject.type = 'button'; reject.dataset.proposalDecision = 'reject';
+        const approve = element('button', 'اعتماد التوصية', 'btn workflow-primary'); approve.type = 'button'; approve.dataset.proposalDecision = 'approve';
+        actions.append(reject, approve);
+        card.append(notes, actions);
+      } else if (proposal.status_code === 'approved') {
+        const issue = element('button', 'تجهيز أمر المالك وإصدار البطاقة', 'btn workflow-primary');
+        issue.type = 'button'; issue.dataset.prepareProposal = proposal.proposal_id;
+        card.append(issue);
+      } else if (proposal.status_code === 'issued' && proposal.issued_root_card_id) {
+        const issued = element('button', `فتح أمر المالك ${proposal.issued_root_card_id}`, 'btn');
+        issued.type = 'button'; issued.addEventListener('click', () => openCard(proposal.issued_root_card_id));
+        card.append(issued);
+      }
+      root.append(card);
+    });
+  }
+
+  async function decideProposal(button) {
+    const card = button.closest('[data-proposal-id]');
+    const note = card.querySelector('.workflow-proposal-notes')?.value.trim() || '';
+    const decision = button.dataset.proposalDecision;
+    const actions = card.querySelectorAll('[data-proposal-decision]');
+    actions.forEach(item => { item.disabled = true; });
+    try {
+      await requestJSON(`/api/workflow/proposals/${encodeURIComponent(card.dataset.proposalId)}/decision`, {
+        method: 'POST', body: JSON.stringify({ actor_id: 'owner', decision, notes: note }),
+      });
+      await loadBoard({ showLoading: false });
+    } catch (error) {
+      const feedback = element('p', error.message || 'تعذر حفظ قرار المالك.', 'workflow-proposal-error');
+      card.append(feedback);
+      actions.forEach(item => { item.disabled = false; });
+    }
+  }
+
+  function prepareProposal(proposal) {
+    openCommandDialog(proposal);
+  }
+
+  async function ensureCriterionCatalog() {
+    if (criteriaCatalog) return;
+    $('command-criteria-status').textContent = 'جارٍ تحميل المعايير من قاعدة البيانات…';
+    try {
+      const data = await requestJSON('/api/workflow/criteria');
+      criteriaCatalog = Array.isArray(data.criteria) ? data.criteria : [];
+      renderCriterionCatalog(criteriaCatalog);
+    } catch (error) {
+      $('command-criteria-status').textContent = error.message || 'تعذر تحميل المعايير من قاعدة البيانات.';
+      throw error;
+    }
   }
 
   function cardButton(card) {
@@ -290,6 +502,7 @@
     setConnection('ready', `متصل · آخر تحديث ${formatDate(board.generated_at)}`);
     renderKPIs(board);
     renderCompletionSummary(board.completion_summary);
+    renderProposals(board.card_proposals, board.proposal_workflow_available !== false);
     renderArchive(board.session_history_groups, board.status_groups);
   }
 
@@ -590,24 +803,54 @@
     }
   }
 
-  function openCommandDialog() {
+  async function openCommandDialog(proposal = null) {
     $('workflow-command-error').hidden = true;
     $('workflow-command-dialog').showModal();
-    $('command-target-actor').focus();
+    if (proposal) {
+      $('command-title').value = proposal.title;
+      $('command-owner-request').value = proposal.owner_request;
+      $('command-scope').value = proposal.scope;
+      $('command-proposal-id').value = proposal.proposal_id;
+      $('command-target-actor').value = '';
+      $('command-custom-criteria').replaceChildren();
+      (proposal.criteria || []).forEach(item => addCustomCriterion(item, true));
+      $('workflow-command-title').textContent = 'مراجعة التوصية وإصدار أمر المالك';
+      $('command-proposal-context').textContent = proposal.suggested_assignee_name
+        ? `الجلسة المقترحة من ${safeText(proposal.proposed_by_name)} هي ${proposal.suggested_assignee_name}؛ هذا اقتراح فقط، اختر بنفسك من القائمة.`
+        : 'اختر بنفسك جلسة التنفيذ من القائمة؛ لم تقترح الجلسة المرسلة جهة تنفيذ.';
+      $('command-proposal-context').hidden = false;
+    } else {
+      $('workflow-command-title').textContent = 'إضافة أمر إلى المصنع';
+      $('workflow-command-form').reset();
+      $('command-custom-criteria').replaceChildren();
+      if (criteriaCatalog) renderCriterionCatalog(criteriaCatalog);
+      $('command-proposal-id').value = '';
+      $('command-proposal-context').hidden = true;
+      $('command-target-actor').focus();
+    }
+    updateCommandPreview();
+    try { await ensureCriterionCatalog(); }
+    catch { /* the owner can still add a custom criterion while the catalog is unavailable */ }
   }
 
   async function submitCommand(event) {
     event.preventDefault();
     const form = event.currentTarget;
     if (!form.reportValidity()) return;
+    try { await ensureCriterionCatalog(); }
+    catch (error) { $('workflow-command-error').textContent = error.message; $('workflow-command-error').hidden = false; return; }
     const submit = $('workflow-command-submit');
     const errorBox = $('workflow-command-error');
     submit.disabled = true;
     submit.textContent = 'جارٍ إصدار الأمر وإسناده…';
     errorBox.hidden = true;
     const commandPayload = {
+      title: $('command-title').value.trim(),
       owner_request: $('command-owner-request').value.trim(),
+      scope: $('command-scope').value.trim(),
+      proposal_id: $('command-proposal-id').value,
       target_actor_ids: [$('command-target-actor').value],
+      criteria: selectedCriteria(),
     };
     const signature = JSON.stringify(commandPayload);
     if (!commandIdempotencyKey || commandPayloadSignature !== signature) {
@@ -621,6 +864,11 @@
       commandPayloadSignature = null;
       $('workflow-command-dialog').close();
       form.reset();
+      $('workflow-command-title').textContent = 'إضافة أمر إلى المصنع';
+      $('command-proposal-context').hidden = true;
+      $('command-custom-criteria').replaceChildren();
+      renderCriterionCatalog(criteriaCatalog || []);
+      updateCommandPreview();
       $('workflow-query').value = '';
       $('workflow-status').value = '';
       $('workflow-actor').value = '';
@@ -659,9 +907,20 @@
     $('workflow-actor').value = '';
     loadBoard();
   });
-  $('workflow-command-open').addEventListener('click', openCommandDialog);
-  document.querySelectorAll('[data-open-command]').forEach(button => button.addEventListener('click', openCommandDialog));
+  $('workflow-command-open').addEventListener('click', () => openCommandDialog());
+  document.querySelectorAll('[data-open-command]').forEach(button => button.addEventListener('click', () => openCommandDialog()));
   $('workflow-command-form').addEventListener('submit', submitCommand);
+  $('wf-proposal-list').addEventListener('click', event => {
+    const decision = event.target.closest('[data-proposal-decision]');
+    if (decision) { decideProposal(decision); return; }
+    const prepare = event.target.closest('[data-prepare-proposal]');
+    if (prepare) {
+      const proposal = (currentBoard?.card_proposals || []).find(item => item.proposal_id === prepare.dataset.prepareProposal);
+      if (proposal) prepareProposal(proposal);
+    }
+  });
+  $('command-criterion-add').addEventListener('click', addCustomCriterion);
+  $('command-target-actor').addEventListener('change', updateCommandPreview);
   $('workflow-command-close').addEventListener('click', () => $('workflow-command-dialog').close());
   $('workflow-command-cancel').addEventListener('click', () => $('workflow-command-dialog').close());
   $('workflow-detail-close').addEventListener('click', () => $('workflow-detail-dialog').close());
