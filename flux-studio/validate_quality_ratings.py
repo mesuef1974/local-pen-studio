@@ -24,8 +24,8 @@ def validate(key, exports):
             if set(item.get('scores',{}))!=AXES or any(v not in VALUES for v in item['scores'].values()):
                 raise ValueError('تقييم خارج النطاق أو محور مفقود.')
         rows.append({'reviewer':reviewer,'rated':len(ratings),'expected':len(ids),'complete':set(ratings)==ids})
-    return {'roundId':key['roundId'],'reviewers':rows,'independence':'requires human confirmation; distinct codes alone do not prove independence',
-            'humanDataComplete':len(rows)>=2 and all(row['complete'] for row in rows),
+    return {'roundId':key['roundId'],'reviewers':rows,'reviewPolicy':'one owner-approved manager reviewer is sufficient; independent holdout remains required',
+            'humanDataComplete':len(rows)>=1 and all(row['complete'] for row in rows),
             'calibrationState':'pending_model_validation','calibratedScore':None,
             'pilotOnly':key.get('pilotOnly',True)}
 

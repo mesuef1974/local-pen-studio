@@ -12,7 +12,25 @@ from PIL import Image,ImageOps
 ROOT = Path(__file__).resolve().parent
 
 
-def build(samples, output, seed=None, include_controls=False):
+def split_groups(groups,rng,strata=None):
+    if strata is None:
+        rng.shuffle(groups)
+        cutoff=max(1,min(len(groups)-1,round(len(groups)*.6)))
+        return [(source,candidates,'calibration' if i<cutoff else 'heldout') for i,(source,candidates) in enumerate(groups)]
+    buckets={}
+    for source,candidates in groups:
+        category=strata.get(source.stem.removesuffix('-source'))
+        if not isinstance(category,str) or not category.strip():raise ValueError('كل مصدر يحتاج فئة صريحة في تقسيم المعايرة.')
+        buckets.setdefault(category,[]).append((source,candidates))
+    result=[]
+    for category,items in sorted(buckets.items()):
+        if len(items)<2:raise ValueError('يلزم مصدران مستقلان على الأقل للفئة: '+category)
+        rng.shuffle(items);cutoff=max(1,min(len(items)-1,round(len(items)*.6)))
+        result.extend((source,candidates,'calibration' if i<cutoff else 'heldout') for i,(source,candidates) in enumerate(items))
+    return result
+
+
+def build(samples, output, seed=None, include_controls=False,strata=None):
     if (output/'review.html').exists() or (output/'private-allocation-key.json').exists():
         raise ValueError('الجولة موجودة؛ اختر مجلدًا جديدًا لحفظ المفتاح والإجابات القديمة.')
     sources = sorted(samples.glob('*-source.png'))
@@ -28,10 +46,9 @@ def build(samples, output, seed=None, include_controls=False):
     if len(set(hashes))!=len(hashes):
         raise ValueError('مصدر مكرر ببصمة واحدة؛ وحّد مشتقاته في مجموعة مصدر واحدة.')
     rng = random.Random(seed if seed is not None else secrets.randbits(128))
-    rng.shuffle(groups)
-    cutoff = max(1, min(len(groups)-1, round(len(groups)*.6)))
+    allocations=split_groups(groups,rng,strata)
     public, key, source_images = [], [], {}
-    for group_index, (source, candidates) in enumerate(groups):
+    for source,candidates,split in allocations:
         source_id=secrets.token_hex(10);source_images[source_id]=data_uri(source)
         records=[(clean_png(candidate),str(candidate.resolve()),'saved-flux') for candidate in candidates]
         if include_controls:
@@ -44,7 +61,7 @@ def build(samples, output, seed=None, include_controls=False):
             case_id = secrets.token_hex(10)
             public.append({'id': case_id, 'sourceId':source_id,'candidate':'data:image/png;base64,'+base64.b64encode(raw).decode()})
             key.append({'caseId': case_id, 'sourceGroup': source.stem,
-                        'split': 'calibration' if group_index < cutoff else 'heldout',
+                        'split':split,
                         'sourcePath': str(source.resolve()), 'candidatePath':candidate_path,'candidateKind':kind,
                         'sourceSHA256': hashlib.sha256(clean_png(source)).hexdigest(),
                         'originalSourceFileSHA256':hashlib.sha256(source.read_bytes()).hexdigest(),
@@ -63,7 +80,7 @@ def build(samples, output, seed=None, include_controls=False):
     (output/'review.html').write_text(html, encoding='utf-8')
     (output/'private-allocation-key.json').write_text(json.dumps({
         'roundId': round_id, 'pilotOnly': True, 'humanRatings': 'pending',
-        'splitUnit': 'source image; derivatives never cross splits', 'cases': key,
+        'splitUnit': 'source image; derivatives never cross splits','stratified':strata is not None, 'cases': key,
         'limitations': ['Small convenience sample, not a representative validation dataset.',
                         'Reviewers must not inspect the allocation key before submitting ratings.']},
         ensure_ascii=False, indent=2), encoding='utf-8')
@@ -88,5 +105,7 @@ if __name__ == '__main__':
     parser.add_argument('--samples', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--controls',action='store_true')
+    parser.add_argument('--strata',type=Path,help='JSON mapping source stems to predeclared applicability strata')
     args = parser.parse_args()
-    print(json.dumps(build(args.samples, args.output,include_controls=args.controls), ensure_ascii=False))
+    strata=json.loads(args.strata.read_text(encoding='utf8')) if args.strata else None
+    print(json.dumps(build(args.samples, args.output,include_controls=args.controls,strata=strata), ensure_ascii=False))

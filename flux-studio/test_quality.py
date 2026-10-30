@@ -13,6 +13,14 @@ from validate_quality_ratings import validate
 
 
 class QualityTests(unittest.TestCase):
+    def test_stratified_split_requires_calibration_and_test_sources_per_profile(self):
+        import random
+        from build_quality_round import split_groups
+        groups=[(Path(name+'-source.png'),[]) for name in ['a','b','c','d']]
+        allocations=split_groups(groups,random.Random(1),{'a':'face-supported','b':'face-supported','c':'other','d':'other'})
+        for category,names in [('face-supported',{'a','b'}),('other',{'c','d'})]:
+            self.assertEqual({split for source,_,split in allocations if source.stem.removesuffix('-source') in names},{'calibration','heldout'})
+        with self.assertRaises(ValueError):split_groups(groups[:3],random.Random(1),{'a':'face-supported','b':'other','c':'other'})
     def test_calibration_analysis_does_not_use_heldout_judgments(self):
         from analyze_quality_calibration import analysis
         with tempfile.TemporaryDirectory() as directory:
@@ -78,6 +86,13 @@ class QualityTests(unittest.TestCase):
             self.assertFalse(validate(key,[])['humanDataComplete'])
             (samples/'animal-source.png').write_bytes((samples/'human-source.png').read_bytes())
             with self.assertRaisesRegex(ValueError,'مكرر'):build(samples,root/'second',seed=42)
+
+    def test_owner_approved_single_complete_reviewer_is_sufficient(self):
+        key={'roundId':'one','cases':[{'caseId':'a','sourceSHA256':'hash','split':'calibration'}]}
+        export={'roundId':'one','reviewer':'manager','ratings':{'a':{'scores':{axis:'5' for axis in ['face','outlinePose','compositionCrop','traceability']}}}}
+        result=validate(key,[export])
+        self.assertTrue(result['humanDataComplete'])
+        self.assertIsNone(result['calibratedScore'])
 
     def test_rating_import_rejects_wrong_round_and_duplicate_reviewers(self):
         key={'roundId':'one','cases':[{'caseId':'a','sourceSHA256':'hash','split':'heldout'}]}

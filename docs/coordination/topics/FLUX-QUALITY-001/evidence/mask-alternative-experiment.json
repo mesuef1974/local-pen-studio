@@ -1,0 +1,26 @@
+{
+  "source": {
+    "width": 451,
+    "height": 300,
+    "model": "BiRefNet-General",
+    "device": "CUDA",
+    "precision": "mixed-fp16",
+    "seconds": 10.638,
+    "loadSeconds": 8.689,
+    "inferenceSeconds": 1.929,
+    "foregroundShare": 0.7985957132298596
+  },
+  "result": {
+    "width": 768,
+    "height": 512,
+    "model": "BiRefNet-General",
+    "device": "CUDA",
+    "precision": "mixed-fp16",
+    "seconds": 8.56,
+    "loadSeconds": 7.027,
+    "inferenceSeconds": 1.486,
+    "foregroundShare": 0.057835896809895836
+  },
+  "productionIntegration": false,
+  "conclusion": "Masks are not equivalent subject silhouettes in this calibration example; no similarity percentage inferred."
+}

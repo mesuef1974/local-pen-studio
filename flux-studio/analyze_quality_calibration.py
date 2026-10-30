@@ -14,7 +14,7 @@ from validate_quality_ratings import validate,AXES
 def analysis(round_directory,ratings_path,output):
     key=json.loads((round_directory/'private-allocation-key.json').read_text(encoding='utf8'))
     ratings=json.loads(ratings_path.read_text(encoding='utf-8-sig'))
-    validate(key,[ratings])
+    validation=validate(key,[ratings])
     data_script=(round_directory/'round-data.js').read_text(encoding='utf8')
     encoded=re.fullmatch(r'window.REVIEW_DATA=JSON.parse\(atob\("([A-Za-z0-9+/=]+)"\)\);',data_script)
     if not encoded:raise ValueError('صيغة الجولة غير معروفة.')
@@ -44,10 +44,10 @@ def analysis(round_directory,ratings_path,output):
     coverage={axis:sum(row['components'][axis]['state']=='raw_only' for row in rows) for axis in ['face','outlinePose','compositionCrop']}
     summary={'version':'calibration-analysis/1.0','roundId':key['roundId'],
         'acceptedRatingsFileSHA256':hashlib.sha256(ratings_path.read_bytes()).hexdigest(),
-        'reviewers':1,'calibrationCases':len(rows),'heldoutCases':sum(c['split']=='heldout' for c in key['cases']),
+        'humanDataComplete':validation['humanDataComplete'],'reviewers':1,'reviewPolicy':'owner-approved single manager reviewer','calibrationCases':len(rows),'heldoutCases':sum(c['split']=='heldout' for c in key['cases']),
         'heldoutHumanJudgmentsAnalyzed':False,'ratingsSummary':axes,'rawDetectorCoverage':coverage,
         'calibratedScore':None,'state':'exploratory_single_reviewer',
-        'limitations':['Second independent human reviewer absent.','Pilot dataset is not representative.','No conversion to a percentage fitted or enabled.','Default highest rating may introduce response bias.']}
+        'limitations':['Pilot dataset is not representative.','No conversion to a percentage fitted or enabled.','Default highest rating may introduce response bias.']}
     output.mkdir(parents=True,exist_ok=True)
     (output/'calibration-private-rows.json').write_text(json.dumps(rows,ensure_ascii=False,indent=2),encoding='utf8')
     (output/'calibration-summary.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding='utf8')

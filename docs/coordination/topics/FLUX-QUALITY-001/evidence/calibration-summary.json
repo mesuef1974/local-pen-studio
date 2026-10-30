@@ -68,9 +68,10 @@
   "calibratedScore": null,
   "state": "exploratory_single_reviewer",
   "limitations": [
-    "Second independent human reviewer absent.",
     "Pilot dataset is not representative.",
     "No conversion to a percentage fitted or enabled.",
     "Default highest rating may introduce response bias."
-  ]
+  ],
+  "humanDataComplete": true,
+  "reviewPolicy": "owner-approved single manager reviewer"
 }

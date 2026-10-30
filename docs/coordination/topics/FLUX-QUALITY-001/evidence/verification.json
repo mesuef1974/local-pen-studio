@@ -3,7 +3,7 @@
   "deliveryState": "work_in_progress",
   "tests": {
     "python": {
-      "passed": 21,
+      "passed": 24,
       "failed": 0
     },
     "javascript": {
@@ -20,10 +20,16 @@
     "consoleErrors": []
   },
   "pending": [
-    "Actual blinded independent human ratings",
     "Calibration mapping and held-out validation",
     "Representative dataset and background-only controls",
     "Robust landmark detection for lineart; current attempt returns unavailable"
   ],
-  "fullCardAcceptance": "not_passed"
+  "fullCardAcceptance": "not_passed",
+  "humanReview": {
+    "ownerApproved": true,
+    "requiredReviewers": 1,
+    "acceptedCompleteReviewers": 1,
+    "ratingCases": 30,
+    "policy": "one manager reviewer; heldout data still independent"
+  }
 }
