@@ -1,0 +1,67 @@
+{
+  "threshold": 0.7,
+  "upscaleFactor": 2,
+  "method": "Lanczos; same image extent, no crop changes",
+  "cases": [
+    {
+      "id": "user-line-12",
+      "originalDetectedFaces": 0,
+      "upscaledDetectedFaces": 0,
+      "upscaledPointCounts": []
+    },
+    {
+      "id": "user-line-12-crop",
+      "originalDetectedFaces": 0,
+      "upscaledDetectedFaces": 0,
+      "upscaledPointCounts": []
+    },
+    {
+      "id": "user-line-13",
+      "originalDetectedFaces": 0,
+      "upscaledDetectedFaces": 0,
+      "upscaledPointCounts": []
+    },
+    {
+      "id": "user-line-13-crop",
+      "originalDetectedFaces": 0,
+      "upscaledDetectedFaces": 0,
+      "upscaledPointCounts": []
+    },
+    {
+      "id": "user-line-14",
+      "originalDetectedFaces": 0,
+      "upscaledDetectedFaces": 0,
+      "upscaledPointCounts": []
+    },
+    {
+      "id": "user-line-14-crop",
+      "originalDetectedFaces": 1,
+      "upscaledDetectedFaces": 0,
+      "upscaledPointCounts": []
+    },
+    {
+      "id": "user-line-15",
+      "originalDetectedFaces": 0,
+      "upscaledDetectedFaces": 0,
+      "upscaledPointCounts": []
+    },
+    {
+      "id": "user-line-15-crop",
+      "originalDetectedFaces": 0,
+      "upscaledDetectedFaces": 0,
+      "upscaledPointCounts": []
+    },
+    {
+      "id": "user-line-16",
+      "originalDetectedFaces": 0,
+      "upscaledDetectedFaces": 0,
+      "upscaledPointCounts": []
+    },
+    {
+      "id": "user-line-16-crop",
+      "originalDetectedFaces": 0,
+      "upscaledDetectedFaces": 0,
+      "upscaledPointCounts": []
+    }
+  ]
+}
