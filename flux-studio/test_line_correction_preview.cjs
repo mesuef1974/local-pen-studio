@@ -30,7 +30,6 @@ const flush=()=>new Promise(setImmediate);
 (async()=>{
     await flush();
     assert(calls.some(c=>c[0]==='set'&&c[1]==='globalCompositeOperation'&&c[2]==='source-in'));
-    assert(calls.some(c=>c[0]==='set'&&c[1]==='fillStyle'&&c[2]==='#00ff66'));
     assert(calls.some(c=>c[0]==='set'&&c[1]==='shadowBlur'&&c[2]===4));
     assert.equal(elements.sample.children.length,data.samples.length);
     assert.equal(elements.summaryRows.children.length,data.samples.length);
@@ -46,6 +45,9 @@ const flush=()=>new Promise(setImmediate);
             assert.equal(elements.downloadFinal.download,row.id+'-final-black.png');
             assert.equal(elements.downloadFinal.href,data.images[row.images.finalBlack]);
             assert.equal(elements.downloadPng.href,data.images[row.images.afterTransparent]);
+            const originals=calls.filter(c=>c[0]==='drawImage'&&c.length===10).slice(-2);
+            assert.equal(originals.length,2);
+            for(const draw of originals)assert.equal(draw[1].src,data.images[row.images.source]);
         }
         elements.focus.checked=false;await elements.focus.listeners.change();
         assert.equal(elements.before.width,row.width);
@@ -53,7 +55,7 @@ const flush=()=>new Promise(setImmediate);
     }
     elements.showLines.checked=false;elements.showChanges.checked=false;
     elements.background.value='white';calls.length=0;await elements.showLines.listeners.change();
-    assert.equal(calls.filter(c=>c[0]==='drawImage').length,1);
+    assert.equal(calls.filter(c=>c[0]==='drawImage').length,3);
     elements.zoom.value='800';await elements.zoom.listeners.input();
     assert.equal(elements.after.style.width,'800%');
     elements.sample.value=data.samples[0].id;await elements.sample.listeners.change();
@@ -62,5 +64,5 @@ const flush=()=>new Promise(setImmediate);
     assert.equal(elements.sample.value,data.samples[1].id);
     elements.beforeFullscreen.listeners.click();await flush();assert.equal(fullscreenCalls,1);
     elements.downloadReport.listeners.click();assert.equal(reportClicks,1);elements.downloadFinal.listeners.click({preventDefault(){}});assert.equal(reportClicks,2);elements.includeGlow.checked=false;await elements.includeGlow.listeners.change();
-    console.log(`PASS: ${data.samples.length} samples × five backgrounds; focus, layers, zoom, navigation, downloads and fullscreen invocation. Mock DOM/canvas only.`);
+    console.log(`PASS: ${data.samples.length} samples; two true-colour originals and final black output; focus, zoom, navigation, downloads and fullscreen invocation. Mock DOM/canvas only.`);
 })().catch(error=>{console.error(error);process.exitCode=1;});

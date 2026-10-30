@@ -11,12 +11,12 @@
   "humanBlindValidation": "not performed",
   "originalFilesModified": false,
   "productionExtractorModified": false,
-  "previewSHA256": "6a7d6574f41ddf86e16689fea4aa411da6f23a9f0d0e1e9601c48bc005c6a48c",
+  "previewSHA256": "f4576660583e6b2cbb3da7d1a193e2570b67f95d3737e4f966be91dc0e22200b",
   "combinedFluxRegressionTestsPassed": 41,
   "combinedCommand": "python -m unittest test_generation test_quality test_line_corrector",
   "correctedLayerDisplay": "neon green #00ff66 with glow; display-only, exports unchanged",
   "finalBlackExports": "22 grayscale black-ink-on-white PNG files; full image; no glow or reference layer",
   "fullOutputDisplay": "Final output fits panel width, uncropped with no internal vertical scrolling; face focus disabled by default.",
   "thirdPanel": "All corrected-layer strokes tinted black; optional copied glow defaults on. Download captures full displayed canvas. Glow changes appearance, not correction geometry.",
-  "layout": "Three image-only panels with aligned top edges and shared sizing; panel headings, descriptions, links and buttons hidden. Global sample controls remain available."
+  "layout": "First two panels show the same true-colour original only; third shows complete black result. Three aligned image-only columns."
 }
