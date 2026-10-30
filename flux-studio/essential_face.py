@@ -1,18 +1,17 @@
 """Experimental subset of MediaPipe's 478 landmarks; not an identity score."""
 import numpy as np
 
-VERSION = 'essential-face/1.0'
+VERSION = 'essential-face/2.0'
 GROUPS = {
     'eyes': [33, 159, 133, 145, 263, 386, 362, 374],
-    'brows': [70, 105, 107, 336, 334, 300],
     'nose': [168, 4, 1, 98, 327],
     'mouth': [61, 37, 0, 267, 291, 314, 17, 84],
-    'jaw': [234, 172, 136, 152, 365, 397, 454],
+    'forehead': [109, 10, 338, 151],
 }
 INDICES = sorted({i for group in GROUPS.values() for i in group})
 CHAINS = [[33,159,133,145,33], [263,386,362,374,263],
-          [70,105,107], [336,334,300], [168,4,1], [98,1,327],
-          [61,37,0,267,291,314,17,84,61], GROUPS['jaw']]
+          [109,10,338], [10,151], [168,4,1], [98,1,327],
+          [61,37,0,267,291,314,17,84,61]]
 EDGES = [(a,b) for chain in CHAINS for a,b in zip(chain,chain[1:])]
 
 
