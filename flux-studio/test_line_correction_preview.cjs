@@ -6,15 +6,15 @@ const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
 const data=JSON.parse(Buffer.from(script.match(/atob\('([^']+)'\)/)[1],'base64').toString());
 const ids=['sample','previous','next','background','opacity','showLines','showChanges','focus','regions',
            'side','zoom','opacityValue','zoomValue','status','before','after','operations',
-           'final','finalFullscreen','downloadFinal','downloadPng','downloadReport','summaryRows','beforeFullscreen','afterFullscreen'];
+           'includeGlow','final','finalFullscreen','downloadFinal','downloadPng','downloadReport','summaryRows','beforeFullscreen','afterFullscreen'];
 let fullscreenCalls=0,reportClicks=0;
 const calls=[];
 const ctx=new Proxy({}, {get:(_,method)=>(...args)=>calls.push([method,...args]),set:(_,key,value)=>{calls.push(['set',key,value]);return true;}});
 const elements=Object.fromEntries(ids.map(id=>[id,{
     value: id==='zoom'?'100':id==='opacity'?'90':id==='background'?'negative':'',
-    checked:['showLines','showChanges'].includes(id),style:{},listeners:{},children:[],
+    checked:['showLines','showChanges','includeGlow'].includes(id),style:{},listeners:{},children:[],
     parentElement:{async requestFullscreen(){fullscreenCalls++;}},
-    append(child){this.children.push(child);},getContext(){return ctx;},
+    append(child){this.children.push(child);},getContext(){return ctx;},toDataURL(){return 'data:image/png;base64,AA==';},
     addEventListener(event,fn){this.listeners[event]=fn;}
 }]));
 const sandbox={
@@ -61,6 +61,6 @@ const flush=()=>new Promise(setImmediate);
     elements.next.listeners.click();await flush();
     assert.equal(elements.sample.value,data.samples[1].id);
     elements.beforeFullscreen.listeners.click();await flush();assert.equal(fullscreenCalls,1);
-    elements.downloadReport.listeners.click();assert.equal(reportClicks,1);
+    elements.downloadReport.listeners.click();assert.equal(reportClicks,1);elements.downloadFinal.listeners.click({preventDefault(){}});assert.equal(reportClicks,2);elements.includeGlow.checked=false;await elements.includeGlow.listeners.change();
     console.log(`PASS: ${data.samples.length} samples × five backgrounds; focus, layers, zoom, navigation, downloads and fullscreen invocation. Mock DOM/canvas only.`);
 })().catch(error=>{console.error(error);process.exitCode=1;});
