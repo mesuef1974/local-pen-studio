@@ -1,0 +1,115 @@
+{
+  "viewsTested": 50,
+  "measurableViews": 8,
+  "unavailableViews": 42,
+  "pointsUsed": 34,
+  "excludedPoints": 444,
+  "cases": [
+    {
+      "id": "astronaut",
+      "fullRMS": 0.024920057720136862,
+      "essentialRMS": 0.030409483434446154,
+      "groupRMS": {
+        "eyes": 0.02184581839779886,
+        "brows": 0.019691202028653553,
+        "nose": 0.020108255882660003,
+        "mouth": 0.04584856462555234,
+        "jaw": 0.030374405435070948
+      },
+      "excludedPointsInvariant": true
+    },
+    {
+      "id": "astronaut-crop",
+      "fullRMS": 0.03887458352471897,
+      "essentialRMS": 0.02359321620495673,
+      "groupRMS": {
+        "eyes": 0.008630042321402525,
+        "brows": 0.012830156362756326,
+        "nose": 0.024047142036460908,
+        "mouth": 0.03826066233312032,
+        "jaw": 0.0197842107135933
+      },
+      "excludedPointsInvariant": true
+    },
+    {
+      "id": "user-line-14-crop",
+      "fullRMS": 0.06241008390175405,
+      "essentialRMS": 0.04250447865444509,
+      "groupRMS": {
+        "eyes": 0.02384645969979053,
+        "brows": 0.02727606548779037,
+        "nose": 0.02345380517208782,
+        "mouth": 0.029853029984164996,
+        "jaw": 0.07794895793449884
+      },
+      "excludedPointsInvariant": true
+    },
+    {
+      "id": "sample-12-crop",
+      "fullRMS": 0.04323836335600466,
+      "essentialRMS": 0.02385471836698486,
+      "groupRMS": {
+        "eyes": 0.008115648335228745,
+        "brows": 0.011879518415185641,
+        "nose": 0.0268127804490769,
+        "mouth": 0.035490608003868114,
+        "jaw": 0.024792505335635383
+      },
+      "excludedPointsInvariant": true
+    },
+    {
+      "id": "sample-26-crop",
+      "fullRMS": 0.015332713132636538,
+      "essentialRMS": 0.019870963218291404,
+      "groupRMS": {
+        "eyes": 0.011258163963107231,
+        "brows": 0.009243833487940679,
+        "nose": 0.018751948874578057,
+        "mouth": 0.019855216179241734,
+        "jaw": 0.03159204351126547
+      },
+      "excludedPointsInvariant": true
+    },
+    {
+      "id": "sample-27-crop",
+      "fullRMS": 0.018959560590384145,
+      "essentialRMS": 0.01877359696692183,
+      "groupRMS": {
+        "eyes": 0.009730787533590721,
+        "brows": 0.008265288211718532,
+        "nose": 0.021024942334577492,
+        "mouth": 0.019051448246142674,
+        "jaw": 0.02854052727014512
+      },
+      "excludedPointsInvariant": true
+    },
+    {
+      "id": "sample-28",
+      "fullRMS": 0.011962771547278131,
+      "essentialRMS": 0.013349869507666175,
+      "groupRMS": {
+        "eyes": 0.00831073862552228,
+        "brows": 0.005222899258279218,
+        "nose": 0.01268118901015174,
+        "mouth": 0.012547790191285485,
+        "jaw": 0.021645152491359357
+      },
+      "excludedPointsInvariant": true
+    },
+    {
+      "id": "sample-28-crop",
+      "fullRMS": 0.017021888951911455,
+      "essentialRMS": 0.016054036798760576,
+      "groupRMS": {
+        "eyes": 0.006840311647212478,
+        "brows": 0.008278483930590108,
+        "nose": 0.010292006379656745,
+        "mouth": 0.013905231277983657,
+        "jaw": 0.029034221187843254
+      },
+      "excludedPointsInvariant": true
+    }
+  ],
+  "score": null,
+  "warning": "Raw errors only; different point sets cannot be ranked by numerical error alone."
+}
