@@ -9,7 +9,7 @@ const ids=['sample','previous','next','background','opacity','showLines','showCh
            'downloadPng','downloadReport','summaryRows','beforeFullscreen','afterFullscreen'];
 let fullscreenCalls=0,reportClicks=0;
 const calls=[];
-const ctx=new Proxy({}, {get:(_,method)=>(...args)=>calls.push([method,...args]),set:()=>true});
+const ctx=new Proxy({}, {get:(_,method)=>(...args)=>calls.push([method,...args]),set:(_,key,value)=>{calls.push(['set',key,value]);return true;}});
 const elements=Object.fromEntries(ids.map(id=>[id,{
     value: id==='zoom'?'100':id==='opacity'?'90':id==='background'?'negative':'',
     checked:['showLines','showChanges','focus'].includes(id),style:{},listeners:{},children:[],
@@ -23,12 +23,15 @@ const sandbox={
     atob:value=>Buffer.from(value,'base64').toString(),
     Image:class{async decode(){assert(this.src.startsWith('data:image/png;base64,'));}},
     document:{getElementById:id=>elements[id],querySelector:()=>({classList:{toggle(){}}}),
-        createElement:()=>({append(){},click(){reportClicks++;}})}
+        createElement:()=>({append(){},getContext(){return ctx;},click(){reportClicks++;}})}
 };
 vm.runInNewContext(script,sandbox);
 const flush=()=>new Promise(setImmediate);
 (async()=>{
     await flush();
+    assert(calls.some(c=>c[0]==='set'&&c[1]==='globalCompositeOperation'&&c[2]==='source-in'));
+    assert(calls.some(c=>c[0]==='set'&&c[1]==='fillStyle'&&c[2]==='#00ff66'));
+    assert(calls.some(c=>c[0]==='set'&&c[1]==='shadowBlur'&&c[2]===4));
     assert.equal(elements.sample.children.length,data.samples.length);
     assert.equal(elements.summaryRows.children.length,data.samples.length);
     for(const row of data.samples){

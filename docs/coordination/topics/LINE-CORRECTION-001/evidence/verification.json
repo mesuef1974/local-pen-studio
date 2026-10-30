@@ -11,7 +11,8 @@
   "humanBlindValidation": "not performed",
   "originalFilesModified": false,
   "productionExtractorModified": false,
-  "previewSHA256": "1d86f64db47dea79093a5fc1be8fcf1a7ed19f17762cdb32c25bf1465570a53d",
+  "previewSHA256": "b86d8a44a46b073d7dfc47514a484216369d848b96af182bdd8f38c8e95ecb87",
   "combinedFluxRegressionTestsPassed": 41,
-  "combinedCommand": "python -m unittest test_generation test_quality test_line_corrector"
+  "combinedCommand": "python -m unittest test_generation test_quality test_line_corrector",
+  "correctedLayerDisplay": "neon green #00ff66 with glow; display-only, exports unchanged"
 }
