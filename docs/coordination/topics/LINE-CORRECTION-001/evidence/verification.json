@@ -11,8 +11,9 @@
   "humanBlindValidation": "not performed",
   "originalFilesModified": false,
   "productionExtractorModified": false,
-  "previewSHA256": "b86d8a44a46b073d7dfc47514a484216369d848b96af182bdd8f38c8e95ecb87",
+  "previewSHA256": "76e49d6b0621038dc6ebd757e249e8491d2201c5985f4f792eac96eef300e473",
   "combinedFluxRegressionTestsPassed": 41,
   "combinedCommand": "python -m unittest test_generation test_quality test_line_corrector",
-  "correctedLayerDisplay": "neon green #00ff66 with glow; display-only, exports unchanged"
+  "correctedLayerDisplay": "neon green #00ff66 with glow; display-only, exports unchanged",
+  "finalBlackExports": "22 grayscale black-ink-on-white PNG files; full image; no glow or reference layer"
 }

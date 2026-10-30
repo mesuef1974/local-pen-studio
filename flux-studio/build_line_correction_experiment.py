@@ -123,14 +123,15 @@ def build(source, output):
                 'regions':boxes,'focus':focus,'images':{}}
         exports = {'source':source_rgb,'before':before,'after':after,
                    'beforeTransparent':transparent(before),'afterTransparent':transparent(after),
+                   'finalBlack':np.repeat(after.min(axis=2)[:,:,None],3,axis=2),
                    'changes':delta,'evidence':(evidence.astype('uint8')*255)}
         for name,array in exports.items():
             item['images'][name] = store(array)
         report.update(beforePNG_SHA256=item['images']['before'],afterPNG_SHA256=item['images']['after'],
-                      referencePNG_SHA256=item['images']['source'])
+                      referencePNG_SHA256=item['images']['source'],finalBlackPNG_SHA256=item['images']['finalBlack'])
         folder = assets/sample_id
         folder.mkdir()
-        for name in ('source','before','after','afterTransparent','changes'):
+        for name in ('source','before','after','afterTransparent','finalBlack','changes'):
             (folder/(name+'.png')).write_bytes(png(exports[name]))
         (folder/'operations.json').write_text(json.dumps(report,indent=2),encoding='utf8')
         rows.append(item)

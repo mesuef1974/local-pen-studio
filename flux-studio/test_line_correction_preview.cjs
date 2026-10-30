@@ -6,7 +6,7 @@ const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
 const data=JSON.parse(Buffer.from(script.match(/atob\('([^']+)'\)/)[1],'base64').toString());
 const ids=['sample','previous','next','background','opacity','showLines','showChanges','focus','regions',
            'side','zoom','opacityValue','zoomValue','status','before','after','operations',
-           'downloadPng','downloadReport','summaryRows','beforeFullscreen','afterFullscreen'];
+           'final','finalFullscreen','downloadFinal','downloadPng','downloadReport','summaryRows','beforeFullscreen','afterFullscreen'];
 let fullscreenCalls=0,reportClicks=0;
 const calls=[];
 const ctx=new Proxy({}, {get:(_,method)=>(...args)=>calls.push([method,...args]),set:(_,key,value)=>{calls.push(['set',key,value]);return true;}});
@@ -42,6 +42,9 @@ const flush=()=>new Promise(setImmediate);
             assert(!elements.status.textContent.startsWith('تعذر العرض'));
             assert.equal(elements.before.width,row.focus[2]-row.focus[0]);
             assert.equal(elements.after.height,row.focus[3]-row.focus[1]);
+            assert.equal(elements.final.width,row.width);
+            assert.equal(elements.downloadFinal.download,row.id+'-final-black.png');
+            assert.equal(elements.downloadFinal.href,data.images[row.images.finalBlack]);
             assert.equal(elements.downloadPng.href,data.images[row.images.afterTransparent]);
         }
         elements.focus.checked=false;await elements.focus.listeners.change();
@@ -50,7 +53,7 @@ const flush=()=>new Promise(setImmediate);
     }
     elements.showLines.checked=false;elements.showChanges.checked=false;
     elements.background.value='white';calls.length=0;await elements.showLines.listeners.change();
-    assert(!calls.some(c=>c[0]==='drawImage'));
+    assert.equal(calls.filter(c=>c[0]==='drawImage').length,1);
     elements.zoom.value='800';await elements.zoom.listeners.input();
     assert.equal(elements.after.style.width,'800%');
     elements.sample.value=data.samples[0].id;await elements.sample.listeners.change();
