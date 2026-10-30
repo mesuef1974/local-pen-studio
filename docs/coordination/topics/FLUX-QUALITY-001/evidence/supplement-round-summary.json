@@ -1,0 +1,15 @@
+{
+  "roundId": "9f1de6659bc1526075fbefb0",
+  "cases": 9,
+  "sources": 2,
+  "stratified": true,
+  "sourceSplit": {
+    "calibration": 1,
+    "heldout": 1
+  },
+  "humanRatings": "pending",
+  "reviewersRequired": 1,
+  "oldRoundUnchanged": true,
+  "generationSeconds": 31.52,
+  "publicImagesInGit": false
+}

@@ -1,0 +1,67 @@
+{
+  "version": "human-geometry/1.0",
+  "profile": "human-single-subject",
+  "score": null,
+  "state": "uncalibrated",
+  "reason": "\u0627\u0644\u0645\u0639\u0627\u064a\u0631\u0629 \u0648\u0627\u0644\u062a\u0642\u064a\u064a\u0645 \u0627\u0644\u0628\u0634\u0631\u064a \u0627\u0644\u0645\u0633\u062a\u0642\u0644 \u0644\u0645 \u064a\u0643\u062a\u0645\u0644\u064e\u0627\u061b \u0644\u0627 \u062a\u064f\u0639\u0631\u0636 \u0646\u0633\u0628\u0629 \u0643\u0644\u064a\u0629 \u0623\u0648 \u064a\u0639\u0627\u062f \u062a\u0648\u0632\u064a\u0639 \u0627\u0644\u0623\u0648\u0632\u0627\u0646.",
+  "components": {
+    "face": {
+      "weight": 0.5,
+      "score": null,
+      "state": "raw_only",
+      "raw": {
+        "normalizedLandmarkRMS": 0.003907960384658377
+      },
+      "confidence": {
+        "probability": null,
+        "detectorThreshold": 0.7,
+        "calibrated": false
+      }
+    },
+    "outlinePose": {
+      "weight": 0.3,
+      "score": null,
+      "state": "raw_only",
+      "raw": {
+        "shapeNormalizedMaskIoU": 0.9834674568167279,
+        "normalizedPoseRMS": 0.05588819233021123,
+        "commonVisibleJoints": 13
+      },
+      "confidence": {
+        "minimumObservedVisibility": 0.9118015766143799,
+        "calibrated": false
+      }
+    },
+    "compositionCrop": {
+      "weight": 0.2,
+      "score": null,
+      "state": "raw_only",
+      "raw": {
+        "frameBoxMeanAbsoluteError": 0.001953125,
+        "sourceBox": [
+          0.025390625,
+          0.033203125,
+          0.712890625,
+          1.0
+        ],
+        "resultBox": [
+          0.03125,
+          0.03125,
+          0.712890625,
+          1.0
+        ],
+        "sourceTouchesFrame": true,
+        "resultTouchesFrame": true
+      },
+      "confidence": {
+        "probability": null,
+        "calibrated": false,
+        "basis": "human pose segmentation; mask not independently validated"
+      }
+    }
+  },
+  "background": "excluded by subject mask; invariance still requires independent validation",
+  "automaticApproval": false,
+  "experiment": "pixels outside estimated source mask set to white; not a manually verified foreground mask",
+  "maskedSourcePixelsUnchanged": true
+}

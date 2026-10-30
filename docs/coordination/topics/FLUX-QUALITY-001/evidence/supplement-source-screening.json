@@ -1,0 +1,18 @@
+[
+  {
+    "source": "astronaut",
+    "faces": 1,
+    "poses": 1,
+    "sha256": "88431cd9653ccd539741b555fb0a46b61558b301d4110412b5bc28b5e3ea6cb5",
+    "origin": "https://raw.githubusercontent.com/scikit-image/scikit-image/v0.25.2/skimage/data/astronaut.png",
+    "redistribution": "local benchmark only; do not include images in Git"
+  },
+  {
+    "source": "package-portrait",
+    "faces": 1,
+    "poses": 0,
+    "sha256": "a8ca6d734765703b09728ab47fe59f473d93ae3967fc24c7c0288c3c7adb7130",
+    "origin": "existing matplotlib sample_data/grace_hopper.jpg",
+    "redistribution": "local benchmark only; do not include images in Git"
+  }
+]
