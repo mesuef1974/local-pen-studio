@@ -1,0 +1,49 @@
+{
+  "card_id": "CARD-20261030-D6415DED-SVG",
+  "date": "2026-10-30",
+  "scope": "FLUX prompt organization, guidance, independent comparison, review metadata, and scoring disclosure",
+  "checks": [
+    {
+      "name": "javascript_syntax",
+      "command": "node --check app.js && node --check flux-controls.js",
+      "result": "pass"
+    },
+    {
+      "name": "javascript_tests",
+      "command": "node --test test-*.mjs",
+      "result": "pass",
+      "passed": 37,
+      "failed": 0
+    },
+    {
+      "name": "python_generation_tests",
+      "command": "python -m unittest test_generation",
+      "result": "pass",
+      "passed": 13,
+      "failed": 0
+    },
+    {
+      "name": "diff_whitespace",
+      "command": "git diff --check",
+      "result": "pass"
+    },
+    {
+      "name": "embedded_browser_smoke",
+      "url": "http://127.0.0.1:8773/prepare",
+      "result": "pass",
+      "observed": [
+        "24 templates grouped by task",
+        "permanent FLUX limitation and proposed score-weight disclosure",
+        "A/B comparison defaults with optional C",
+        "B defaults to a distinct minimal portrait prompt",
+        "final prompt local-save controls",
+        "generation and comparison buttons disabled with a visible reason when the local model is unavailable"
+      ]
+    },
+    {
+      "name": "real_generation_and_similarity_score",
+      "result": "not_run",
+      "reason": "This card worktree has no FLUX virtual environment or model weights. No generated output or numeric score is claimed. The 50/30/20 score definition is documented; automatic feature detection and calibration remain necessary before publishing values."
+    }
+  ]
+}
