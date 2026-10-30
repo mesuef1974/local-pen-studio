@@ -41,9 +41,37 @@
       ]
     },
     {
-      "name": "real_generation_and_similarity_score",
-      "result": "not_run",
-      "reason": "This card worktree has no FLUX virtual environment or model weights. No generated output or numeric score is claimed. The 50/30/20 score definition is documented; automatic feature detection and calibration remain necessary before publishing values."
+      "name": "real_flux_generation_and_ab_comparison",
+      "result": "pass",
+      "model": "FLUX.2 Klein 4B Q5_K_M",
+      "source": "bundled samplePhoto.png (422x1024), not user supplied image",
+      "single_generation": {
+        "seed": 42,
+        "duration_seconds": 24.18,
+        "output_dimensions": "320x768",
+        "completed_steps": "4/4",
+        "outcome": "completed"
+      },
+      "ab_comparison": {
+        "variants": 2,
+        "same_source_seed_and_settings": true,
+        "prompts_varied": true,
+        "outcome": "both completed and appeared separately in history"
+      },
+      "review_gate": "Result inspected in review stage; remained pending user approval and was not sent to pen paths",
+      "runtime_note": "Nonfatal AutoencoderKLFlux2 force_upcast configuration warning; generation completed",
+      "environment": "Reused pre-existing local model and virtual environment through ignored worktree junctions; downloaded no weights"
+    },
+    {
+      "name": "similarity_score",
+      "result": "not_implemented",
+      "documented_metric": {
+        "face_landmarks_percent": 50,
+        "contour_pose_percent": 30,
+        "composition_crop_percent": 20,
+        "background": "ignored"
+      },
+      "reason": "No automatic face landmark, contour/pose, composition measurement, calibration, or validated numeric output exists; no percentage is claimed."
     }
   ]
 }
