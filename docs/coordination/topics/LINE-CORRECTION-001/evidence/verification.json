@@ -11,12 +11,14 @@
   "humanBlindValidation": "not performed",
   "originalFilesModified": false,
   "productionExtractorModified": false,
-  "previewSHA256": "f4576660583e6b2cbb3da7d1a193e2570b67f95d3737e4f966be91dc0e22200b",
+  "previewSHA256": "203000f558654aedfd895bdf2b265420b7709ed14515b48d0c771d73c775a724",
   "combinedFluxRegressionTestsPassed": 41,
   "combinedCommand": "python -m unittest test_generation test_quality test_line_corrector",
   "correctedLayerDisplay": "neon green #00ff66 with glow; display-only, exports unchanged",
   "finalBlackExports": "22 grayscale black-ink-on-white PNG files; full image; no glow or reference layer",
   "fullOutputDisplay": "Final output fits panel width, uncropped with no internal vertical scrolling; face focus disabled by default.",
   "thirdPanel": "All corrected-layer strokes tinted black; optional copied glow defaults on. Download captures full displayed canvas. Glow changes appearance, not correction geometry.",
-  "layout": "First two panels show the same true-colour original only; third shows complete black result. Three aligned image-only columns."
+  "layout": "First two panels show the same true-colour original only; third shows complete black result. Three aligned image-only columns.",
+  "imageSelections": "Three unchecked per-image approval checkboxes; persisted locally per sample/panel/hash/glow state; export only on user click; automaticAction=false; no workflow or extraction invoked.",
+  "selectionTests": "Initial unchecked, navigation persistence, visual-version isolation, deselection, export; mock DOM only."
 }

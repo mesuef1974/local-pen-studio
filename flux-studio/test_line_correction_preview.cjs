@@ -4,7 +4,7 @@ if(!process.argv[2])throw new Error('Pass generated preview HTML path.');
 const html=fs.readFileSync(process.argv[2],'utf8');
 const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
 const data=JSON.parse(Buffer.from(script.match(/atob\('([^']+)'\)/)[1],'base64').toString());
-const ids=['sample','previous','next','background','opacity','showLines','showChanges','focus','regions',
+const ids=['approve-before','approve-after','approve-final','selectionStatus','downloadSelections','sample','previous','next','background','opacity','showLines','showChanges','focus','regions',
            'side','zoom','opacityValue','zoomValue','status','before','after','operations',
            'includeGlow','final','finalFullscreen','downloadFinal','downloadPng','downloadReport','summaryRows','beforeFullscreen','afterFullscreen'];
 let fullscreenCalls=0,reportClicks=0;
@@ -18,7 +18,7 @@ const elements=Object.fromEntries(ids.map(id=>[id,{
     addEventListener(event,fn){this.listeners[event]=fn;}
 }]));
 const sandbox={
-    console,Blob,setTimeout:()=>0,
+    console,Blob,setTimeout:()=>0,localStorage:{saved:null,getItem(){return this.saved;},setItem(key,value){this.saved=value;}},
     URL:{createObjectURL:()=> 'blob:test',revokeObjectURL(){}},
     atob:value=>Buffer.from(value,'base64').toString(),
     Image:class{async decode(){assert(this.src.startsWith('data:image/png;base64,'));}},
@@ -64,5 +64,14 @@ const flush=()=>new Promise(setImmediate);
     assert.equal(elements.sample.value,data.samples[1].id);
     elements.beforeFullscreen.listeners.click();await flush();assert.equal(fullscreenCalls,1);
     elements.downloadReport.listeners.click();assert.equal(reportClicks,1);elements.downloadFinal.listeners.click({preventDefault(){}});assert.equal(reportClicks,2);elements.includeGlow.checked=false;await elements.includeGlow.listeners.change();
+    for(const role of ['before','after','final'])assert.equal(elements['approve-'+role].checked,false);
+    const chosen=elements.sample.value;elements['approve-final'].checked=true;elements['approve-final'].listeners.change();
+    assert(sandbox.localStorage.saved.includes('"automaticAction":false'));
+    elements.sample.value=data.samples[0].id;await elements.sample.listeners.change();assert.equal(elements['approve-final'].checked,false);
+    elements.sample.value=chosen;await elements.sample.listeners.change();assert.equal(elements['approve-final'].checked,true);
+    elements.includeGlow.checked=!elements.includeGlow.checked;await elements.includeGlow.listeners.change();assert.equal(elements['approve-final'].checked,false);
+    elements.includeGlow.checked=!elements.includeGlow.checked;await elements.includeGlow.listeners.change();assert.equal(elements['approve-final'].checked,true);
+    elements['approve-final'].checked=false;elements['approve-final'].listeners.change();assert.equal(elements['approve-final'].checked,false);
+    elements.downloadSelections.listeners.click();assert.equal(reportClicks,3);
     console.log(`PASS: ${data.samples.length} samples; two true-colour originals and final black output; focus, zoom, navigation, downloads and fullscreen invocation. Mock DOM/canvas only.`);
 })().catch(error=>{console.error(error);process.exitCode=1;});
