@@ -30,7 +30,7 @@ def audit(manifest, run):
             p=json.loads((folder/'procedure.json').read_text(encoding='utf8'))
             historical=json.loads((folder/'archived-profile.json').read_text(encoding='utf8'))
             g=p['generation'];correction=p['correction']
-            assert p['historicalPromptExact'] and g['effectivePrompt']==historical['effectivePrompt']
+            assert (p.get('profilePromptExact') or p['historicalPromptExact']) and g['effectivePrompt']==historical['effectivePrompt']
             assert g['seed']==42 and g['style']==style and g['engine']=='flux' and g['mode']=='edit' and g['referenceCount']==1
             assert sha(model_input)==p['modelInputSHA256']
             assert sha(folder/'raw-flux.png')==p['rawSHA256'] and sha(folder/'final-black.png')==p['finalBlackSHA256']
@@ -55,7 +55,9 @@ def audit(manifest, run):
             records.append({'id':case_id,'sourceId':source['id'],'style':style,
                 'width':g['width'],'height':g['height'],'seconds':g['seconds'],
                 'seed':g['seed'],'model':g['model'],'promptTokens':g['promptTokens'],
-                'historicalPromptExact':True,'effectivePromptSHA256':hashlib.sha256(g['effectivePrompt'].encode()).hexdigest(),
+                'historicalPromptExact':p['historicalPromptExact'],'profilePromptExact':True,
+                'profileKind':p.get('profileKind','historical'),'profileVersion':p.get('profileVersion','historical-approved-prompts'),
+                'effectivePromptSHA256':hashlib.sha256(g['effectivePrompt'].encode()).hexdigest(),
                 'sourceSHA256':source['sha256'],'rawSHA256':p['rawSHA256'],'finalBlackSHA256':p['finalBlackSHA256'],
                 'lineScreeningPassed':p['lineScreeningPassed'],'correctionState':correction['state'],
                 'operations':correction.get('operations',[]),'changedPixels':correction['changedPixels'],

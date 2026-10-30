@@ -1,0 +1,29 @@
+{
+  "revision": "man02-beard/1.0",
+  "unchangedCases": [
+    "man-01-ink",
+    "man-01-minimal",
+    "man-01-pencil-light",
+    "man-03-ink",
+    "man-03-minimal",
+    "man-03-pencil-light",
+    "woman-01-ink",
+    "woman-01-minimal",
+    "woman-01-pencil-light",
+    "woman-02-ink",
+    "woman-02-minimal",
+    "woman-02-pencil-light",
+    "woman-03-ink",
+    "woman-03-minimal",
+    "woman-03-pencil-light"
+  ],
+  "regeneratedCases": [
+    "man-02-ink",
+    "man-02-minimal",
+    "man-02-pencil-light"
+  ],
+  "testsPassed": 45,
+  "uiTest": "mock DOM/Canvas passed; native browser not tested",
+  "visualReview": "Beard and moustache visible in all three. Density and contour still differ from source. Owner approval pending.",
+  "run": "C:\\Users\\mesue\\Downloads\\six-portraits-three-styles-20261030-man02-beard-v2"
+}
