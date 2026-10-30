@@ -1,0 +1,100 @@
+{
+  "version": "full-face-preview/1.0",
+  "threshold": 0.7,
+  "pointFiltering": false,
+  "score": null,
+  "samples": [
+    {
+      "id": "astronaut",
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "88431cd9653ccd539741b555fb0a46b61558b301d4110412b5bc28b5e3ea6cb5"
+      },
+      "result": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "eb77b0e8df310f980aad81331dec751a42173182dc6435b7a415ae28f947ec9e"
+      }
+    },
+    {
+      "id": "user-line-12",
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "1e3787227b14468174d2b29a77c7f40481df87e6877ad5aa8e39b778db0503ad"
+      }
+    },
+    {
+      "id": "user-line-13",
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "9b8a26a7f852c66b7baf08a5e44f84f648def50812c9aa3be403fa977f4c41a0"
+      }
+    },
+    {
+      "id": "user-line-14",
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "f41025bb12e02b8fbeb2b266be34249c19cb8dca275f7364df3eca876f7ba1c3"
+      }
+    },
+    {
+      "id": "user-line-15",
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "2e8381aef1ae8cf43183e55284fd374ca65bb7b18f4e8845071880b39cd35a90"
+      }
+    },
+    {
+      "id": "user-line-16",
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "c358626c71869a7b4b257a9c024693f44194e24337664914d2398398a8a18e30"
+      }
+    }
+  ]
+}
