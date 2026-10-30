@@ -1,0 +1,5 @@
+# Independent, opt-in local landmark worker. Never install into the FLUX runtime.
+mediapipe==1.2.0
+numpy==2.5.4
+Pillow==13.0.0
+opencv-contrib-python==5.0.0.93

@@ -1,0 +1,19 @@
+{
+  "roundId": "1407996019bd04f6bae7191c",
+  "pilotOnly": true,
+  "sources": 5,
+  "cases": 30,
+  "splits": {
+    "calibration": 3,
+    "heldout": 2
+  },
+  "candidateKinds": {
+    "control-crop": 5,
+    "control-identity": 5,
+    "control-rotation": 5,
+    "saved-flux": 15
+  },
+  "humanRatings": "pending",
+  "backgroundOnlyControls": false,
+  "publicImagesMetadataStripped": true
+}

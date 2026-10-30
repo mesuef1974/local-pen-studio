@@ -28,12 +28,16 @@ ASSETS['/audit']=ROOT/'pipeline-review-ar.html'
 for audit_asset in ['raw-flux.png','verified-paths.svg','verified-paths.json','review-results.json']:
     ASSETS['/pipeline-audit/'+audit_asset]=ROOT/'pipeline-audit'/audit_asset
 ASSETS.update({'/flux-controls.js':ROOT/'flux-controls.js','/flux-prompts.js':ROOT/'flux-prompts.js','/flux-catalog.json':ROOT/'flux-catalog.json','/flux.css':ROOT/'flux.css'})
+ASSETS.update({p:ROOT/f for p,f in [('/quality','quality.html'),('/quality.js','quality.js'),('/quality.css','quality.css')]})
 from generation import Jobs
 GENERATION=Jobs(GATE)
 
 def digest(image):return hashlib.sha256(image.encode()).hexdigest()
 
 def process(path,data):
+    if path=='/api/quality':
+        from quality_measurement import evaluate
+        return evaluate(data)
     if path=='/api/import':
         from preparation import import_image
         return import_image(data)
@@ -89,10 +93,10 @@ class Handler(SimpleHTTPRequestHandler):
         port=self.server.server_port
         if not self.valid_host() or self.headers.get('Origin') not in {f'http://localhost:{port}',f'http://127.0.0.1:{port}'}:self.reply(403,{'error':'افتح مساحة العمل المحلية.'});return
         path=urlsplit(self.path).path
-        if path not in ['/api/import','/api/prepare','/api/paths','/api/path-audit','/api/path-audit-target','/api/editor','/api/background','/api/generate']:self.reply(404,{'error':'غير موجود.'});return
+        if path not in ['/api/import','/api/prepare','/api/paths','/api/path-audit','/api/path-audit-target','/api/editor','/api/background','/api/generate','/api/quality']:self.reply(404,{'error':'غير موجود.'});return
         try:
             size=int(self.headers.get('Content-Length','0'))
-            if self.headers.get_content_type()!='application/json' or not 0<size<=(22_000_000 if path in ['/api/import','/api/generate','/api/path-audit','/api/path-audit-target'] else 9_000_000):raise ValueError()
+            if self.headers.get_content_type()!='application/json' or not 0<size<=(22_000_000 if path in ['/api/import','/api/generate','/api/path-audit','/api/path-audit-target','/api/quality'] else 9_000_000):raise ValueError()
             data=json.loads(self.rfile.read(size))
             if not isinstance(data,dict):raise ValueError()
         except (ValueError,UnicodeError):self.reply(400,{'error':'بيانات الطلب غير صالحة أو أكبر من الحد.'});return
@@ -101,7 +105,7 @@ class Handler(SimpleHTTPRequestHandler):
             except BlockingIOError as error:self.reply(429,{'error':str(error)})
             except ValueError as error:self.reply(400,{'error':str(error)})
             return
-        locked=path in ['/api/prepare','/api/paths','/api/path-audit','/api/path-audit-target','/api/background']
+        locked=path in ['/api/prepare','/api/paths','/api/path-audit','/api/path-audit-target','/api/background','/api/quality']
         if locked and not GATE.acquire(blocking=False):self.reply(429,{'error':'هناك معالجة محلية أخرى. أعد المحاولة بعد اكتمالها.'});return
         try:status,result=200,process(path,data)
         except ValueError as error:status,result=400,{'error':str(error)}
@@ -113,7 +117,14 @@ class Handler(SimpleHTTPRequestHandler):
         except (BrokenPipeError,ConnectionResetError,TimeoutError):pass
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8770);args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8770)
+    parser.add_argument('--quality-round',type=Path);args=parser.parse_args()
+    if args.quality_round:
+        round_page=args.quality_round.resolve()
+        if not round_page.is_file() or round_page.name!='review.html':parser.error('يلزم ملف review.html لجولة عمياء.')
+        ASSETS['/quality-round']=round_page
+        ASSETS['/round-data.js']=round_page.parent/'round-data.js'
+        ASSETS['/round-ui.js']=round_page.parent/'round-ui.js'
     server=ThreadingHTTPServer(('127.0.0.1',args.port),Handler);print(f'FLUX Studio: http://127.0.0.1:{args.port}',flush=True)
     try:server.serve_forever()
     except KeyboardInterrupt:pass

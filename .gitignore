@@ -144,6 +144,7 @@
 !/flux-studio/pipeline-audit/editor-checks.json
 !/flux-studio/pipeline-audit/export-check.json
 !/flux-studio/pipeline-audit/gpu-check.json
+!/flux-studio/requirements-quality.txt
 
 # Repository governance and CI source files.
 !/.github/

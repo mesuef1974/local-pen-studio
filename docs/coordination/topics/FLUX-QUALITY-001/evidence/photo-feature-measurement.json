@@ -1,0 +1,106 @@
+{
+  "version": "human-geometry/1.0",
+  "profile": "human-single-subject",
+  "score": null,
+  "state": "uncalibrated",
+  "reason": "المعايرة والتقييم البشري المستقل لم يكتملَا؛ لا تُعرض نسبة كلية أو يعاد توزيع الأوزان.",
+  "components": {
+    "face": {
+      "weight": 0.5,
+      "score": null,
+      "state": "raw_only",
+      "raw": {
+        "normalizedLandmarkRMS": 0.010602665815239196
+      },
+      "confidence": {
+        "probability": null,
+        "detectorThreshold": 0.7,
+        "calibrated": false
+      }
+    },
+    "outlinePose": {
+      "weight": 0.3,
+      "score": null,
+      "state": "raw_only",
+      "raw": {
+        "shapeNormalizedMaskIoU": 0.962285061794734,
+        "normalizedPoseRMS": 0.03870929926198046,
+        "commonVisibleJoints": 13
+      },
+      "confidence": {
+        "minimumObservedVisibility": 0.9611409902572632,
+        "calibrated": false
+      }
+    },
+    "compositionCrop": {
+      "weight": 0.2,
+      "score": null,
+      "state": "raw_only",
+      "raw": {
+        "frameBoxMeanAbsoluteError": 0.002685546875,
+        "sourceBox": [
+          0.0986328125,
+          0.0302734375,
+          0.783203125,
+          1.0
+        ],
+        "resultBox": [
+          0.09375,
+          0.0341796875,
+          0.78125,
+          1.0
+        ],
+        "sourceTouchesFrame": true,
+        "resultTouchesFrame": true
+      },
+      "confidence": {
+        "probability": null,
+        "calibrated": false,
+        "basis": "human pose segmentation; mask not independently validated"
+      }
+    }
+  },
+  "background": "excluded by subject mask; invariance still requires independent validation",
+  "automaticApproval": false,
+  "detections": [
+    {
+      "faces": 1,
+      "poses": 1
+    },
+    {
+      "faces": 1,
+      "poses": 1
+    }
+  ],
+  "provenance": {
+    "mediapipe": "1.2.0",
+    "opencv": "5.0.0",
+    "modelsSHA256": {
+      "face_landmarker.task": "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff",
+      "pose_landmarker_lite.task": "59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a"
+    },
+    "originalDimensions": [
+      [
+        1024,
+        1024
+      ],
+      [
+        1024,
+        1024
+      ]
+    ],
+    "analysisDimensions": [
+      [
+        1024,
+        1024
+      ],
+      [
+        1024,
+        1024
+      ]
+    ],
+    "preprocessing": "EXIF transpose; alpha composited on white; RGB; max side 1024, area resize; no rotation alignment",
+    "sourceHash": "5959dc64c75a3cd4ca62a958215c79ae1d2b1ec0945539bdd602cb1a2100643b",
+    "resultHash": "5e8419566ad29be4bfd600691e98ac172c3f187180844b0dd82dbab90d78824a"
+  }
+}

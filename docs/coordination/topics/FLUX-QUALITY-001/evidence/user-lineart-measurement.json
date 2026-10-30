@@ -1,0 +1,97 @@
+{
+  "version": "prepath-quality/1.0",
+  "automaticApproval": false,
+  "sourceHash": "5959dc64c75a3cd4ca62a958215c79ae1d2b1ec0945539bdd602cb1a2100643b",
+  "resultHash": "6f2ad3583856f7d9cb3b9382ef992e95dfeaae98c3b9a3f148f5827739512368",
+  "similarity": {
+    "version": "human-geometry/1.0",
+    "profile": "human-single-subject",
+    "score": null,
+    "state": "uncalibrated",
+    "reason": "المعايرة والتقييم البشري المستقل لم يكتملَا؛ لا تُعرض نسبة كلية أو يعاد توزيع الأوزان.",
+    "components": {
+      "face": {
+        "weight": 0.5,
+        "score": null,
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد قابل للكشف في كل صورة؛ لا يثبت الكشف هوية الشخص."
+      },
+      "outlinePose": {
+        "weight": 0.3,
+        "score": null,
+        "state": "unavailable",
+        "reason": "قناع شخص واحد غير متاح في الصورتين؛ الملف الحالي مخصص للبشر."
+      },
+      "compositionCrop": {
+        "weight": 0.2,
+        "score": null,
+        "state": "unavailable",
+        "reason": "قناع شخص واحد غير متاح في الصورتين؛ الملف الحالي مخصص للبشر."
+      }
+    },
+    "background": "excluded by subject mask; invariance still requires independent validation",
+    "automaticApproval": false,
+    "detections": [
+      {
+        "faces": 1,
+        "poses": 1
+      },
+      {
+        "faces": 0,
+        "poses": 0
+      }
+    ],
+    "provenance": {
+      "mediapipe": "1.2.0",
+      "opencv": "5.0.0",
+      "modelsSHA256": {
+        "face_landmarker.task": "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff",
+        "pose_landmarker_lite.task": "59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a"
+      },
+      "originalDimensions": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "analysisDimensions": [
+        [
+          1024,
+          1024
+        ],
+        [
+          1024,
+          1024
+        ]
+      ],
+      "preprocessing": "EXIF transpose; alpha composited on white; RGB; max side 1024, area resize; no rotation alignment",
+      "sourceHash": "5959dc64c75a3cd4ca62a958215c79ae1d2b1ec0945539bdd602cb1a2100643b",
+      "resultHash": "6f2ad3583856f7d9cb3b9382ef992e95dfeaae98c3b9a3f148f5827739512368"
+    }
+  },
+  "traceability": {
+    "version": "fixed-pen-audit/1.0",
+    "state": "measured",
+    "score": null,
+    "reason": "مؤشرات وصفية لإعادة بناء الحبر؛ لا توجد عتبة معتمدة لقابلية التتبع بعد.",
+    "inkPrecision": 95.84,
+    "inkRecall": 98.36,
+    "inkIoU": 94.33,
+    "inkF1": 97.08,
+    "connectedInkComponents": 744,
+    "largestComponentInkShare": 0.6820208789792499,
+    "paths": 6298,
+    "points": 62830,
+    "pathsPerSquareMm": 0.19481539864464406,
+    "pointsPerSquareMm": 1.943514051578753,
+    "widthMm": 180,
+    "penMm": 0.2,
+    "mmPerPixel": 0.1755859375,
+    "scope": "candidate thresholded ink only; separate from original/candidate similarity",
+    "pathsUsedForAuditOnly": true
+  }
+}
