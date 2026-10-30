@@ -8,8 +8,17 @@ import secrets
 import io
 from pathlib import Path
 from PIL import Image,ImageOps
+import numpy as np
 
 ROOT = Path(__file__).resolve().parent
+
+
+def require_line_candidate(path):
+    with Image.open(path) as opened:rgb=np.asarray(ImageOps.exif_transpose(opened).convert('RGB'))
+    gray=rgb.mean(axis=2)
+    if (np.mean(rgb.max(axis=2)-rgb.min(axis=2)>12)>.01 or
+        np.mean((gray>40)&(gray<215))>.1 or np.mean(gray>=225)<.65 or np.mean(gray<225)<.001):
+        raise ValueError('المخرج يجب أن يكون رسمًا خطيًا بخلفية بيضاء؛ لا تقبل نتيجة فوتوغرافية.')
 
 
 def split_groups(groups,rng,strata=None):
@@ -30,7 +39,9 @@ def split_groups(groups,rng,strata=None):
     return result
 
 
-def build(samples, output, seed=None, include_controls=False,strata=None):
+def build(samples, output, seed=None, include_controls=False,strata=None,candidate_kinds=None):
+    if include_controls:
+        raise ValueError('تُبنى حالات الضبط من مرجع خطي فقط؛ استخدم build_line_quality_round.py.')
     if (output/'review.html').exists() or (output/'private-allocation-key.json').exists():
         raise ValueError('الجولة موجودة؛ اختر مجلدًا جديدًا لحفظ المفتاح والإجابات القديمة.')
     sources = sorted(samples.glob('*-source.png'))
@@ -39,6 +50,7 @@ def build(samples, output, seed=None, include_controls=False,strata=None):
         stem = source.name.removesuffix('-source.png')
         candidates = sorted(samples.glob(stem + '-*-flux.png'))
         if candidates:
+            for candidate in candidates:require_line_candidate(candidate)
             groups.append((source, candidates))
     if len(groups) < 2:
         raise ValueError('يلزم مصدران مستقلان على الأقل لتقسيم الجولة.')
@@ -50,13 +62,9 @@ def build(samples, output, seed=None, include_controls=False,strata=None):
     public, key, source_images = [], [], {}
     for source,candidates,split in allocations:
         source_id=secrets.token_hex(10);source_images[source_id]=data_uri(source)
-        records=[(clean_png(candidate),str(candidate.resolve()),'saved-flux') for candidate in candidates]
-        if include_controls:
-            original=ImageOps.exif_transpose(Image.open(source)).convert('RGB');w,h=original.size
-            controls={'identity':original,'crop':original.crop((round(w*.12),round(h*.08),round(w*.92),round(h*.95))).resize((w,h)),
-                      'rotation':original.rotate(12,resample=Image.Resampling.BICUBIC,fillcolor='white')}
-            for name,image in controls.items():
-                stream=io.BytesIO();image.save(stream,format='PNG');records.append((stream.getvalue(),None,'control-'+name))
+        if candidate_kinds is not None and any(candidate.name not in candidate_kinds for candidate in candidates):
+            raise ValueError('يلزم توثيق نوع كل نتيجة في الجولة.')
+        records=[(clean_png(candidate),str(candidate.resolve()),candidate_kinds[candidate.name] if candidate_kinds is not None else 'saved-flux') for candidate in candidates]
         for raw,candidate_path,kind in records:
             case_id = secrets.token_hex(10)
             public.append({'id': case_id, 'sourceId':source_id,'candidate':'data:image/png;base64,'+base64.b64encode(raw).decode()})

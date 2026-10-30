@@ -1,0 +1,75 @@
+{
+  "roundId": "8fe4c954715961978ba1dd4f",
+  "cases": 10,
+  "sources": 2,
+  "allVisibleImagesAreLineArt": true,
+  "referenceType": "fixed lineart baseline, not photograph",
+  "generatedByFlux": false,
+  "variantOrigin": "controlled transforms of existing FLUX lineart",
+  "purpose": "line-to-line diagnostic sensitivity; not independent photo-to-line calibration",
+  "humanRatings": "pending",
+  "privateKeyIncluded": false,
+  "visibleImagesVerified": 12,
+  "toneChecks": [
+    {
+      "label": "Line reference 1",
+      "blackWhiteOnly": true,
+      "whiteFraction": 0.9459095001220703
+    },
+    {
+      "label": "Line reference 2",
+      "blackWhiteOnly": true,
+      "whiteFraction": 0.8849673800998263
+    },
+    {
+      "label": "Case 1",
+      "blackWhiteOnly": true,
+      "whiteFraction": 0.8968980577256944
+    },
+    {
+      "label": "Case 2",
+      "blackWhiteOnly": true,
+      "whiteFraction": 0.8857455783420138
+    },
+    {
+      "label": "Case 3",
+      "blackWhiteOnly": true,
+      "whiteFraction": 0.9480371475219727
+    },
+    {
+      "label": "Case 4",
+      "blackWhiteOnly": true,
+      "whiteFraction": 0.8895551893446181
+    },
+    {
+      "label": "Case 5",
+      "blackWhiteOnly": true,
+      "whiteFraction": 0.8849673800998263
+    },
+    {
+      "label": "Case 6",
+      "blackWhiteOnly": true,
+      "whiteFraction": 0.9445858001708984
+    },
+    {
+      "label": "Case 7",
+      "blackWhiteOnly": true,
+      "whiteFraction": 0.9459095001220703
+    },
+    {
+      "label": "Case 8",
+      "blackWhiteOnly": true,
+      "whiteFraction": 0.9457521438598633
+    },
+    {
+      "label": "Case 9",
+      "blackWhiteOnly": true,
+      "whiteFraction": 0.951848030090332
+    },
+    {
+      "label": "Case 10",
+      "blackWhiteOnly": true,
+      "whiteFraction": 0.8848927815755209
+    }
+  ]
+}

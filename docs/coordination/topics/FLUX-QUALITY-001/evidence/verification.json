@@ -3,7 +3,7 @@
   "deliveryState": "work_in_progress",
   "tests": {
     "python": {
-      "passed": 24,
+      "passed": 28,
       "failed": 0
     },
     "javascript": {
@@ -31,5 +31,12 @@
     "acceptedCompleteReviewers": 1,
     "ratingCases": 30,
     "policy": "one manager reviewer; heldout data still independent"
+  },
+  "lineOnlyRound": {
+    "cases": 10,
+    "references": 2,
+    "all12ImagesBinary": true,
+    "photographicControlsDisabled": true,
+    "humanRatings": "pending"
   }
 }

@@ -13,6 +13,27 @@ from validate_quality_ratings import validate
 
 
 class QualityTests(unittest.TestCase):
+    def test_future_rounds_reject_photographic_outputs_and_photo_controls(self):
+        from build_quality_round import require_line_candidate
+        with tempfile.TemporaryDirectory() as directory:
+            file=Path(directory)/'photo.png';Image.new('RGB',(40,40),(180,110,70)).save(file)
+            with self.assertRaises(ValueError):require_line_candidate(file)
+            with self.assertRaises(ValueError):build(Path(directory),Path(directory)/'round',include_controls=True)
+    def test_line_controls_are_binary_and_reject_photo_like_inputs(self):
+        from build_line_quality_round import line_baseline,variants,verify_line
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);file=root/'lines.png'
+            im=Image.new('L',(120,120),'white');draw=ImageDraw.Draw(im)
+            draw.ellipse((30,20,90,100),outline='black',width=2);draw.line((45,55,75,55),fill='black',width=2);im.save(file)
+            base=line_baseline(file);controls=variants(base,[.5,.5,.3,.3])
+            self.assertEqual(len(controls),5)
+            self.assertTrue(np.array_equal(base,controls['baseline']))
+            for kind,array in controls.items():
+                self.assertTrue(verify_line(array)['binary'])
+                if kind!='baseline':self.assertGreater(np.sum(base!=array),0)
+            Image.fromarray(np.tile(np.arange(120,dtype='uint8')+60,(120,1))).save(root/'gray.png')
+            with self.assertRaises(ValueError):line_baseline(root/'gray.png')
+
     def test_constant_human_ratings_never_imply_a_perfect_calibration(self):
         from analyze_quality_calibration import fit_readiness
         key={'cases':[{'caseId':str(i),'sourceSHA256':str(i),'split':'calibration'} for i in range(3)]}
@@ -49,7 +70,7 @@ class QualityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);samples=root/'samples';samples.mkdir()
             for i in range(2):
-                image=Image.new('RGB',(20,20),(i*100,0,0))
+                image=Image.new('RGB',(20,20),'white');ImageDraw.Draw(image).line((2+i,2,18,18),fill='black')
                 image.save(samples/f'case{i}-source.png');image.save(samples/f'case{i}-test-flux.png')
             built=build(samples,root/'round',seed=1)
             key=json.loads((root/'round/private-allocation-key.json').read_text(encoding='utf8'))
@@ -100,7 +121,7 @@ class QualityTests(unittest.TestCase):
             root=Path(directory);samples=root/'samples';samples.mkdir()
             for index,stem in enumerate(['human','animal','object']):
                 Image.new('RGB',(20,20),(index*50,100,200)).save(samples/f'{stem}-source.png')
-                Image.new('RGB',(20,20),'black').save(samples/f'{stem}-secret-prompt-flux.png')
+                candidate=Image.new('RGB',(20,20),'white');ImageDraw.Draw(candidate).line((2,2,18,18),fill='black');candidate.save(samples/f'{stem}-secret-prompt-flux.png')
             result=build(samples,root/'out',seed=42)
             html=(root/'out/review.html').read_text(encoding='utf8')
             self.assertNotIn('secret-prompt',html)
