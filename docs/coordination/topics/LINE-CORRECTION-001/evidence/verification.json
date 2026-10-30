@@ -11,11 +11,12 @@
   "humanBlindValidation": "not performed",
   "originalFilesModified": false,
   "productionExtractorModified": false,
-  "previewSHA256": "8c1bbeab417df991eb003df24fac82714735bfd82227206a8cf387ac57d859fd",
+  "previewSHA256": "5dc855b8b6def43d8779f135b79e29f720a0b7bf53cccdbe5532d95165d33c15",
   "combinedFluxRegressionTestsPassed": 41,
   "combinedCommand": "python -m unittest test_generation test_quality test_line_corrector",
   "correctedLayerDisplay": "neon green #00ff66 with glow; display-only, exports unchanged",
   "finalBlackExports": "22 grayscale black-ink-on-white PNG files; full image; no glow or reference layer",
   "fullOutputDisplay": "Final output fits panel width, uncropped with no internal vertical scrolling; face focus disabled by default.",
-  "thirdPanel": "All corrected-layer strokes tinted black; optional copied glow defaults on. Download captures full displayed canvas. Glow changes appearance, not correction geometry."
+  "thirdPanel": "All corrected-layer strokes tinted black; optional copied glow defaults on. Download captures full displayed canvas. Glow changes appearance, not correction geometry.",
+  "layout": "Three sibling panels in one three-column grid; stacked below 800px."
 }
