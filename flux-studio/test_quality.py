@@ -13,6 +13,19 @@ from validate_quality_ratings import validate
 
 
 class QualityTests(unittest.TestCase):
+    def test_offline_export_includes_public_assets_and_preserves_existing_files(self):
+        from export_quality_round import export
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            (root/'review.html').write_text('<main>review</main><script src="round-data.js"></script><script src="round-ui.js"></script>',encoding='utf8')
+            (root/'round-data.js').write_text('window.REVIEW_DATA={roundId:"test"};',encoding='utf8')
+            (root/'round-ui.js').write_text('console.log("ready");',encoding='utf8')
+            (root/'private-allocation-key.json').write_text('PRIVATE_DO_NOT_BUNDLE',encoding='utf8')
+            output=root/'offline.html';result=export(root,output);html=output.read_text(encoding='utf8')
+            self.assertIn('roundId:"test"',html);self.assertNotIn('src=',html)
+            self.assertNotIn('PRIVATE_DO_NOT_BUNDLE',html)
+            self.assertFalse(result['privateAllocationKeyIncluded'])
+            with self.assertRaises(FileExistsError):export(root,output)
     def test_stratified_split_requires_calibration_and_test_sources_per_profile(self):
         import random
         from build_quality_round import split_groups
