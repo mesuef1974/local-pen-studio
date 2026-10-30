@@ -1,0 +1,29 @@
+{
+  "profileKind": "revision",
+  "profileVersion": "women02-03-eyes/1.0",
+  "effectivePrompt": "Edit the attached ORIGINAL photograph into a faithful black-line portrait on pure white. Preserve this woman, her exact facial proportions, expression, head angle, full hairstyle and framing. EYES ARE THE PRIORITY: preserve the original gaze and the visible iris size, placement and eyelid contours in BOTH eyes. Draw each visible iris as a clearly defined thin circular or elliptical contour, with a small dark pupil inside and a tiny white highlight. Keep the sclera white and clearly separate it from the iris, upper lid and eyelashes. Render the dark source irises using contours and restrained inner detail rather than filling the whole eye black. Do not leave empty eye sockets or blank irises. Do not merge pupils, eyelashes, eyebrows and eyelids into black blobs. Do not enlarge the eyes or change their direction. Only draw parts visible in the source; preserve natural eyelid occlusion. Eye details must remain readable even when other details are simplified. Use delicate graphite-like black contours, white interiors, readable iris boundaries and small darker pupils. Do not fade away iris detail or fill the eyeballs black. No broad tonal shading.",
+  "settings": {
+    "seed": 42,
+    "resolution": 768,
+    "style": "pencil-light",
+    "prompt": "Draw the main reference as a light graphite outline sketch on clean white paper. Prioritize precise facial landmarks and a few long expressive contours. Describe hair using grouped locks and clothing using only structural folds. Leave skin and large surfaces white. Avoid crosshatching, tonal shading, filled black masses and scratchy texture.",
+    "mode": "edit",
+    "aspect": "source",
+    "controls": {
+      "detail": "auto",
+      "shading": "none",
+      "hair": "auto",
+      "background": "white",
+      "lighting": "auto",
+      "lines": "auto",
+      "clothing": "auto",
+      "palette": "mono"
+    },
+    "preserve": {
+      "identity": true,
+      "pose": true,
+      "clothes": true
+    }
+  },
+  "parentEffectivePromptSHA256": "44fc179eaf29ce0afd112e5f6e0a016a700b56cd26dfeef828b3fcc0dbf0de0a"
+}

@@ -1,0 +1,29 @@
+{
+  "revision": "women02-03-eyes/1.0",
+  "unchangedCases": [
+    "man-01-ink",
+    "man-01-minimal",
+    "man-01-pencil-light",
+    "man-02-ink",
+    "man-02-minimal",
+    "man-02-pencil-light",
+    "man-03-ink",
+    "man-03-minimal",
+    "man-03-pencil-light",
+    "woman-01-ink",
+    "woman-01-minimal",
+    "woman-01-pencil-light"
+  ],
+  "regeneratedCases": [
+    "woman-02-ink",
+    "woman-02-minimal",
+    "woman-02-pencil-light",
+    "woman-03-ink",
+    "woman-03-minimal",
+    "woman-03-pencil-light"
+  ],
+  "artifactAudit": "18 results passed",
+  "uiTest": "mock DOM/Canvas passed; native browser not tested",
+  "visualReview": "Pupils visible in all six. Woman-03 iris remains lighter than original. Fidelity not established; owner approval pending.",
+  "run": "C:\\Users\\mesue\\Downloads\\six-portraits-three-styles-20261030-women-eyes-v3"
+}

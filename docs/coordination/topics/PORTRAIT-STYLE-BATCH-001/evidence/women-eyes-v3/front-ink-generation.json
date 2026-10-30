@@ -1,0 +1,29 @@
+{
+  "profileKind": "revision",
+  "profileVersion": "women02-03-eyes/1.0",
+  "effectivePrompt": "Edit the attached ORIGINAL photograph into a faithful black-line portrait on pure white. Preserve this woman, her exact facial proportions, expression, head angle, full hairstyle and framing. EYES ARE THE PRIORITY: preserve the original gaze and the visible iris size, placement and eyelid contours in BOTH eyes. Draw each visible iris as a clearly defined thin circular or elliptical contour, with a small dark pupil inside and a tiny white highlight. Keep the sclera white and clearly separate it from the iris, upper lid and eyelashes. Render the dark source irises using contours and restrained inner detail rather than filling the whole eye black. Do not leave empty eye sockets or blank irises. Do not merge pupils, eyelashes, eyebrows and eyelids into black blobs. Do not enlarge the eyes or change their direction. Only draw parts visible in the source; preserve natural eyelid occlusion. Eye details must remain readable even when other details are simplified. Use precise clean fine ink lines. Keep delicate iris contours and compact dark pupils. No broad shading or gray fills.",
+  "settings": {
+    "seed": 42,
+    "resolution": 768,
+    "style": "ink",
+    "prompt": "Redraw the main reference as a clean black pen line drawing on pure white paper. Use confident continuous contours, clearly readable eyes, eyebrows, nose and mouth, and a recognizable silhouette. Simplify hair into a few purposeful locks and clothing into major folds. Keep the original proportions. Leave interiors white, without shading, hatching, gray fills or skin texture.",
+    "mode": "edit",
+    "aspect": "source",
+    "controls": {
+      "detail": "auto",
+      "shading": "none",
+      "hair": "auto",
+      "background": "white",
+      "lighting": "auto",
+      "lines": "auto",
+      "clothing": "auto",
+      "palette": "mono"
+    },
+    "preserve": {
+      "identity": true,
+      "pose": true,
+      "clothes": true
+    }
+  },
+  "parentEffectivePromptSHA256": "392aea5b1f3f4b7d40b5a6acc96a5b386a55e19f7f116682ced11a38fb52c820"
+}
