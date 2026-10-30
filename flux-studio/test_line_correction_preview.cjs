@@ -12,7 +12,7 @@ const calls=[];
 const ctx=new Proxy({}, {get:(_,method)=>(...args)=>calls.push([method,...args]),set:(_,key,value)=>{calls.push(['set',key,value]);return true;}});
 const elements=Object.fromEntries(ids.map(id=>[id,{
     value: id==='zoom'?'100':id==='opacity'?'90':id==='background'?'negative':'',
-    checked:['showLines','showChanges','focus'].includes(id),style:{},listeners:{},children:[],
+    checked:['showLines','showChanges'].includes(id),style:{},listeners:{},children:[],
     parentElement:{async requestFullscreen(){fullscreenCalls++;}},
     append(child){this.children.push(child);},getContext(){return ctx;},
     addEventListener(event,fn){this.listeners[event]=fn;}
@@ -35,7 +35,7 @@ const flush=()=>new Promise(setImmediate);
     assert.equal(elements.sample.children.length,data.samples.length);
     assert.equal(elements.summaryRows.children.length,data.samples.length);
     for(const row of data.samples){
-        elements.sample.value=row.id;
+        elements.sample.value=row.id;elements.focus.checked=true;
         for(const mode of ['negative','gray','color','white','evidence']){
             elements.background.value=mode;
             await elements.sample.listeners.change();
