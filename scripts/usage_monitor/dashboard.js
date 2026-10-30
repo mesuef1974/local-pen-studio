@@ -160,7 +160,7 @@
     const body = $('sessions-body');
     const empty = $('sessions-empty');
     body.replaceChildren();
-    const current = sessions.filter(session => activeSessionIds.has(session.session_id))
+    const current = sessions.filter(session => session.team_session ?? activeSessionIds.has(session.session_id))
       .map(session => ({ session, sample: lastSample(session) }))
       .filter(item => item.sample)
       .sort((a, b) => (Number(b.sample.cumulative?.total_tokens) || 0) - (Number(a.sample.cumulative?.total_tokens) || 0));
@@ -193,6 +193,21 @@
     }
     empty.hidden = current.length > 0;
     return current;
+  }
+
+  function renderOtherSessions(sessions) {
+    const root = $('other-sessions');
+    const items = sessions.filter(session => !session.team_session).map(session => ({session, sample: lastSample(session)}))
+      .filter(item => item.sample).sort((a, b) => Date.parse(b.sample.timestamp) - Date.parse(a.sample.timestamp));
+    root.replaceChildren();
+    $('other-session-count').textContent = formatNumber(items.length);
+    for (const {session, sample} of items) {
+      const row = document.createElement('div'); row.className = 'other-session-row';
+      const name = document.createElement('strong'); name.textContent = session.session_name || 'محادثة Codex';
+      const meta = document.createElement('span'); meta.textContent = `${sample.model || session.model || 'نموذج غير محدد'} · آخر عينة ${formatDate(sample.timestamp)}`;
+      row.append(name, meta); root.append(row);
+    }
+    $('other-sessions-empty').hidden = items.length > 0;
   }
 
   function hourlySessionSeries(sessions) {
@@ -662,8 +677,9 @@
   function render(data) {
     latestData = data;
     const sessions = Array.isArray(data.sessions) ? data.sessions : [];
-    const activeSessions = sessions.filter(session => activeSessionIds.has(session.session_id));
-    const measured = sessions.map(session => ({ session, sample: lastSample(session) })).filter(item => item.sample);
+    const activeSessions = sessions.filter(session => session.team_session ?? activeSessionIds.has(session.session_id));
+    const otherSessions = sessions.filter(session => !(session.team_session ?? activeSessionIds.has(session.session_id)));
+    const measured = activeSessions.map(session => ({ session, sample: lastSample(session) })).filter(item => item.sample);
     const activeMeasured = activeSessions.map(session => ({ session, sample: lastSample(session) })).filter(item => item.sample);
     const contextValues = activeMeasured.map(item => Number(item.sample.context?.used_percent)).filter(Number.isFinite);
     const total = measured.reduce((sum, item) => sum + (Number(item.sample.cumulative?.total_tokens) || 0), 0);
@@ -675,8 +691,9 @@
       ? formatPercent(contextValues.reduce((sum, value) => sum + value, 0) / contextValues.length)
       : '—';
     $('peak-context').textContent = contextValues.length ? formatPercent(Math.max(...contextValues)) : '—';
-    renderBreakdown(sessions);
+    renderBreakdown(activeSessions);
     renderSessionTable(activeSessions);
+    renderOtherSessions(otherSessions);
     renderWeekly(data.weekly);
     renderFreshness(data.freshness);
     drawTrend(sessions);

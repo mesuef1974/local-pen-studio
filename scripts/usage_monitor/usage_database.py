@@ -309,6 +309,9 @@ def dashboard_data(database: Path) -> dict:
     connection = connect(database)
     try:
         sessions = []
+        active_team_ids = {row[0] for row in connection.execute("""SELECT e.thread_id
+            FROM coordination_actor_endpoints e JOIN coordination_actors a ON a.actor_id=e.actor_id
+            WHERE a.active=1 AND e.enabled=1 AND e.provider_code='codex_cli'""")}
         for session in connection.execute("SELECT * FROM usage_sessions ORDER BY session_name COLLATE NOCASE"):
             rows = connection.execute(
                 "SELECT * FROM usage_samples WHERE session_id=? ORDER BY sampled_at DESC,sample_id DESC LIMIT 500",
@@ -332,9 +335,15 @@ def dashboard_data(database: Path) -> dict:
                                    "output_tokens": row["cumulative_output_tokens"],
                                    "reasoning_output_tokens": row["cumulative_reasoning_output_tokens"]},
                 })
+            team_session = session["session_id"] in active_team_ids
+            if team_session and len(samples) > 180:
+                last_index = len(samples) - 1
+                samples = [samples[round(index * last_index / 179)] for index in range(180)]
+            elif not team_session:
+                samples = samples[-1:]
             sessions.append({"session_id": session["session_id"], "session_name": session["session_name"],
                              "created_at": session["created_at"], "updated_at": session["updated_at"],
-                             "model": samples[-1].get("model"), "samples": samples})
+                             "model": samples[-1].get("model"), "team_session": team_session, "samples": samples})
         weekly_row = connection.execute(
             """SELECT sampled_at,recorded_at,weekly_used_percent,weekly_remaining_percent,weekly_resets_at,
             weekly_window_minutes,weekly_plan_type FROM usage_samples
