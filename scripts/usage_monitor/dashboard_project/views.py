@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 
 from usage_database import dashboard_data
-from workflow_api import board, card_details, criterion_catalog, create_command, decide_card_proposal, metrics, submit_card_proposal, submit_delivery, submit_quality, transition_assigned_card
+from workflow_api import board, card_details, criterion_catalog, create_command, decide_card_proposal, metrics, submit_session_opinion, submit_card_proposal, submit_delivery, submit_quality, transition_assigned_card
 
 
 ASSET_ROOT = Path(__file__).resolve().parent.parent
@@ -116,6 +116,28 @@ def workflow_commands_api(request: HttpRequest) -> JsonResponse:
         return _json({"error": {"message": str(exc)}}, status=400)
     except (OSError, RuntimeError, sqlite3.Error) as exc:
         return _service_error("تعذر تسجيل الأمر في قاعدة البيانات", exc)
+
+
+@csrf_exempt
+@require_POST
+def workflow_opinions_api(request: HttpRequest) -> JsonResponse:
+    expected_origin = f"http://{request.get_host()}"
+    if request.headers.get("Origin") != expected_origin or request.headers.get("X-Workflow-Request") != "1":
+        return _json({"error": {"message": "الطلب المحلي غير موثّق."}}, status=403)
+    try:
+        if not request.body or len(request.body) > 64_000:
+            raise ValueError("حجم التوصية غير صالح.")
+        payload = json.loads(request.body)
+        if not isinstance(payload, dict):
+            raise ValueError("صيغة التوصية غير صالحة.")
+        result = submit_session_opinion(settings.USAGE_DATABASE, payload)
+        return _json(result, status=201 if result.get("created") else 200)
+    except KeyError as exc:
+        return _json({"error": {"message": str(exc.args[0])}}, status=404)
+    except (ValueError, json.JSONDecodeError) as exc:
+        return _json({"error": {"message": str(exc)}}, status=400)
+    except (OSError, RuntimeError, sqlite3.Error) as exc:
+        return _service_error("تعذر تسجيل توصية البطاقة", exc)
 
 
 @csrf_exempt

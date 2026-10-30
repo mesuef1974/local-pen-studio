@@ -9,7 +9,7 @@ from unittest.mock import patch
 from codex_session_dispatcher import dispatch_one
 from coordination_repository import transition_card
 from usage_database import SCHEMA_VERSION, connect, utc_now
-from workflow_api import board, card_details, criterion_catalog, create_command, decide_card_proposal, submit_card_proposal, submit_delivery, submit_quality, transition_assigned_card
+from workflow_api import board, card_details, criterion_catalog, create_command, decide_card_proposal, submit_session_opinion, submit_card_proposal, submit_delivery, submit_quality, transition_assigned_card
 
 
 class WorkflowCommandRoutingTests(unittest.TestCase):
@@ -48,6 +48,36 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
                           "description": "تسجيل نتيجة المرور على عناصر التحكم.", "required": True}],
         }
         return source, proposal_payload, submit_card_proposal(self.path, proposal_payload)
+
+    def test_coordinator_records_relay_without_changing_author(self):
+        source=create_command(self.path,self.payload())
+        db=connect(self.path)
+        with db:
+            db.execute("INSERT INTO coordination_actors(actor_id,display_name,charter,active) VALUES('brainstorm','عصف ذهني','coordination',1) ON CONFLICT(actor_id) DO UPDATE SET active=1")
+        db.close()
+        payload={"actor_id":"brainstorm","opinion_actor_id":"laser","source_card_id":source["child_card_ids"][0],
+            "opinion":"رأي ليزر المنقول", "recommendation":"أوصي بالتحقق", "source_reference":"استشارة منقولة موثقة", "idempotency_key":"relay-one"}
+        submit_session_opinion(self.path,payload)
+        history=card_details(self.path,payload["source_card_id"])["opinion_history"]
+        self.assertEqual(history[0]["actor_id"],"laser")
+        self.assertEqual(history[0]["recorded_by_actor_id"],"brainstorm")
+
+    def test_opinion_provenance_idempotency_and_author_guard(self):
+        source=create_command(self.path,self.payload())
+        payload={"actor_id":"laser","opinion_actor_id":"laser","source_card_id":source["child_card_ids"][0],
+            "opinion":"هذا رأي استشاري للاختبار", "recommendation":"أوصي بالمراجعة", "source_reference":"مصدر مباشر", "idempotency_key":"opinion-one"}
+        first=submit_session_opinion(self.path,payload)
+        self.assertTrue(first["created"])
+        self.assertFalse(submit_session_opinion(self.path,payload)["created"])
+        with self.assertRaises(ValueError):
+            submit_session_opinion(self.path,dict(payload,opinion="رأي مختلف"))
+        with self.assertRaises(ValueError):
+            submit_session_opinion(self.path,dict(payload,opinion_actor_id="svg",idempotency_key="other"))
+        history=card_details(self.path,payload["source_card_id"])["opinion_history"]
+        self.assertEqual(len(history),1)
+        self.assertEqual(history[0]["actor_id"],"laser")
+        self.assertEqual(history[0]["recorded_by_actor_id"],"laser")
+        self.assertIn("مصدر مباشر",history[0]["source_details"])
 
     def test_session_proposal_is_persisted_with_immutable_opinion_link_and_owner_review(self):
         source, payload, created = self.create_proposal()

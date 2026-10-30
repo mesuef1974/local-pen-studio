@@ -16,6 +16,7 @@ urlpatterns = [
     path("api/workflow/criteria", views.workflow_criteria_api),
     re_path(r"^api/workflow/cards/(?P<card_id>[^/]+)$", views.workflow_card_api),
     path("api/workflow/commands", views.workflow_commands_api),
+    path("api/workflow/opinions", views.workflow_opinions_api),
     path("api/workflow/proposals", views.workflow_proposals_api),
     re_path(r"^api/workflow/proposals/(?P<proposal_id>[^/]+)/decision$", views.workflow_proposal_decision_api),
     re_path(r"^api/workflow/cards/(?P<card_id>[^/]+)/lifecycle$", views.workflow_card_lifecycle_api),
