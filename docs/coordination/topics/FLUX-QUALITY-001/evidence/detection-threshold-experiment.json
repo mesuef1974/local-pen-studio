@@ -1,0 +1,56 @@
+[
+  {
+    "source": "animal-source",
+    "threshold": 0.7,
+    "faces": 0,
+    "poses": 0
+  },
+  {
+    "source": "animal-source",
+    "threshold": 0.5,
+    "faces": 0,
+    "poses": 0
+  },
+  {
+    "source": "animal-source",
+    "threshold": 0.3,
+    "faces": 0,
+    "poses": 0
+  },
+  {
+    "source": "object-source",
+    "threshold": 0.7,
+    "faces": 0,
+    "poses": 0
+  },
+  {
+    "source": "object-source",
+    "threshold": 0.5,
+    "faces": 0,
+    "poses": 0
+  },
+  {
+    "source": "object-source",
+    "threshold": 0.3,
+    "faces": 0,
+    "poses": 0
+  },
+  {
+    "source": "side-source",
+    "threshold": 0.7,
+    "faces": 0,
+    "poses": 0
+  },
+  {
+    "source": "side-source",
+    "threshold": 0.5,
+    "faces": 0,
+    "poses": 0
+  },
+  {
+    "source": "side-source",
+    "threshold": 0.3,
+    "faces": 0,
+    "poses": 2
+  }
+]

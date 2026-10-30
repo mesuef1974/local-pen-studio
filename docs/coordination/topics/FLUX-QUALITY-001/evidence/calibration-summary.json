@@ -1,0 +1,76 @@
+{
+  "version": "calibration-analysis/1.0",
+  "roundId": "1407996019bd04f6bae7191c",
+  "acceptedRatingsFileSHA256": "421add27bed378b8047ebe1359688aa8465ab300d39994412c604ada690cdcd5",
+  "reviewers": 1,
+  "calibrationCases": 18,
+  "heldoutCases": 12,
+  "heldoutHumanJudgmentsAnalyzed": false,
+  "ratingsSummary": {
+    "compositionCrop": {
+      "numeric": 9,
+      "uncertain": 9,
+      "na": 0,
+      "missing": 0,
+      "histogram": {
+        "1": 2,
+        "2": 0,
+        "3": 2,
+        "4": 0,
+        "5": 5
+      }
+    },
+    "face": {
+      "numeric": 9,
+      "uncertain": 9,
+      "na": 0,
+      "missing": 0,
+      "histogram": {
+        "1": 3,
+        "2": 2,
+        "3": 2,
+        "4": 0,
+        "5": 2
+      }
+    },
+    "outlinePose": {
+      "numeric": 9,
+      "uncertain": 9,
+      "na": 0,
+      "missing": 0,
+      "histogram": {
+        "1": 0,
+        "2": 0,
+        "3": 1,
+        "4": 0,
+        "5": 8
+      }
+    },
+    "traceability": {
+      "numeric": 9,
+      "uncertain": 9,
+      "na": 0,
+      "missing": 0,
+      "histogram": {
+        "1": 1,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 8
+      }
+    }
+  },
+  "rawDetectorCoverage": {
+    "face": 0,
+    "outlinePose": 0,
+    "compositionCrop": 0
+  },
+  "calibratedScore": null,
+  "state": "exploratory_single_reviewer",
+  "limitations": [
+    "Second independent human reviewer absent.",
+    "Pilot dataset is not representative.",
+    "No conversion to a percentage fitted or enabled.",
+    "Default highest rating may introduce response bias."
+  ]
+}

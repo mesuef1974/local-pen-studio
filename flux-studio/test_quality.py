@@ -13,6 +13,26 @@ from validate_quality_ratings import validate
 
 
 class QualityTests(unittest.TestCase):
+    def test_calibration_analysis_does_not_use_heldout_judgments(self):
+        from analyze_quality_calibration import analysis
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);samples=root/'samples';samples.mkdir()
+            for i in range(2):
+                image=Image.new('RGB',(20,20),(i*100,0,0))
+                image.save(samples/f'case{i}-source.png');image.save(samples/f'case{i}-test-flux.png')
+            built=build(samples,root/'round',seed=1)
+            key=json.loads((root/'round/private-allocation-key.json').read_text(encoding='utf8'))
+            ratings={'roundId':built['roundId'],'reviewer':'human1','ratings':{c['caseId']:{'scores':{a:'5' for a in ['face','outlinePose','compositionCrop','traceability']}} for c in key['cases']}}
+            file=root/'ratings.json';file.write_text(json.dumps(ratings),encoding='utf8')
+            with patch('analyze_quality_calibration.detect',return_value=self.feature()):
+                first=analysis(root/'round',file,root/'first')
+                for case in key['cases']:
+                    if case['split']=='heldout':ratings['ratings'][case['caseId']]['scores']={a:'1' for a in ratings['ratings'][case['caseId']]['scores']}
+                file.write_text(json.dumps(ratings),encoding='utf8')
+                second=analysis(root/'round',file,root/'second')
+            self.assertEqual(first['ratingsSummary'],second['ratingsSummary'])
+            self.assertFalse(second['heldoutHumanJudgmentsAnalyzed'])
+            self.assertIsNone(second['calibratedScore'])
     def test_detector_single_channel_mask_is_two_dimensional(self):
         self.assertEqual(binary_mask(np.ones((10,20,1))).shape,(10,20))
         with self.assertRaises(ValueError):binary_mask(np.ones((10,20,3)))

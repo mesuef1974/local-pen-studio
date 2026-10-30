@@ -18,19 +18,19 @@ def verified_model(name):
     return str(path)
 
 
-def detect(rgb):
+def detect(rgb,threshold=.7):
     import mediapipe as mp
     from mediapipe.tasks import python
     from mediapipe.tasks.python import vision
     image = mp.Image(image_format=mp.ImageFormat.SRGB, data=np.ascontiguousarray(rgb))
     with vision.FaceLandmarker.create_from_options(vision.FaceLandmarkerOptions(
             base_options=python.BaseOptions(model_asset_path=verified_model('face_landmarker.task')),
-            num_faces=2, min_face_detection_confidence=.7, min_face_presence_confidence=.7)) as model:
+            num_faces=2, min_face_detection_confidence=threshold, min_face_presence_confidence=threshold)) as model:
         faces = model.detect(image).face_landmarks
     with vision.PoseLandmarker.create_from_options(vision.PoseLandmarkerOptions(
             base_options=python.BaseOptions(model_asset_path=verified_model('pose_landmarker_lite.task')),
             num_poses=2, output_segmentation_masks=True,
-            min_pose_detection_confidence=.7, min_pose_presence_confidence=.7)) as model:
+            min_pose_detection_confidence=threshold, min_pose_presence_confidence=threshold)) as model:
         pose = model.detect(image)
     frame_scale=np.array([rgb.shape[1],rgb.shape[0]])/max(rgb.shape[:2])
     face = np.array([[p.x,p.y] for p in faces[0]])*frame_scale if len(faces)==1 else None
