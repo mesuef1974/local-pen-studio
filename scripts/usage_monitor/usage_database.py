@@ -9,7 +9,7 @@ import math
 import sqlite3
 from pathlib import Path
 
-SCHEMA_VERSION = 14
+SCHEMA_VERSION = 16
 
 SCHEMA_V1 = """
 CREATE TABLE IF NOT EXISTS coordination_actors (

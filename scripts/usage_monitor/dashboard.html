@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#f2f6f9">
   <meta name="description" content="لوحة محلية لمتابعة استهلاك التوكنز والحصة الأسبوعية وضغط سياق الجلسات.">
   <title>لوحة استهلاك التوكنز</title>
-  <link rel="stylesheet" href="workflow.css">
+  <link rel="stylesheet" href="workflow.css?v=owner-proposals-db-1">
   <style>
     .dot.is-current{background:#21805b}.dot.is-stale{background:#c18319}.dot.is-error{background:#b43c45}.dot.is-unavailable{background:#82939b}
     :root{font-family:"Cairo","Manrope",sans-serif;color:var(--identity-ink);background:var(--identity-canvas);font-synthesis:none;text-rendering:optimizeLegibility;--ink:var(--identity-ink);--muted:var(--identity-muted);--line:var(--identity-line);--teal:var(--identity-teal);--blue:var(--identity-blue);--gold:var(--identity-gold);--red:var(--identity-red);--surface:var(--identity-paper);--soft:var(--identity-soft);--shadow:var(--identity-shadow)}
@@ -103,6 +103,10 @@
         <div><span>التحقق من الدفع</span><strong id="wf-metric-push">—</strong></div>
       </div>
     </section>
+    <section class="workflow-proposals panel" aria-labelledby="wf-proposals-title">
+      <div class="panel-head"><div><h3 id="wf-proposals-title">توصيات الجلسات لبطاقات متابعة</h3><div class="sub">تُحفظ مع الرأي والبطاقة المصدر؛ لا تصدر بطاقة قبل قرار المالك.</div></div><span id="wf-proposal-count" class="pill">—</span></div>
+      <div id="wf-proposal-list" class="workflow-proposal-list" aria-live="polite"></div>
+    </section>
     <section id="workflow-board" class="workflow-board panel" aria-labelledby="wf-board-title">
       <div class="panel-head workflow-board-head"><div><h3 id="wf-board-title">خط الإنتاج حسب المالك والجلسة</h3><div class="sub">يظهر أمر المالك في صف مستقل، وتظهر مهمة التنفيذ في صف الجلسة المسندة إليها.</div></div><span id="workflow-card-count" class="pill">—</span></div>
       <form class="workflow-filters" id="workflow-filters" role="search">
@@ -133,8 +137,29 @@
       <form id="workflow-command-form" method="dialog">
         <div class="workflow-dialog-head"><div><div class="eyebrow">أمر المالك</div><h2 id="workflow-command-title">إضافة أمر إلى المصنع</h2></div><button class="icon-button" id="workflow-command-close" type="button" aria-label="إغلاق نموذج الأمر">×</button></div>
         <p class="workflow-form-note">اختر الجلسة التي ستتولى التنفيذ، ثم اكتب المهمة والنتيجة المطلوبة بالعربية. تعرض القائمة الجلسات النشطة الجاهزة لاستلام البطاقات.</p>
+        <p id="command-proposal-context" class="workflow-form-note workflow-proposal-context" hidden></p>
         <label for="command-target-actor">الجلسة المسؤولة عن التنفيذ<select id="command-target-actor" name="target_actor_id" required><option value="">اختر الجلسة</option></select></label>
-        <label for="command-owner-request">ما المهمة المطلوبة؟<textarea id="command-owner-request" name="owner_request" required rows="6" maxlength="12000" placeholder="اكتب المطلوب والنتيجة بالعربية…"></textarea></label>
+        <section id="command-session-duties" class="workflow-session-duties" aria-live="polite" hidden></section>
+        <div class="workflow-form-grid">
+          <label for="command-title">عنوان البطاقة<input id="command-title" name="title" required maxlength="240" placeholder="عنوان مختصر وواضح"></label>
+        </div>
+        <label for="command-owner-request">وصف المهمة والنتيجة المطلوبة<textarea id="command-owner-request" name="owner_request" required rows="5" maxlength="12000" placeholder="ما المطلوب؟ ما حدود المهمة؟ وما النتيجة التي تريد استلامها؟"></textarea></label>
+        <label for="command-scope">نطاق البطاقة<textarea id="command-scope" name="scope" rows="2" maxlength="12000" placeholder="حدد ما يدخل ضمن المهمة"></textarea></label>
+        <input id="command-proposal-id" name="proposal_id" type="hidden" value="">
+        <fieldset class="workflow-criteria">
+          <legend>معايير إنجاز هذه البطاقة</legend>
+          <p id="command-criteria-status" class="workflow-criteria-status" role="status" aria-live="polite">جارٍ تحميل المعايير من قاعدة البيانات…</p>
+          <div id="command-criteria-list" class="workflow-criteria-list"></div>
+        </fieldset>
+        <section class="workflow-custom-criteria" aria-labelledby="command-custom-title">
+          <div class="workflow-custom-head"><div><h3 id="command-custom-title">معيار خاص بهذه المهمة</h3><p>أضف شرطًا غير موجود في القائمة. يُحفظ مع البطاقة في قاعدة البيانات.</p></div><button class="btn" id="command-criterion-add" type="button">إضافة معيار</button></div>
+          <div id="command-custom-criteria" class="workflow-custom-list"></div>
+        </section>
+        <section id="command-preview" class="workflow-command-preview" aria-labelledby="command-preview-title">
+          <h3 id="command-preview-title">ملخص الأمر</h3>
+          <p id="command-preview-session">اختر الجلسة لعرض اختصاصها.</p>
+          <p id="command-preview-criteria">لم تُحدد معايير بعد؛ سيُستخدم معيار الجودة الافتراضي.</p>
+        </section>
         <div id="workflow-command-error" class="workflow-feedback is-error" role="alert" tabindex="-1" hidden></div>
         <div class="workflow-dialog-actions"><button class="btn" id="workflow-command-cancel" type="button">إلغاء</button><button class="btn workflow-primary" id="workflow-command-submit" type="submit">إصدار الأمر وإسناده</button></div>
       </form>
@@ -143,6 +168,6 @@
 </main>
 <span id="chart-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
 <script src="dashboard.js?v=time-minute-4" defer></script>
-<script src="workflow.js?v=git-integration-1" defer></script>
+<script src="workflow.js?v=owner-proposals-db-1" defer></script>
 </body>
 </html>
