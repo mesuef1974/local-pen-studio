@@ -26,13 +26,14 @@ def build(manifest, output, crop_experiment=False):
         inputs = json.loads(manifest.read_text(encoding='utf-8-sig'))
         expanded = []
         for item in inputs:
-            item = dict(item, label='رائدة الفضاء' if item['id']=='astronaut' else 'صورتك / الرسم '+item['id'].split('-')[-1])
+            item = dict(item, label=item.get('label') or ('رائدة الفضاء' if item['id']=='astronaut' else 'صورتك / الرسم '+item['id'].split('-')[-1]))
             expanded.append(item)
             if crop_experiment:
                 source = ImageOps.exif_transpose(Image.open(item['reference'])).convert('RGB')
                 found = detector.detect(mp.Image(image_format=mp.ImageFormat.SRGB, data=np.ascontiguousarray(source)))
                 if len(found.face_landmarks) != 1:
-                    raise ValueError('يلزم وجه أصلي واحد لتحديد منطقة القص: '+item['id'])
+                    item['cropUnavailable'] = 'لم يُكشف وجه أصلي واحد؛ تعذر تحديد قص تلقائي.'
+                    continue
                 face = found.face_landmarks[0]
                 xs, ys = [p.x for p in face], [p.y for p in face]
                 left, top, right, bottom = min(xs), min(ys), max(xs), max(ys)
@@ -40,7 +41,7 @@ def build(manifest, output, crop_experiment=False):
                 box = [max(0,left-dx),max(0,top-dy),min(1,right+dx),min(1,bottom+dy)]
                 expanded.append(dict(item, id=item['id']+'-crop', cropBox=box))
         for item in expanded:
-            pair = {'id': item['id'], 'label': item.get('label', item['id']) + (' · قص الوجه' if 'cropBox' in item else ' · الصورة الكاملة'), 'cropBox': item.get('cropBox')}
+            pair = {'id': item['id'], 'label': item.get('label', item['id']) + (' · قص الوجه' if 'cropBox' in item else ' · الصورة الكاملة'), 'cropBox': item.get('cropBox'), 'cropUnavailable': item.get('cropUnavailable')}
 
             for role, field in [('source', 'reference'), ('result', 'path')]:
                 path = Path(item[field])
@@ -61,15 +62,31 @@ def build(manifest, output, crop_experiment=False):
                 pair[role] = {'image': 'data:image/png;base64,'+base64.b64encode(buf.getvalue()).decode(),
                     'faces': points, 'width': image.width, 'height': image.height,
                     'fileSHA256': hashlib.sha256(path.read_bytes()).hexdigest()}
+            pair['comparison'] = {'state': 'unavailable', 'reason': 'يلزم وجه واحد مكتشف في الصورتين.', 'score': None}
+            if len(pair['source']['faces']) == len(pair['result']['faces']) == 1:
+                a,b = [np.array(pair[role]['faces'][0])[:,:2]*[pair[role]['width'],pair[role]['height']] for role in ['source','result']]
+                if len(a) == len(b) == 478:
+                    def normalized(v):
+                        return (v-v.min(axis=0))/np.ptp(v,axis=0).max()
+                    errors = np.linalg.norm(normalized(a)-normalized(b),axis=1)
+                    pair['comparison'] = {'state': 'raw_only', 'points': 478, 'rms': float(np.sqrt(np.mean(errors**2))), 'median': float(np.median(errors)), 'maximum': float(errors.max()), 'score': None}
             rows.append(pair)
     data = {'version': 'full-face-preview/1.0', 'threshold': .7, 'edges': edges, 'samples': rows}
+    images = {}
+    for row in rows:
+        for role in ['source', 'result']:
+            uri = row[role].pop('image')
+            image_id = hashlib.sha256(uri.encode()).hexdigest()
+            images.setdefault(image_id, uri)
+            row[role]['imageId'] = image_id
+    data['images'] = images
     template = (Path(__file__).parent/'full-face-preview.html').read_text(encoding='utf8')
     encoded = base64.b64encode(json.dumps(data).encode()).decode()
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_bytes(template.replace('__BUNDLE__', encoded).encode('utf8'))
     summary = {'version': data['version'], 'threshold': .7, 'pointFiltering': False,
         'score': None, 'cropPolicy': 'source face bounds plus 45 percent margin each side, identical normalized box for both images; no point transfer' if crop_experiment else None,
-        'samples': [{'id': r['id'], 'cropBox': r['cropBox'], **{role: {'faces': len(r[role]['faces']),
+        'samples': [{'id': r['id'], 'cropBox': r['cropBox'], 'comparison': r['comparison'], 'cropUnavailable': r['cropUnavailable'], **{role: {'faces': len(r[role]['faces']),
         'pointsPerFace': [len(f) for f in r[role]['faces']], 'fileSHA256': r[role]['fileSHA256']}
         for role in ['source', 'result']}} for r in rows]}
     output.with_suffix('.json').write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding='utf8')

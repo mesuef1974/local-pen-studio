@@ -1,0 +1,1220 @@
+{
+  "version": "full-face-preview/1.0",
+  "threshold": 0.7,
+  "pointFiltering": false,
+  "score": null,
+  "cropPolicy": "source face bounds plus 45 percent margin each side, identical normalized box for both images; no point transfer",
+  "samples": [
+    {
+      "id": "astronaut",
+      "cropBox": null,
+      "comparison": {
+        "state": "raw_only",
+        "points": 478,
+        "rms": 0.024920057720136862,
+        "median": 0.019297437662121122,
+        "maximum": 0.0641285967680432,
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "88431cd9653ccd539741b555fb0a46b61558b301d4110412b5bc28b5e3ea6cb5"
+      },
+      "result": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "eb77b0e8df310f980aad81331dec751a42173182dc6435b7a415ae28f947ec9e"
+      }
+    },
+    {
+      "id": "astronaut-crop",
+      "cropBox": [
+        0.27381516993045807,
+        0.04828429445624351,
+        0.6066415756940842,
+        0.4392745323479176
+      ],
+      "comparison": {
+        "state": "raw_only",
+        "points": 478,
+        "rms": 0.03887458352471897,
+        "median": 0.03696794156576401,
+        "maximum": 0.06831331456356457,
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "88431cd9653ccd539741b555fb0a46b61558b301d4110412b5bc28b5e3ea6cb5"
+      },
+      "result": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "eb77b0e8df310f980aad81331dec751a42173182dc6435b7a415ae28f947ec9e"
+      }
+    },
+    {
+      "id": "user-line-12",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "1e3787227b14468174d2b29a77c7f40481df87e6877ad5aa8e39b778db0503ad"
+      }
+    },
+    {
+      "id": "user-line-12-crop",
+      "cropBox": [
+        0.428179994225502,
+        0.05285528600215912,
+        0.8012844771146774,
+        0.46886703073978425
+      ],
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "1e3787227b14468174d2b29a77c7f40481df87e6877ad5aa8e39b778db0503ad"
+      }
+    },
+    {
+      "id": "user-line-13",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "9b8a26a7f852c66b7baf08a5e44f84f648def50812c9aa3be403fa977f4c41a0"
+      }
+    },
+    {
+      "id": "user-line-13-crop",
+      "cropBox": [
+        0.428179994225502,
+        0.05285528600215912,
+        0.8012844771146774,
+        0.46886703073978425
+      ],
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "9b8a26a7f852c66b7baf08a5e44f84f648def50812c9aa3be403fa977f4c41a0"
+      }
+    },
+    {
+      "id": "user-line-14",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "f41025bb12e02b8fbeb2b266be34249c19cb8dca275f7364df3eca876f7ba1c3"
+      }
+    },
+    {
+      "id": "user-line-14-crop",
+      "cropBox": [
+        0.428179994225502,
+        0.05285528600215912,
+        0.8012844771146774,
+        0.46886703073978425
+      ],
+      "comparison": {
+        "state": "raw_only",
+        "points": 478,
+        "rms": 0.06241008390175405,
+        "median": 0.05923195343488701,
+        "maximum": 0.12042281200364545,
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f41025bb12e02b8fbeb2b266be34249c19cb8dca275f7364df3eca876f7ba1c3"
+      }
+    },
+    {
+      "id": "user-line-15",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "2e8381aef1ae8cf43183e55284fd374ca65bb7b18f4e8845071880b39cd35a90"
+      }
+    },
+    {
+      "id": "user-line-15-crop",
+      "cropBox": [
+        0.428179994225502,
+        0.05285528600215912,
+        0.8012844771146774,
+        0.46886703073978425
+      ],
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "2e8381aef1ae8cf43183e55284fd374ca65bb7b18f4e8845071880b39cd35a90"
+      }
+    },
+    {
+      "id": "user-line-16",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "c358626c71869a7b4b257a9c024693f44194e24337664914d2398398a8a18e30"
+      }
+    },
+    {
+      "id": "user-line-16-crop",
+      "cropBox": [
+        0.428179994225502,
+        0.05285528600215912,
+        0.8012844771146774,
+        0.46886703073978425
+      ],
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "f1091433c6c25cff47e1c93df484f985e4c9b35204d63f632735ab0f632c6bc0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "c358626c71869a7b4b257a9c024693f44194e24337664914d2398398a8a18e30"
+      }
+    },
+    {
+      "id": "sample-7",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "3701674da38829afb0cb84d7c783bf8bc24f6169ddc809eebd489d04979efa75"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "63ca0e23d73335cffabe90903fa29e033d5ac7d6fa8030dbd23958b058d23413"
+      }
+    },
+    {
+      "id": "sample-7-crop",
+      "cropBox": [
+        0.428179994225502,
+        0.05285528600215912,
+        0.8012844771146774,
+        0.46886703073978425
+      ],
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "3701674da38829afb0cb84d7c783bf8bc24f6169ddc809eebd489d04979efa75"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "63ca0e23d73335cffabe90903fa29e033d5ac7d6fa8030dbd23958b058d23413"
+      }
+    },
+    {
+      "id": "sample-8",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "3701674da38829afb0cb84d7c783bf8bc24f6169ddc809eebd489d04979efa75"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "57b4f80906e813728f8585103daf5ae14bec8f4e4139ca04ea33b42789b1ffc8"
+      }
+    },
+    {
+      "id": "sample-8-crop",
+      "cropBox": [
+        0.428179994225502,
+        0.05285528600215912,
+        0.8012844771146774,
+        0.46886703073978425
+      ],
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "3701674da38829afb0cb84d7c783bf8bc24f6169ddc809eebd489d04979efa75"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "57b4f80906e813728f8585103daf5ae14bec8f4e4139ca04ea33b42789b1ffc8"
+      }
+    },
+    {
+      "id": "sample-9",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "3701674da38829afb0cb84d7c783bf8bc24f6169ddc809eebd489d04979efa75"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "1f22926109a214369e749f3cf537491137c8ae7b976ffe17dbc85043936e8114"
+      }
+    },
+    {
+      "id": "sample-9-crop",
+      "cropBox": [
+        0.428179994225502,
+        0.05285528600215912,
+        0.8012844771146774,
+        0.46886703073978425
+      ],
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "3701674da38829afb0cb84d7c783bf8bc24f6169ddc809eebd489d04979efa75"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "1f22926109a214369e749f3cf537491137c8ae7b976ffe17dbc85043936e8114"
+      }
+    },
+    {
+      "id": "sample-10",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "3701674da38829afb0cb84d7c783bf8bc24f6169ddc809eebd489d04979efa75"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "2bd7a3b229e5ad26a093cd1b21edc109978b68cd88eb72cb9e6dd1fce8283449"
+      }
+    },
+    {
+      "id": "sample-10-crop",
+      "cropBox": [
+        0.428179994225502,
+        0.05285528600215912,
+        0.8012844771146774,
+        0.46886703073978425
+      ],
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "3701674da38829afb0cb84d7c783bf8bc24f6169ddc809eebd489d04979efa75"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "2bd7a3b229e5ad26a093cd1b21edc109978b68cd88eb72cb9e6dd1fce8283449"
+      }
+    },
+    {
+      "id": "sample-11",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "3701674da38829afb0cb84d7c783bf8bc24f6169ddc809eebd489d04979efa75"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "7472a6568705735a434dd7101f52c50b86e893947fc96afdb90f9fab5cacf8ee"
+      }
+    },
+    {
+      "id": "sample-11-crop",
+      "cropBox": [
+        0.428179994225502,
+        0.05285528600215912,
+        0.8012844771146774,
+        0.46886703073978425
+      ],
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "3701674da38829afb0cb84d7c783bf8bc24f6169ddc809eebd489d04979efa75"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "7472a6568705735a434dd7101f52c50b86e893947fc96afdb90f9fab5cacf8ee"
+      }
+    },
+    {
+      "id": "sample-12",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "d5dc01b8796b3a68480ba51dbfb8dc84e35d5772f88998bd7e32f1ba71edfb00"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "a45fc2e78bfce7b17c4b7c2eb33ff0d71d6122d520ea8c6d7dcd27fb86b42dc1"
+      }
+    },
+    {
+      "id": "sample-12-crop",
+      "cropBox": [
+        0.27381516993045807,
+        0.04828429445624351,
+        0.6066415756940842,
+        0.4392745323479176
+      ],
+      "comparison": {
+        "state": "raw_only",
+        "points": 478,
+        "rms": 0.04323836335600466,
+        "median": 0.04062591427941102,
+        "maximum": 0.07312557980300335,
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "d5dc01b8796b3a68480ba51dbfb8dc84e35d5772f88998bd7e32f1ba71edfb00"
+      },
+      "result": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "a45fc2e78bfce7b17c4b7c2eb33ff0d71d6122d520ea8c6d7dcd27fb86b42dc1"
+      }
+    },
+    {
+      "id": "sample-13",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "d5dc01b8796b3a68480ba51dbfb8dc84e35d5772f88998bd7e32f1ba71edfb00"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "6ab32e163a799daf696c954dcd5903b011d5784c602f4c3f29b4d652b3dceac5"
+      }
+    },
+    {
+      "id": "sample-13-crop",
+      "cropBox": [
+        0.27381516993045807,
+        0.04828429445624351,
+        0.6066415756940842,
+        0.4392745323479176
+      ],
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "d5dc01b8796b3a68480ba51dbfb8dc84e35d5772f88998bd7e32f1ba71edfb00"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "6ab32e163a799daf696c954dcd5903b011d5784c602f4c3f29b4d652b3dceac5"
+      }
+    },
+    {
+      "id": "sample-14",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "d5dc01b8796b3a68480ba51dbfb8dc84e35d5772f88998bd7e32f1ba71edfb00"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "8a8657436264b6182429818d6a232229f61827ad83b777441837b19926d233c5"
+      }
+    },
+    {
+      "id": "sample-14-crop",
+      "cropBox": [
+        0.27381516993045807,
+        0.04828429445624351,
+        0.6066415756940842,
+        0.4392745323479176
+      ],
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "d5dc01b8796b3a68480ba51dbfb8dc84e35d5772f88998bd7e32f1ba71edfb00"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "8a8657436264b6182429818d6a232229f61827ad83b777441837b19926d233c5"
+      }
+    },
+    {
+      "id": "sample-15",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "d5dc01b8796b3a68480ba51dbfb8dc84e35d5772f88998bd7e32f1ba71edfb00"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "b3dd21109134b21e6ecc92b1d250e4d8d3ed1e764bba140f8dfc95aeffd10b9c"
+      }
+    },
+    {
+      "id": "sample-15-crop",
+      "cropBox": [
+        0.27381516993045807,
+        0.04828429445624351,
+        0.6066415756940842,
+        0.4392745323479176
+      ],
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "d5dc01b8796b3a68480ba51dbfb8dc84e35d5772f88998bd7e32f1ba71edfb00"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "b3dd21109134b21e6ecc92b1d250e4d8d3ed1e764bba140f8dfc95aeffd10b9c"
+      }
+    },
+    {
+      "id": "sample-16",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "d5dc01b8796b3a68480ba51dbfb8dc84e35d5772f88998bd7e32f1ba71edfb00"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "cf261403270d014f6c9de60ca49a994ef40554d0525de402fd522ae4ff44e149"
+      }
+    },
+    {
+      "id": "sample-16-crop",
+      "cropBox": [
+        0.27381516993045807,
+        0.04828429445624351,
+        0.6066415756940842,
+        0.4392745323479176
+      ],
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "d5dc01b8796b3a68480ba51dbfb8dc84e35d5772f88998bd7e32f1ba71edfb00"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "cf261403270d014f6c9de60ca49a994ef40554d0525de402fd522ae4ff44e149"
+      }
+    },
+    {
+      "id": "sample-17",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": "لم يُكشف وجه أصلي واحد؛ تعذر تحديد قص تلقائي.",
+      "source": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "32ed1fd123151984b3e6e0b9cab9e63c8cdaf44462f29380c24d0d9ebff850b1"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "f521b907c17851627e2de84822fd603316df40e8ff324cb6ed7988645ab35985"
+      }
+    },
+    {
+      "id": "sample-18",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": "لم يُكشف وجه أصلي واحد؛ تعذر تحديد قص تلقائي.",
+      "source": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "32ed1fd123151984b3e6e0b9cab9e63c8cdaf44462f29380c24d0d9ebff850b1"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "58e4de9acdd967bb0325b4fe3e94bf841b8d3e1410236c10c0cae2b75f897654"
+      }
+    },
+    {
+      "id": "sample-19",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": "لم يُكشف وجه أصلي واحد؛ تعذر تحديد قص تلقائي.",
+      "source": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "32ed1fd123151984b3e6e0b9cab9e63c8cdaf44462f29380c24d0d9ebff850b1"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "10b863683b04afb5bf23ec20b1c7b78a0c5b82133ee6bb23e3abbd017a85427b"
+      }
+    },
+    {
+      "id": "sample-20",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": "لم يُكشف وجه أصلي واحد؛ تعذر تحديد قص تلقائي.",
+      "source": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "e420fb6f871933fe179d10fda1c9000b87f7cc885018905fd7a3b49d1fb09aa0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "c64162f846486e6526c36de7dd914c5b53f61baa34f7d414c26f4ebcd6beecb1"
+      }
+    },
+    {
+      "id": "sample-21",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": "لم يُكشف وجه أصلي واحد؛ تعذر تحديد قص تلقائي.",
+      "source": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "e420fb6f871933fe179d10fda1c9000b87f7cc885018905fd7a3b49d1fb09aa0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "d32006ffb92def0e4ba6c4f2318968da9c2847de008dc965c1c3c47ccdc9dade"
+      }
+    },
+    {
+      "id": "sample-22",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": "لم يُكشف وجه أصلي واحد؛ تعذر تحديد قص تلقائي.",
+      "source": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "e420fb6f871933fe179d10fda1c9000b87f7cc885018905fd7a3b49d1fb09aa0"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "ed90b86f878b1353e1468cf1d60a9a50ab99c8976e549170dfbf01ae018122e9"
+      }
+    },
+    {
+      "id": "sample-23",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": "لم يُكشف وجه أصلي واحد؛ تعذر تحديد قص تلقائي.",
+      "source": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "ba55f739dac772b7fa485be79b7a0267dfc2643a4354241b7365f8f3581b865d"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "449b882c0183935cac39364c573c7aabb33258a4571ffb6f7badff0e2169b01f"
+      }
+    },
+    {
+      "id": "sample-24",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": "لم يُكشف وجه أصلي واحد؛ تعذر تحديد قص تلقائي.",
+      "source": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "ba55f739dac772b7fa485be79b7a0267dfc2643a4354241b7365f8f3581b865d"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "17a39dbb8eb2ae2953c8a52007a363d2075adf0f29fdb19f707ed0e00cff9fef"
+      }
+    },
+    {
+      "id": "sample-25",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": "لم يُكشف وجه أصلي واحد؛ تعذر تحديد قص تلقائي.",
+      "source": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "ba55f739dac772b7fa485be79b7a0267dfc2643a4354241b7365f8f3581b865d"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "4885035ee96690d40a204bd95be5bff6d1a7b2fd04fb7db8e706ddfe5f12f9ec"
+      }
+    },
+    {
+      "id": "sample-26",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "013045f0b455668e61253186d3c9e1ed7d0c61831c6f2759fed311629943bbe4"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "3e11c3f996f9991c00d3c5b64e40d32e56d59637276a04ee1642a87dd5f928c0"
+      }
+    },
+    {
+      "id": "sample-26-crop",
+      "cropBox": [
+        0.2588352397084236,
+        0.08671866580843926,
+        0.7926176652312279,
+        0.7222974874079228
+      ],
+      "comparison": {
+        "state": "raw_only",
+        "points": 478,
+        "rms": 0.015332713132636538,
+        "median": 0.012220322813622887,
+        "maximum": 0.03457347695042051,
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "013045f0b455668e61253186d3c9e1ed7d0c61831c6f2759fed311629943bbe4"
+      },
+      "result": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "3e11c3f996f9991c00d3c5b64e40d32e56d59637276a04ee1642a87dd5f928c0"
+      }
+    },
+    {
+      "id": "sample-27",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "013045f0b455668e61253186d3c9e1ed7d0c61831c6f2759fed311629943bbe4"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "58b836511c2053768084aa22fbfd3a8500c485dc55fe8af7904f1d6a5ac592ad"
+      }
+    },
+    {
+      "id": "sample-27-crop",
+      "cropBox": [
+        0.2588352397084236,
+        0.08671866580843926,
+        0.7926176652312279,
+        0.7222974874079228
+      ],
+      "comparison": {
+        "state": "raw_only",
+        "points": 478,
+        "rms": 0.018959560590384145,
+        "median": 0.017401662489256037,
+        "maximum": 0.03609890194403525,
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "013045f0b455668e61253186d3c9e1ed7d0c61831c6f2759fed311629943bbe4"
+      },
+      "result": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "58b836511c2053768084aa22fbfd3a8500c485dc55fe8af7904f1d6a5ac592ad"
+      }
+    },
+    {
+      "id": "sample-28",
+      "cropBox": null,
+      "comparison": {
+        "state": "raw_only",
+        "points": 478,
+        "rms": 0.011962771547278131,
+        "median": 0.011142293778147974,
+        "maximum": 0.025010290721803816,
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "013045f0b455668e61253186d3c9e1ed7d0c61831c6f2759fed311629943bbe4"
+      },
+      "result": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "20aa0581a6a90026ba5caf8143e4188084aaa7dba7c93f6ff0a00270bb750d79"
+      }
+    },
+    {
+      "id": "sample-28-crop",
+      "cropBox": [
+        0.2588352397084236,
+        0.08671866580843926,
+        0.7926176652312279,
+        0.7222974874079228
+      ],
+      "comparison": {
+        "state": "raw_only",
+        "points": 478,
+        "rms": 0.017021888951911455,
+        "median": 0.015947171691889986,
+        "maximum": 0.03674892496042961,
+        "score": null
+      },
+      "cropUnavailable": null,
+      "source": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "013045f0b455668e61253186d3c9e1ed7d0c61831c6f2759fed311629943bbe4"
+      },
+      "result": {
+        "faces": 1,
+        "pointsPerFace": [
+          478
+        ],
+        "fileSHA256": "20aa0581a6a90026ba5caf8143e4188084aaa7dba7c93f6ff0a00270bb750d79"
+      }
+    },
+    {
+      "id": "sample-29",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": "لم يُكشف وجه أصلي واحد؛ تعذر تحديد قص تلقائي.",
+      "source": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "33101f4762e6e603168020bb1afe5ca4135559aa4de2f4926f65f902a112594c"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "9d748e027e49c3b62e7b9ed2cac11405f625cfef515cdf0440a0ac26afb2514b"
+      }
+    },
+    {
+      "id": "sample-30",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": "لم يُكشف وجه أصلي واحد؛ تعذر تحديد قص تلقائي.",
+      "source": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "33101f4762e6e603168020bb1afe5ca4135559aa4de2f4926f65f902a112594c"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "ddca5f904648f59eb20a8497af92c0049635ebd499b139863808bbd4365fd50e"
+      }
+    },
+    {
+      "id": "sample-31",
+      "cropBox": null,
+      "comparison": {
+        "state": "unavailable",
+        "reason": "يلزم وجه واحد مكتشف في الصورتين.",
+        "score": null
+      },
+      "cropUnavailable": "لم يُكشف وجه أصلي واحد؛ تعذر تحديد قص تلقائي.",
+      "source": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "33101f4762e6e603168020bb1afe5ca4135559aa4de2f4926f65f902a112594c"
+      },
+      "result": {
+        "faces": 0,
+        "pointsPerFace": [],
+        "fileSHA256": "82e74a47a3aa1b873a81c37f0d68300871493a2b27af9891e4c7b6459139d650"
+      }
+    }
+  ]
+}
