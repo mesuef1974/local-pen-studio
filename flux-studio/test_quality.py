@@ -13,6 +13,16 @@ from validate_quality_ratings import validate
 
 
 class QualityTests(unittest.TestCase):
+    def test_constant_human_ratings_never_imply_a_perfect_calibration(self):
+        from analyze_quality_calibration import fit_readiness
+        key={'cases':[{'caseId':str(i),'sourceSHA256':str(i),'split':'calibration'} for i in range(3)]}
+        rows=[{'caseId':str(i),'human':{axis:'5' for axis in ['face','outlinePose','compositionCrop']},
+            'components':{axis:{'state':'raw_only'} for axis in ['face','outlinePose','compositionCrop']}} for i in range(3)]
+        readiness=fit_readiness(rows,key)
+        for component in readiness.values():
+            self.assertFalse(component['readyForExploratoryFit'])
+            self.assertIsNone(component['calibratedScore'])
+            self.assertEqual(component['humanLevels'],[5])
     def test_offline_export_includes_public_assets_and_preserves_existing_files(self):
         from export_quality_round import export
         with tempfile.TemporaryDirectory() as directory:

@@ -11,6 +11,21 @@ from path_fidelity import decode_image
 from validate_quality_ratings import validate,AXES
 
 
+def fit_readiness(rows,key):
+    sources={case['caseId']:case['sourceSHA256'] for case in key['cases'] if case['split']=='calibration'}
+    result={}
+    for axis in ['face','outlinePose','compositionCrop']:
+        pairs=[row for row in rows if row['components'][axis]['state']=='raw_only' and row['human'].get(axis) in {'1','2','3','4','5'}]
+        levels=sorted({int(row['human'][axis]) for row in pairs})
+        groups={sources[row['caseId']] for row in pairs}
+        reasons=[]
+        if len(levels)<2:reasons.append('Human labels have fewer than two distinct numeric levels; a mapping is not identifiable.')
+        if len(groups)<2:reasons.append('Usable calibration pairs span fewer than two independent source images.')
+        result[axis]={'usablePairs':len(pairs),'humanLevels':levels,'independentSources':len(groups),
+            'readyForExploratoryFit':not reasons,'reasons':reasons,'calibratedScore':None}
+    return result
+
+
 def analysis(round_directory,ratings_path,output):
     key=json.loads((round_directory/'private-allocation-key.json').read_text(encoding='utf8'))
     ratings=json.loads(ratings_path.read_text(encoding='utf-8-sig'))
@@ -46,6 +61,7 @@ def analysis(round_directory,ratings_path,output):
         'acceptedRatingsFileSHA256':hashlib.sha256(ratings_path.read_bytes()).hexdigest(),
         'humanDataComplete':validation['humanDataComplete'],'reviewers':1,'reviewPolicy':'owner-approved single manager reviewer','calibrationCases':len(rows),'heldoutCases':sum(c['split']=='heldout' for c in key['cases']),
         'heldoutHumanJudgmentsAnalyzed':False,'ratingsSummary':axes,'rawDetectorCoverage':coverage,
+        'fitReadiness':fit_readiness(rows,key),
         'calibratedScore':None,'state':'exploratory_single_reviewer',
         'limitations':['Pilot dataset is not representative.','No conversion to a percentage fitted or enabled.','Default highest rating may introduce response bias.']}
     output.mkdir(parents=True,exist_ok=True)
