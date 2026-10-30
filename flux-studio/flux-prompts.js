@@ -9,3 +9,19 @@ export function composePrompt(catalog, settings) {
  for(const [key,group]of Object.entries(catalog.controls))parts.push(group.options[settings.controls[key]][1]);
  return parts.filter(Boolean).join(' ');
 }
+
+export function buildComparisonRequests(settings, sourceImage, alternatives) {
+ if(settings.mode!=='edit'||!sourceImage)throw new Error('Prompt comparison requires one source image in edit mode.');
+ if(!Array.isArray(alternatives)||alternatives.length<1||alternatives.length>2)throw new Error('Choose one or two alternative prompts.');
+ const variants=[{letter:'A',style:settings.style,title:'Current prompt',prompt:settings.prompt},...alternatives];
+ if(variants.some(item=>typeof item.prompt!=='string'||!item.prompt.trim()||typeof item.style!=='string'))throw new Error('Every comparison needs a style and a non-empty prompt.');
+ if(new Set(variants.map(item=>item.style)).size!==variants.length)throw new Error('Comparison prompts must use distinct templates.');
+ return variants.map(variant=>({
+  letter:variant.letter,
+  title:variant.title,
+  style:variant.style,
+  prompt:variant.prompt.trim(),
+  payload:{...settings,image:sourceImage,style:variant.style,prompt:variant.prompt.trim(),
+   controls:{...settings.controls},preserve:{...settings.preserve},references:(settings.references||[]).map(reference=>({...reference}))}
+ }));
+}
