@@ -1,0 +1,2624 @@
+{
+  "version": "controlled-input-size/1.0",
+  "threshold": 0.7,
+  "sizes": [
+    384,
+    512,
+    768
+  ],
+  "normalizedPairs": 19,
+  "unavailableCropPairs": 3,
+  "views": 60,
+  "pointGroups": {
+    "eyes": [
+      33,
+      159,
+      133,
+      145,
+      263,
+      386,
+      362,
+      374
+    ],
+    "nose": [
+      168,
+      4,
+      1,
+      98,
+      327
+    ],
+    "mouth": [
+      61,
+      37,
+      0,
+      267,
+      291,
+      314,
+      17,
+      84
+    ]
+  },
+  "score": null,
+  "limitations": [
+    "No ground-truth landmark labels.",
+    "Upscaling does not restore detail.",
+    "Same crop coordinates do not guarantee equal face occupancy after generation.",
+    "Detection failure does not measure drawing quality."
+  ],
+  "cases": [
+    {
+      "id": "astronaut-crop-size-384",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.04309545082327322,
+        "median": 0.02333889188510406,
+        "maximum": 0.09272271546516002,
+        "groupRMS": {
+          "eyes": 0.012217596099588397,
+          "nose": 0.04201916884116702,
+          "mouth": 0.06018654908776383
+        },
+        "equalGroupMeanRMS": 0.03814110467617308,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 1.92,
+          "upscaled": true,
+          "offset": [
+            29,
+            0
+          ],
+          "resizedSize": [
+            326,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 1.28,
+          "upscaled": true,
+          "offset": [
+            29,
+            0
+          ],
+          "resizedSize": [
+            326,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "astronaut-crop-size-512",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.04164611545901795,
+        "median": 0.021391440953871174,
+        "maximum": 0.09177870065419189,
+        "groupRMS": {
+          "eyes": 0.010611396670092279,
+          "nose": 0.041010285232786374,
+          "mouth": 0.05821548999262364
+        },
+        "equalGroupMeanRMS": 0.0366123906318341,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 2.56,
+          "upscaled": true,
+          "offset": [
+            38,
+            0
+          ],
+          "resizedSize": [
+            435,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 1.7066666666666668,
+          "upscaled": true,
+          "offset": [
+            38,
+            0
+          ],
+          "resizedSize": [
+            435,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "astronaut-crop-size-768",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.04252503800789685,
+        "median": 0.02255680119013927,
+        "maximum": 0.09392682879140227,
+        "groupRMS": {
+          "eyes": 0.009995925197575434,
+          "nose": 0.04185258283036132,
+          "mouth": 0.05960118958201364
+        },
+        "equalGroupMeanRMS": 0.037149899203316794,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 3.84,
+          "upscaled": true,
+          "offset": [
+            57,
+            0
+          ],
+          "resizedSize": [
+            653,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 2.56,
+          "upscaled": true,
+          "offset": [
+            57,
+            0
+          ],
+          "resizedSize": [
+            653,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-12-crop-size-384",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-12-crop-size-512",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-12-crop-size-768",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-13-crop-size-384",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-13-crop-size-512",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-13-crop-size-768",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-14-crop-size-384",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-14-crop-size-512",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-14-crop-size-768",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-15-crop-size-384",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-15-crop-size-512",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-15-crop-size-768",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-16-crop-size-384",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-16-crop-size-512",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-line-16-crop-size-768",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-7-crop-size-384",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-7-crop-size-512",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-7-crop-size-768",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-8-crop-size-384",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-8-crop-size-512",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-8-crop-size-768",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-9-crop-size-384",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-9-crop-size-512",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-9-crop-size-768",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-10-crop-size-384",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-10-crop-size-512",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-10-crop-size-768",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-11-crop-size-384",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 0.9014084507042254,
+          "upscaled": false,
+          "offset": [
+            20,
+            0
+          ],
+          "resizedSize": [
+            344,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-11-crop-size-512",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.2018779342723005,
+          "upscaled": true,
+          "offset": [
+            26,
+            0
+          ],
+          "resizedSize": [
+            459,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-11-crop-size-768",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            382,
+            426
+          ],
+          "scale": 1.8028169014084507,
+          "upscaled": true,
+          "offset": [
+            39,
+            0
+          ],
+          "resizedSize": [
+            689,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-12-crop-size-384",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.04017460116799903,
+        "median": 0.02655298239701569,
+        "maximum": 0.10374432059847274,
+        "groupRMS": {
+          "eyes": 0.011788834586982806,
+          "nose": 0.03945409936410021,
+          "mouth": 0.055900612036730156
+        },
+        "equalGroupMeanRMS": 0.03571451532927106,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 1.92,
+          "upscaled": true,
+          "offset": [
+            29,
+            0
+          ],
+          "resizedSize": [
+            326,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 1.28,
+          "upscaled": true,
+          "offset": [
+            29,
+            0
+          ],
+          "resizedSize": [
+            326,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-12-crop-size-512",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.039289967490691934,
+        "median": 0.02747712092334103,
+        "maximum": 0.10227481670565963,
+        "groupRMS": {
+          "eyes": 0.010906851235703235,
+          "nose": 0.03583650308825145,
+          "mouth": 0.055951745342324714
+        },
+        "equalGroupMeanRMS": 0.0342316998887598,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 2.56,
+          "upscaled": true,
+          "offset": [
+            38,
+            0
+          ],
+          "resizedSize": [
+            435,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 1.7066666666666668,
+          "upscaled": true,
+          "offset": [
+            38,
+            0
+          ],
+          "resizedSize": [
+            435,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-12-crop-size-768",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.04001023765767601,
+        "median": 0.02587279359546548,
+        "maximum": 0.09790125665032341,
+        "groupRMS": {
+          "eyes": 0.00992348262792844,
+          "nose": 0.037539667060060754,
+          "mouth": 0.05677066186779773
+        },
+        "equalGroupMeanRMS": 0.03474460385192898,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 3.84,
+          "upscaled": true,
+          "offset": [
+            57,
+            0
+          ],
+          "resizedSize": [
+            653,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 2.56,
+          "upscaled": true,
+          "offset": [
+            57,
+            0
+          ],
+          "resizedSize": [
+            653,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-13-crop-size-384",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 1.92,
+          "upscaled": true,
+          "offset": [
+            29,
+            0
+          ],
+          "resizedSize": [
+            326,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 1.28,
+          "upscaled": true,
+          "offset": [
+            29,
+            0
+          ],
+          "resizedSize": [
+            326,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-13-crop-size-512",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 2.56,
+          "upscaled": true,
+          "offset": [
+            38,
+            0
+          ],
+          "resizedSize": [
+            435,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 1.7066666666666668,
+          "upscaled": true,
+          "offset": [
+            38,
+            0
+          ],
+          "resizedSize": [
+            435,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-13-crop-size-768",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 3.84,
+          "upscaled": true,
+          "offset": [
+            57,
+            0
+          ],
+          "resizedSize": [
+            653,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 2.56,
+          "upscaled": true,
+          "offset": [
+            57,
+            0
+          ],
+          "resizedSize": [
+            653,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-14-crop-size-384",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.04534675686345457,
+        "median": 0.037863193279729306,
+        "maximum": 0.10716540906466736,
+        "groupRMS": {
+          "eyes": 0.01727925523704102,
+          "nose": 0.039782488763542956,
+          "mouth": 0.06411033669114614
+        },
+        "equalGroupMeanRMS": 0.04039069356391004,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 1.92,
+          "upscaled": true,
+          "offset": [
+            29,
+            0
+          ],
+          "resizedSize": [
+            326,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 1.28,
+          "upscaled": true,
+          "offset": [
+            29,
+            0
+          ],
+          "resizedSize": [
+            326,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-14-crop-size-512",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 2.56,
+          "upscaled": true,
+          "offset": [
+            38,
+            0
+          ],
+          "resizedSize": [
+            435,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 1.7066666666666668,
+          "upscaled": true,
+          "offset": [
+            38,
+            0
+          ],
+          "resizedSize": [
+            435,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-14-crop-size-768",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.04321570829436234,
+        "median": 0.03431660245813228,
+        "maximum": 0.09638361829874073,
+        "groupRMS": {
+          "eyes": 0.02394111687030596,
+          "nose": 0.041319616316796384,
+          "mouth": 0.05711564609657568
+        },
+        "equalGroupMeanRMS": 0.04079212642789268,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 3.84,
+          "upscaled": true,
+          "offset": [
+            57,
+            0
+          ],
+          "resizedSize": [
+            653,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 2.56,
+          "upscaled": true,
+          "offset": [
+            57,
+            0
+          ],
+          "resizedSize": [
+            653,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-15-crop-size-384",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 1.92,
+          "upscaled": true,
+          "offset": [
+            29,
+            0
+          ],
+          "resizedSize": [
+            326,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 1.28,
+          "upscaled": true,
+          "offset": [
+            29,
+            0
+          ],
+          "resizedSize": [
+            326,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-15-crop-size-512",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 2.56,
+          "upscaled": true,
+          "offset": [
+            38,
+            0
+          ],
+          "resizedSize": [
+            435,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 1.7066666666666668,
+          "upscaled": true,
+          "offset": [
+            38,
+            0
+          ],
+          "resizedSize": [
+            435,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-15-crop-size-768",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 3.84,
+          "upscaled": true,
+          "offset": [
+            57,
+            0
+          ],
+          "resizedSize": [
+            653,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 2.56,
+          "upscaled": true,
+          "offset": [
+            57,
+            0
+          ],
+          "resizedSize": [
+            653,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-16-crop-size-384",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 1.92,
+          "upscaled": true,
+          "offset": [
+            29,
+            0
+          ],
+          "resizedSize": [
+            326,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 1.28,
+          "upscaled": true,
+          "offset": [
+            29,
+            0
+          ],
+          "resizedSize": [
+            326,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-16-crop-size-512",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 2.56,
+          "upscaled": true,
+          "offset": [
+            38,
+            0
+          ],
+          "resizedSize": [
+            435,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 1.7066666666666668,
+          "upscaled": true,
+          "offset": [
+            38,
+            0
+          ],
+          "resizedSize": [
+            435,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-16-crop-size-768",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            170,
+            200
+          ],
+          "scale": 3.84,
+          "upscaled": true,
+          "offset": [
+            57,
+            0
+          ],
+          "resizedSize": [
+            653,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            255,
+            300
+          ],
+          "scale": 2.56,
+          "upscaled": true,
+          "offset": [
+            57,
+            0
+          ],
+          "resizedSize": [
+            653,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-26-crop-size-384",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.014915633122139836,
+        "median": 0.014706586170152011,
+        "maximum": 0.023813448660145287,
+        "groupRMS": {
+          "eyes": 0.007782010533062223,
+          "nose": 0.016955954515989954,
+          "mouth": 0.018540492404749673
+        },
+        "equalGroupMeanRMS": 0.014426152484600616,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            860,
+            1024
+          ],
+          "scale": 0.375,
+          "upscaled": false,
+          "offset": [
+            31,
+            0
+          ],
+          "resizedSize": [
+            322,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            410,
+            488
+          ],
+          "scale": 0.7868852459016393,
+          "upscaled": false,
+          "offset": [
+            30,
+            0
+          ],
+          "resizedSize": [
+            323,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-26-crop-size-512",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.022025756644135343,
+        "median": 0.014701222031374538,
+        "maximum": 0.04346974699073721,
+        "groupRMS": {
+          "eyes": 0.007328650977619792,
+          "nose": 0.02975860143961715,
+          "mouth": 0.02581246857445074
+        },
+        "equalGroupMeanRMS": 0.020966573663895895,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            860,
+            1024
+          ],
+          "scale": 0.5,
+          "upscaled": false,
+          "offset": [
+            41,
+            0
+          ],
+          "resizedSize": [
+            430,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            410,
+            488
+          ],
+          "scale": 1.0491803278688525,
+          "upscaled": true,
+          "offset": [
+            41,
+            0
+          ],
+          "resizedSize": [
+            430,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-26-crop-size-768",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.01885265133690134,
+        "median": 0.013373423245134596,
+        "maximum": 0.03421226413113169,
+        "groupRMS": {
+          "eyes": 0.008777396004753484,
+          "nose": 0.023800434223647256,
+          "mouth": 0.02240319988272108
+        },
+        "equalGroupMeanRMS": 0.018327010037040608,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            860,
+            1024
+          ],
+          "scale": 0.75,
+          "upscaled": false,
+          "offset": [
+            61,
+            0
+          ],
+          "resizedSize": [
+            645,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            410,
+            488
+          ],
+          "scale": 1.5737704918032787,
+          "upscaled": true,
+          "offset": [
+            61,
+            0
+          ],
+          "resizedSize": [
+            645,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-27-crop-size-384",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.01933340486097815,
+        "median": 0.013322436833751398,
+        "maximum": 0.037797204642552325,
+        "groupRMS": {
+          "eyes": 0.005945719458683404,
+          "nose": 0.01691040426761846,
+          "mouth": 0.02769650228902105
+        },
+        "equalGroupMeanRMS": 0.01685087533844097,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            860,
+            1024
+          ],
+          "scale": 0.375,
+          "upscaled": false,
+          "offset": [
+            31,
+            0
+          ],
+          "resizedSize": [
+            322,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            410,
+            488
+          ],
+          "scale": 0.7868852459016393,
+          "upscaled": false,
+          "offset": [
+            30,
+            0
+          ],
+          "resizedSize": [
+            323,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-27-crop-size-512",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.015705690262052274,
+        "median": 0.009569792360155096,
+        "maximum": 0.027165171506156934,
+        "groupRMS": {
+          "eyes": 0.005922539242005344,
+          "nose": 0.015819146403131288,
+          "mouth": 0.02135475387810271
+        },
+        "equalGroupMeanRMS": 0.014365479841079781,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            860,
+            1024
+          ],
+          "scale": 0.5,
+          "upscaled": false,
+          "offset": [
+            41,
+            0
+          ],
+          "resizedSize": [
+            430,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            410,
+            488
+          ],
+          "scale": 1.0491803278688525,
+          "upscaled": true,
+          "offset": [
+            41,
+            0
+          ],
+          "resizedSize": [
+            430,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-27-crop-size-768",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.022446224285997612,
+        "median": 0.012895174217205837,
+        "maximum": 0.043991885844988816,
+        "groupRMS": {
+          "eyes": 0.006586350386403125,
+          "nose": 0.0188489436459238,
+          "mouth": 0.03251353411371112
+        },
+        "equalGroupMeanRMS": 0.01931627604867935,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            860,
+            1024
+          ],
+          "scale": 0.75,
+          "upscaled": false,
+          "offset": [
+            61,
+            0
+          ],
+          "resizedSize": [
+            645,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            410,
+            488
+          ],
+          "scale": 1.5737704918032787,
+          "upscaled": true,
+          "offset": [
+            61,
+            0
+          ],
+          "resizedSize": [
+            645,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-28-crop-size-384",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.0159648112238976,
+        "median": 0.01624017722018643,
+        "maximum": 0.02785870177251222,
+        "groupRMS": {
+          "eyes": 0.012102727373232432,
+          "nose": 0.011162848189112454,
+          "mouth": 0.021087689442765685
+        },
+        "equalGroupMeanRMS": 0.01478442166837019,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            860,
+            1024
+          ],
+          "scale": 0.375,
+          "upscaled": false,
+          "offset": [
+            31,
+            0
+          ],
+          "resizedSize": [
+            322,
+            384
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            410,
+            488
+          ],
+          "scale": 0.7868852459016393,
+          "upscaled": false,
+          "offset": [
+            30,
+            0
+          ],
+          "resizedSize": [
+            323,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-28-crop-size-512",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.023362399154892733,
+        "median": 0.02073887092706008,
+        "maximum": 0.03654526733130865,
+        "groupRMS": {
+          "eyes": 0.012108696089136702,
+          "nose": 0.023220627241434453,
+          "mouth": 0.030807636562349177
+        },
+        "equalGroupMeanRMS": 0.02204565329764011,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            860,
+            1024
+          ],
+          "scale": 0.5,
+          "upscaled": false,
+          "offset": [
+            41,
+            0
+          ],
+          "resizedSize": [
+            430,
+            512
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            410,
+            488
+          ],
+          "scale": 1.0491803278688525,
+          "upscaled": true,
+          "offset": [
+            41,
+            0
+          ],
+          "resizedSize": [
+            430,
+            512
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-28-crop-size-768",
+      "comparison": {
+        "state": "raw_only",
+        "profile": "essential-face/3.0",
+        "points": 21,
+        "rms": 0.014358740721006295,
+        "median": 0.012618158099416977,
+        "maximum": 0.028626605209809097,
+        "groupRMS": {
+          "eyes": 0.008362109027230842,
+          "nose": 0.009938352883651592,
+          "mouth": 0.020237307465694635
+        },
+        "equalGroupMeanRMS": 0.012845923125525691,
+        "score": null,
+        "automaticApproval": false
+      },
+      "normalization": {
+        "source": {
+          "nativeCropSize": [
+            860,
+            1024
+          ],
+          "scale": 0.75,
+          "upscaled": false,
+          "offset": [
+            61,
+            0
+          ],
+          "resizedSize": [
+            645,
+            768
+          ]
+        },
+        "result": {
+          "nativeCropSize": [
+            410,
+            488
+          ],
+          "scale": 1.5737704918032787,
+          "upscaled": true,
+          "offset": [
+            61,
+            0
+          ],
+          "resizedSize": [
+            645,
+            768
+          ]
+        }
+      }
+    },
+    {
+      "id": "sample-20",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": null,
+        "result": null
+      }
+    },
+    {
+      "id": "sample-21",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": null,
+        "result": null
+      }
+    },
+    {
+      "id": "sample-22",
+      "comparison": {
+        "state": "unavailable",
+        "score": null
+      },
+      "normalization": {
+        "source": null,
+        "result": null
+      }
+    }
+  ]
+}
