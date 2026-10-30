@@ -71,6 +71,10 @@ def _message(row: sqlite3.Row, criteria: list[sqlite3.Row]) -> str:
         headers,
         f'$body = @{{ actor_id = "{actor_id}"; status_code = "in_progress" }} | ConvertTo-Json -Compress',
         f'Invoke-RestMethod -Uri "{lifecycle}" -Method Post -Headers $headers -ContentType "application/json" -Body $body',
+        "إذا ظهرت حاجة حقيقية لبطاقة متابعة أخرى، لا تنشئها ولا تحدد منفذها بنفسك؛ سجّل رأيك والاقتراح في قاعدة المصنع ليقرر المالك أولًا:",
+        f'$proposal = @{{ actor_id = "{actor_id}"; source_card_id = "{row["card_id"]}"; opinion = "اكتب رأيك المهني بالعربية"; recommendation = "اكتب توصيتك ببطاقة متابعة مستقلة بالعربية"; title = "عنوان البطاقة المقترحة بالعربية"; owner_request = "المهمة والنتيجة المطلوبة بالعربية"; scope = "نطاق البطاقة بالعربية"; rationale = "سبب اقتراح بطاقة مستقلة بالعربية"; suggested_assignee_actor_id = ""; idempotency_key = "proposal-{row["idempotency_key"]}"; criteria = @() }} | ConvertTo-Json -Depth 6 -Compress',
+        f'Invoke-RestMethod -Uri "{base_url}/api/workflow/proposals" -Method Post -Headers $headers -ContentType "application/json" -Body $proposal',
+        "اترك suggested_assignee_actor_id فارغًا إن لم تكن لديك توصية؛ وأي جلسة مقترحة تظل إرشادية، فالمالك يختار المنفذ في أمره.",
     ])
     if row["card_type_code"] == "review":
         lines.extend([

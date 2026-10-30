@@ -74,6 +74,10 @@ CODE_LABELS = {
     "update": "تعديل",
     "delete": "حذف",
     "general": "عام",
+    "quality": "الجودة والتحقق",
+    "delivery": "التسليم والنطاق",
+    "research": "المصادر والمحتوى",
+    "interface": "الواجهة وإمكانية الوصول",
     "urgent": "عاجلة",
     "high": "عالية",
     "normal": "عادية",
@@ -83,6 +87,8 @@ CODE_LABELS = {
 READ_ONLY_WORKFLOW_TABLES = {
     "coordination_command_receipts",
     "coordination_command_cards",
+    "coordination_card_proposals",
+    "coordination_card_proposal_criteria",
     "coordination_events",
     "coordination_git_events",
     "coordination_git_integrations",
@@ -101,7 +107,8 @@ READ_ONLY_WORKFLOW_TABLES = {
 
 WORKFLOW_ADMIN_GROUPS = (
     ("أوامر المالك والبطاقات", "commands", (
-        "coordination_cards", "coordination_command_cards", "coordination_command_receipts",
+        "coordination_cards", "coordination_command_cards", "coordination_command_receipts", "workflow_criterion_catalog",
+        "coordination_card_proposals", "coordination_card_proposal_criteria",
         "coordination_assignments", "coordination_card_criteria", "coordination_card_dependencies",
     )),
     ("الجلسات والتوجيه", "sessions", (
@@ -204,6 +211,7 @@ class WorkflowTableAdmin(admin.ModelAdmin):
         "action": ("action_label", "الإجراء"),
         "kind": ("kind_label", "نوع المخرج"),
         "card_type_code": ("card_type_label", "نوع البطاقة"),
+        "category_code": ("criterion_category_label", "فئة المعيار"),
         "priority_code": ("priority_label", "الأولوية"),
         "terminal": ("terminal_label", "حالة نهائية"),
         "active": ("active_label", "نشط"),
@@ -241,6 +249,7 @@ class WorkflowTableAdmin(admin.ModelAdmin):
         content_fields = {
             "coordination_cards": ("title", "owner_request", "scope"),
             "coordination_card_criteria": ("title", "description"),
+            "workflow_criterion_catalog": ("title", "description"),
             "coordination_issues": ("impact_summary",),
             "coordination_opinions": ("opinion", "recommendation"),
             "owner_decisions": ("notes",),
@@ -356,6 +365,9 @@ class WorkflowTableAdmin(admin.ModelAdmin):
 
     @admin.display(description="نوع البطاقة", ordering="card_type_code")
     def card_type_label(self, obj): return self._label(obj, "card_type_code")
+
+    @admin.display(description="فئة المعيار", ordering="category_code")
+    def criterion_category_label(self, obj): return self._label(obj, "category_code")
 
     @admin.display(description="الأولوية", ordering="priority_code")
     def priority_label(self, obj): return self._label(obj, "priority_code")
