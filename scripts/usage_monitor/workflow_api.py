@@ -237,6 +237,49 @@ def criterion_catalog(path: Path) -> dict[str, Any]:
         connection.close()
 
 
+def submit_session_opinion(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    """Record an author's opinion, preserving recorder and source provenance."""
+    fields = [str(payload.get(k, "")).strip() for k in
+        ("actor_id", "opinion_actor_id", "source_card_id", "opinion", "recommendation", "source_reference", "idempotency_key")]
+    recorder, author, card, opinion, recommendation, source, key = fields
+    if not all(fields) or any(len(v)>8000 for v in fields) or len(key)>200:
+        raise ValueError("أكمل حقول الرأي والمصدر ومفتاح منع التكرار ضمن الحدود المسموحة.")
+    if recorder != author and recorder != "brainstorm":
+        raise ValueError("تسجيل رأي منقول متاح للمنسق فقط.")
+    if not _contains_arabic(opinion) or not _contains_arabic(recommendation):
+        raise ValueError("اكتب الرأي والتوصية بالعربية.")
+    details = json.dumps(dict(zip(("recorded_by_actor_id","opinion_actor_id","source_card_id","opinion","recommendation","source_reference","idempotency_key"),fields)), ensure_ascii=False,sort_keys=True)
+    db = _connect(path,write=True)
+    try:
+        db.execute("BEGIN IMMEDIATE")
+        for actor in {recorder,author}:
+            if not db.execute("SELECT 1 FROM coordination_actors WHERE actor_id=? AND active=1 AND actor_id<>'owner'",(actor,)).fetchone():
+                raise ValueError("الجلسة غير نشطة أو غير صالحة.")
+        if not db.execute("SELECT 1 FROM coordination_cards WHERE card_id=?",(card,)).fetchone():
+            raise KeyError("البطاقة الأصلية غير موجودة.")
+        prior=db.execute("SELECT event_id,details FROM coordination_events WHERE source_type='relayed_session_opinion' AND source_id=?",(key,)).fetchone()
+        if prior:
+            if prior['details'] != details:
+                raise ValueError("مفتاح منع التكرار مستخدم مع محتوى مختلف.")
+            history=db.execute("SELECT opinion_history_id FROM coordination_opinion_history WHERE source_event_id=?",(prior['event_id'],)).fetchone()
+            db.commit()
+            return {"created":False,"opinion_history_id":history[0],"event_id":prior['event_id']}
+        now=utc_now()
+        event=db.execute("""INSERT INTO coordination_events(card_id,actor_id,event_type,details,recorded_at,stage_code,source_type,source_id,sensitivity)
+            VALUES(?,?,'session_opinion_recorded',?,?,'advisory','relayed_session_opinion',?,'internal')""",(card,recorder,details,now,key))
+        db.execute("""INSERT INTO coordination_opinions(card_id,actor_id,opinion,recommendation,recorded_at) VALUES(?,?,?,?,?)
+            ON CONFLICT(card_id,actor_id) DO UPDATE SET opinion=excluded.opinion,recommendation=excluded.recommendation,recorded_at=excluded.recorded_at""",(card,author,opinion,recommendation,now))
+        history=db.execute("""INSERT INTO coordination_opinion_history(card_id,actor_id,opinion,recommendation,recorded_at,source_event_id)
+            VALUES(?,?,?,?,?,?)""",(card,author,opinion,recommendation,now,event.lastrowid))
+        db.commit()
+        return {"created":True,"opinion_history_id":history.lastrowid,"event_id":event.lastrowid}
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
 def submit_card_proposal(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
     """Persist a session opinion and its follow-up card proposal atomically."""
     actor_id = str(payload.get("actor_id", "")).strip()
@@ -456,6 +499,9 @@ def card_details(path: Path, card_id: str) -> dict[str, Any] | None:
             result["owner_command"]["display_title"] = _display_title(
                 result["owner_command"]["title"], result["owner_command"]["owner_request"])
         result["criteria"] = _rows(connection, "SELECT * FROM coordination_card_criteria WHERE card_id=? ORDER BY sort_order,criterion_id", (card_id,))
+        result["opinion_history"] = _rows(connection, """SELECT h.*, e.actor_id AS recorded_by_actor_id,
+            e.details AS source_details FROM coordination_opinion_history h LEFT JOIN coordination_events e
+            ON e.event_id=h.source_event_id WHERE h.card_id=? ORDER BY h.opinion_history_id""", (card_id,))
         result["events"] = _rows(connection, """SELECT event_id,card_id,actor_id,event_type,details,recorded_at,stage_code,
             previous_status,next_status,reason_code,reason_resolution FROM coordination_events
             WHERE card_id=? AND sensitivity<>'confidential' ORDER BY event_id""", (card_id,))
