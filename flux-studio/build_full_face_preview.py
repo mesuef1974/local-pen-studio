@@ -14,7 +14,7 @@ from mediapipe.tasks.python import vision
 from quality_features import verified_model
 
 
-def build(manifest, output):
+def build(manifest, output, crop_experiment=False):
     from mediapipe.tasks.python.vision import FaceLandmarksConnections as C
     edges = sorted({(e.start, e.end) for name in ('FACE_LANDMARKS_TESSELATION',
         'FACE_LANDMARKS_LEFT_IRIS', 'FACE_LANDMARKS_RIGHT_IRIS') for e in getattr(C, name)})
@@ -23,14 +23,35 @@ def build(manifest, output):
         base_options=python.BaseOptions(model_asset_path=verified_model('face_landmarker.task')),
         num_faces=2, min_face_detection_confidence=.7, min_face_presence_confidence=.7)
     with vision.FaceLandmarker.create_from_options(options) as detector:
-        for item in json.loads(manifest.read_text(encoding='utf-8-sig')):
-            pair = {'id': item['id']}
+        inputs = json.loads(manifest.read_text(encoding='utf-8-sig'))
+        expanded = []
+        for item in inputs:
+            item = dict(item, label='رائدة الفضاء' if item['id']=='astronaut' else 'صورتك / الرسم '+item['id'].split('-')[-1])
+            expanded.append(item)
+            if crop_experiment:
+                source = ImageOps.exif_transpose(Image.open(item['reference'])).convert('RGB')
+                found = detector.detect(mp.Image(image_format=mp.ImageFormat.SRGB, data=np.ascontiguousarray(source)))
+                if len(found.face_landmarks) != 1:
+                    raise ValueError('يلزم وجه أصلي واحد لتحديد منطقة القص: '+item['id'])
+                face = found.face_landmarks[0]
+                xs, ys = [p.x for p in face], [p.y for p in face]
+                left, top, right, bottom = min(xs), min(ys), max(xs), max(ys)
+                dx, dy = (right-left)*.45, (bottom-top)*.45
+                box = [max(0,left-dx),max(0,top-dy),min(1,right+dx),min(1,bottom+dy)]
+                expanded.append(dict(item, id=item['id']+'-crop', cropBox=box))
+        for item in expanded:
+            pair = {'id': item['id'], 'label': item.get('label', item['id']) + (' · قص الوجه' if 'cropBox' in item else ' · الصورة الكاملة'), 'cropBox': item.get('cropBox')}
+
             for role, field in [('source', 'reference'), ('result', 'path')]:
                 path = Path(item[field])
                 image = ImageOps.exif_transpose(Image.open(path)).convert('RGBA')
                 white = Image.new('RGBA', image.size, 'white')
                 white.alpha_composite(image)
                 image = white.convert('RGB')
+                if item.get('cropBox'):
+                    l,t,r,b = item['cropBox']
+                    w,h = image.size
+                    image = image.crop((int(l*w),int(t*h),int(r*w),int(b*h)))
                 image.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
                 found = detector.detect(mp.Image(image_format=mp.ImageFormat.SRGB,
                     data=np.ascontiguousarray(image)))
@@ -47,7 +68,8 @@ def build(manifest, output):
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_bytes(template.replace('__BUNDLE__', encoded).encode('utf8'))
     summary = {'version': data['version'], 'threshold': .7, 'pointFiltering': False,
-        'score': None, 'samples': [{'id': r['id'], **{role: {'faces': len(r[role]['faces']),
+        'score': None, 'cropPolicy': 'source face bounds plus 45 percent margin each side, identical normalized box for both images; no point transfer' if crop_experiment else None,
+        'samples': [{'id': r['id'], 'cropBox': r['cropBox'], **{role: {'faces': len(r[role]['faces']),
         'pointsPerFace': [len(f) for f in r[role]['faces']], 'fileSHA256': r[role]['fileSHA256']}
         for role in ['source', 'result']}} for r in rows]}
     output.with_suffix('.json').write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding='utf8')
@@ -58,5 +80,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--manifest', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--crop-experiment', action='store_true')
     args = parser.parse_args()
-    print(json.dumps(build(args.manifest, args.output), ensure_ascii=False, indent=2))
+    print(json.dumps(build(args.manifest, args.output, args.crop_experiment), ensure_ascii=False, indent=2))
