@@ -1,4 +1,4 @@
-"""Controlled line-to-line diagnostic round, never photo-to-line validation."""
+"""Original photographic references paired with controlled line-only candidates."""
 import argparse
 import hashlib
 import json
@@ -53,25 +53,27 @@ def create(manifest,output,downloads):
         name=entry['id']
         if not name.isascii() or not name.replace('-','').isalnum():raise ValueError('معرف مصدر غير صالح.')
         path=Path(entry['path']);base=line_baseline(path)
-        Image.fromarray(base).save(samples/f'{name}-source.png');strata[name]='lineart-controls'
+        reference=Path(entry['reference'])
+        with Image.open(reference) as original:ImageOps.exif_transpose(original).save(samples/f'{name}-source.png')
+        strata[name]='photo-to-line-controls'
         for kind,array in variants(base,entry['roi']).items():
             metrics=verify_line(array);filename=f'{name}-{kind}-flux.png'
             Image.fromarray(array).save(samples/filename);kinds[filename]='controlled-line-transform:'+kind
             provenance.append({'file':filename,'kind':kind,'baselineSHA256':hashlib.sha256(path.read_bytes()).hexdigest(),
+                               'referenceSHA256':hashlib.sha256(reference.read_bytes()).hexdigest(),
                                'faceRegion':entry['roi'],'toneCheck':metrics,'changedPixels':int(np.sum(array!=base))})
     round_result=build(samples,output/'round',seed=1,strata=strata,candidate_kinds=kinds)
     page=output/'round/review.html';html=page.read_text(encoding='utf8')
-    html=html.replace('الصورة الأصلية','المرجع الخطي الثابت').replace('الصورة المرجعية الأصلية','المرجع الخطي الثابت')
     html=html.replace('قارن النتيجة بالأصل دون الرجوع إلى أسماء الأساليب أو البرومبتات.',
-        'قارن النتيجة بالمرجع الخطي الثابت. جميع الصور المعروضة خطية، وبعض النتائج تحتوي تغييرات ضبط مقصودة. هذه الجولة تقيس حساسية التقييم لفروق الخطوط؛ لا تثبت أمانة تحويل صورة فوتوغرافية إلى رسم.')
+        'المرجع هو الصورة الأصلية، والنتيجة فقط رسم خطي معالج ينتظر تقييمك. قارن الملامح والمحيط والتكوين بالأصل. بعض النتائج تحتوي تغييرات ضبط مقصودة لاختبار حساسية القياس؛ لا تحدد الصفحة تقييمك بالنيابة عنك.')
     page.write_bytes(html.encode('utf8'))
     (output/'private-transforms.json').write_text(json.dumps(provenance,indent=2),encoding='utf8')
-    destination=downloads/f"flux-lines-{round_result['roundId'][:8]}.html"
+    destination=downloads/f"flux-original-lines-{round_result['roundId'][:8]}.html"
     portable=export(output/'round',destination)
     summary={'roundId':round_result['roundId'],'cases':round_result['cases'],'sources':round_result['sources'],
-        'allVisibleImagesAreLineArt':True,'referenceType':'fixed lineart baseline, not photograph',
+        'allCandidatesAreLineArt':True,'referenceType':'original photograph; pixels preserved after EXIF orientation',
         'generatedByFlux':False,'variantOrigin':'controlled transforms of existing FLUX lineart',
-        'purpose':'line-to-line diagnostic sensitivity; not independent photo-to-line calibration',
+        'purpose':'original-to-line diagnostic comparison; calibration not yet validated',
         'humanRatings':'pending','privateKeyIncluded':False,'portable':portable['path']}
     (output/'summary.json').write_text(json.dumps(summary,indent=2),encoding='utf8')
     return summary

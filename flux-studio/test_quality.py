@@ -13,6 +13,26 @@ from validate_quality_ratings import validate
 
 
 class QualityTests(unittest.TestCase):
+    def test_line_round_preserves_original_photo_as_reference(self):
+        import re
+        from build_line_quality_round import create
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);manifest=[]
+            for i in range(2):
+                reference=root/f'photo{i}.png';Image.new('RGB',(80,80),(100+i*30,150,200)).save(reference)
+                line=root/f'line{i}.png';im=Image.new('L',(80,80),'white');ImageDraw.Draw(im).ellipse((15+i,10,65,70),outline='black',width=2);im.save(line)
+                manifest.append({'id':f'person{i}','path':str(line),'reference':str(reference),'roi':[.5,.5,.3,.3]})
+            result=create(manifest,root/'output',root)
+            script=(root/'output/round/round-data.js').read_text(encoding='utf8')
+            bundle=json.loads(base64.b64decode(re.search(r'atob\("([A-Za-z0-9+/=]+)"',script)[1]))
+            references=[]
+            for value in bundle['sources'].values():references.append(np.asarray(Image.open(io.BytesIO(base64.b64decode(value.split(',')[1]))).convert('RGB')))
+            for i in range(2):self.assertTrue(any(np.array_equal(a,np.asarray(Image.open(root/f'photo{i}.png'))) for a in references))
+            for case in bundle['cases']:
+                pixels=np.asarray(Image.open(io.BytesIO(base64.b64decode(case['candidate'].split(',')[1]))).convert('RGB'))
+                self.assertTrue(np.all((pixels==0)|(pixels==255)))
+            self.assertEqual(result['cases'],10)
+            self.assertTrue(result['allCandidatesAreLineArt'])
     def test_future_rounds_reject_photographic_outputs_and_photo_controls(self):
         from build_quality_round import require_line_candidate
         with tempfile.TemporaryDirectory() as directory:

@@ -1,0 +1,14 @@
+{
+  "roundId": "13ff2b767f68d793b997fe46",
+  "cases": 10,
+  "sources": 2,
+  "allCandidatesAreLineArt": true,
+  "referenceType": "original photograph; pixels preserved after EXIF orientation",
+  "generatedByFlux": false,
+  "variantOrigin": "controlled transforms of existing FLUX lineart",
+  "purpose": "original-to-line diagnostic comparison; calibration not yet validated",
+  "humanRatings": "pending",
+  "privateKeyIncluded": false,
+  "originalReferencePixelEquality": true,
+  "candidateBinaryChecksPassed": 10
+}
