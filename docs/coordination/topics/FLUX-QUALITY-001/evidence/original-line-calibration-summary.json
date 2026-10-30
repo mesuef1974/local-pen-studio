@@ -1,0 +1,112 @@
+{
+  "version": "calibration-analysis/1.0",
+  "roundId": "13ff2b767f68d793b997fe46",
+  "acceptedRatingsFileSHA256": "156a869e056c60f9306f4c7c451c383978f17b049fcb81a9f37228d704d4aaa7",
+  "humanDataComplete": true,
+  "reviewers": 1,
+  "reviewPolicy": "owner-approved single manager reviewer",
+  "calibrationCases": 5,
+  "heldoutCases": 5,
+  "heldoutHumanJudgmentsAnalyzed": false,
+  "ratingsSummary": {
+    "compositionCrop": {
+      "numeric": 5,
+      "uncertain": 0,
+      "na": 0,
+      "missing": 0,
+      "histogram": {
+        "1": 3,
+        "2": 0,
+        "3": 0,
+        "4": 1,
+        "5": 1
+      }
+    },
+    "face": {
+      "numeric": 5,
+      "uncertain": 0,
+      "na": 0,
+      "missing": 0,
+      "histogram": {
+        "1": 3,
+        "2": 0,
+        "3": 0,
+        "4": 1,
+        "5": 1
+      }
+    },
+    "outlinePose": {
+      "numeric": 5,
+      "uncertain": 0,
+      "na": 0,
+      "missing": 0,
+      "histogram": {
+        "1": 1,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 4
+      }
+    },
+    "traceability": {
+      "numeric": 5,
+      "uncertain": 0,
+      "na": 0,
+      "missing": 0,
+      "histogram": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 5
+      }
+    }
+  },
+  "rawDetectorCoverage": {
+    "face": 0,
+    "outlinePose": 0,
+    "compositionCrop": 0
+  },
+  "fitReadiness": {
+    "face": {
+      "usablePairs": 0,
+      "humanLevels": [],
+      "independentSources": 0,
+      "readyForExploratoryFit": false,
+      "reasons": [
+        "Human labels have fewer than two distinct numeric levels; a mapping is not identifiable.",
+        "Usable calibration pairs span fewer than two independent source images."
+      ],
+      "calibratedScore": null
+    },
+    "outlinePose": {
+      "usablePairs": 0,
+      "humanLevels": [],
+      "independentSources": 0,
+      "readyForExploratoryFit": false,
+      "reasons": [
+        "Human labels have fewer than two distinct numeric levels; a mapping is not identifiable.",
+        "Usable calibration pairs span fewer than two independent source images."
+      ],
+      "calibratedScore": null
+    },
+    "compositionCrop": {
+      "usablePairs": 0,
+      "humanLevels": [],
+      "independentSources": 0,
+      "readyForExploratoryFit": false,
+      "reasons": [
+        "Human labels have fewer than two distinct numeric levels; a mapping is not identifiable.",
+        "Usable calibration pairs span fewer than two independent source images."
+      ],
+      "calibratedScore": null
+    }
+  },
+  "calibratedScore": null,
+  "state": "exploratory_single_reviewer",
+  "limitations": [
+    "Pilot dataset is not representative.",
+    "No conversion to a percentage fitted or enabled.",
+    "Default highest rating may introduce response bias."
+  ]
+}
