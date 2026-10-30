@@ -8,13 +8,13 @@ class EssentialFaceTests(unittest.TestCase):
         self.points = np.random.default_rng(42).random((478, 2))
 
     def test_unique_profile(self):
-        self.assertEqual(len(INDICES), 25)
-        self.assertEqual(sum(map(len, GROUPS.values())), 25)
+        self.assertEqual(len(INDICES), 21)
+        self.assertEqual(sum(map(len, GROUPS.values())), 21)
         self.assertTrue(all(0 <= i < 478 for i in INDICES))
 
     def test_no_jaw_or_brows(self):
-        self.assertEqual(set(GROUPS), {'eyes', 'nose', 'mouth', 'forehead'})
-        excluded = [234,172,136,152,365,397,454,70,105,107,336,334,300]
+        self.assertEqual(set(GROUPS), {'eyes', 'nose', 'mouth'})
+        excluded = [234,172,136,152,365,397,454,70,105,107,336,334,300,109,10,338,151]
         self.assertFalse(set(excluded) & set(INDICES))
         changed = self.points.copy()
         changed[excluded] += 999
