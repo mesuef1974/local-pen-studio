@@ -1,0 +1,11 @@
+{
+  "sample": "user-line-14-crop",
+  "pointsCompared": 478,
+  "alignment": "independent bounding-box origin and uniform scale; no rotation or deformation",
+  "normalizedRMS": 0.06241008390175405,
+  "normalizedMedianDistance": 0.05923195343488701,
+  "normalizedMaximumDistance": 0.12042281200364545,
+  "score": null,
+  "automaticApproval": false,
+  "warning": "Raw uncalibrated geometric errors; landmark placement not validated by a human."
+}
