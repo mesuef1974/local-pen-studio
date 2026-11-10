@@ -79,7 +79,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--database", type=Path, default=DEFAULT_DATABASE)
     parser.add_argument("--host", default="127.0.0.1", choices=("127.0.0.1",))
-    parser.add_argument("--port", type=int, default=8769)
+    parser.add_argument("--port", type=int, default=8772)
     args = parser.parse_args()
     os.chdir(ROOT)
     handler = lambda *a, **kw: Handler(*a, database=args.database, **kw)

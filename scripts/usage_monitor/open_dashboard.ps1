@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
-$port = 8769
+$port = 8772
 $url = "http://127.0.0.1:$port/dashboard.html"
 $existing = Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort $port -State Listen -ErrorAction SilentlyContinue
 if (-not $existing) {
