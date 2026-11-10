@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تحليل SWOT لتطبيق مسار · FLUX</title>
+<style>
+:root{--bg:#fbfaf7;--fg:#1d1d1b;--mut:#5f5e5a;--line:#d9d6cc;--card:#fff;--s:#eaf3de;--sf:#27500a;--w:#faeeda;--wf:#633806;--o:#e6f1fb;--of:#0c447c;--t:#fceaea;--tf:#791f1f}
+@media (prefers-color-scheme:dark){:root{--bg:#171715;--fg:#ecebe6;--mut:#a9a79f;--line:#3a3935;--card:#201f1d;--s:#27341a;--sf:#c0dd97;--w:#3a2c12;--wf:#fac775;--o:#16293d;--of:#b5d4f4;--t:#3d2020;--tf:#f7c1c1}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.8 "Dubai","Cairo",system-ui,sans-serif;padding:24px 16px}
+main{max-width:980px;margin:0 auto}
+h1{font-size:26px;font-weight:500;margin:0 0 4px}
+h2{font-size:20px;font-weight:500;margin:32px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.sub{color:var(--mut);margin:0 0 20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:12px}
+.q{border-radius:12px;padding:12px 18px}
+.q h3{margin:0 0 6px;font-size:18px;font-weight:500}
+.q ul{margin:6px 0;padding-inline-start:20px}
+.q li{margin:6px 0}
+.s{background:var(--s);color:var(--sf)}.w{background:var(--w);color:var(--wf)}.o{background:var(--o);color:var(--of)}.t{background:var(--t);color:var(--tf)}
+.tag{font-size:12px;border:1px solid currentColor;border-radius:8px;padding:0 6px;margin-inline-start:6px;white-space:nowrap}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:15px}
+th,td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
+th{font-weight:500;background:var(--bg)}
+bdi,code{font-family:Consolas,monospace;font-size:13px;direction:ltr;unicode-bidi:embed}
+@media print{body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<main>
+<h1>تحليل SWOT لتطبيق مسار · FLUX</h1>
+<p class="sub">المجلد: <bdi>flux-studio</bdi> · المنفذ 8770 · التاريخ: 11 نوفمبر 2026. وسم «متحقق» يعني أني رأيته أو قسته في هذه الجلسة؛ وسم «استنتاج» يعني رأيًا لم أتحقق منه.</p>
+
+<div class="grid">
+<section class="q s"><h3>نقاط القوة</h3><ul>
+<li>معالجة محلية كاملة: لا ترفع الصور لأي خدمة، والتوليد بنموذج مثبّت بمراجعة وبصمة SHA-256.<span class="tag">متحقق</span></li>
+<li>اعتماد بشري صريح بين الصورة والقلم؛ لا يُفتح القلم قبل اعتماد الصورة.<span class="tag">من README</span></li>
+<li>تغطية اختبارية جيدة: 24 اختبار بايثون و33 جافاسكربت في flux-studio، كلها ناجحة، واختبار مطابقة الوصف بين المتصفح والعامل.<span class="tag">متحقق</span></li>
+<li>قياس مطابقة الحبر (IoU والاسترجاع والدقة) يمنع الادعاء الزائد بدل الاعتماد على الانطباع.<span class="tag">متحقق</span></li>
+<li>أداء مقبول على كرت 8 جيجابايت: توليد 512×512 بأربع خطوات في 51 ثانية شاملة التحميل.<span class="tag">متحقق</span></li>
+<li>24 قالبًا وثمانية توجيهات وثلاثة أوضاع وحد 512 رمزًا يرفضه العامل بدل أن يقصّه بصمت.<span class="tag">من README</span></li>
+<li>خادم محلي فقط مع تحقق من المضيف والأصل وترويسات CSP.<span class="tag">متحقق</span></li>
+</ul></section>
+
+<section class="q w"><h3>نقاط الضعف</h3><ul>
+<li>اعتماد على Cairo غير مثبت دائمًا؛ يعمل الآن بمسار مؤقت من PostgreSQL فقط، وإلا تفشل 10 من 24 اختبار دقة.<span class="tag">متحقق</span></li>
+<li>التوليد يعيد رسم الصورة ولا ينسخها؛ الملامح والتفاصيل تتغير ولا يوجد مفتاح لقوة التحويل في النسخة المقطّرة.<span class="tag">متحقق</span></li>
+<li>اختبارات الدقة لا تعمل في CI على ويندوز، وتشغَّل على لينكس فقط.<span class="tag">متحقق</span></li>
+<li>لم يُختبر تثبيت نظيف على جهاز آخر ولا يوجد ملف قفل كامل للتبعيات.<span class="tag">من README</span></li>
+<li>جذر المجلد مزدحم بنحو 100 ملف يخلط الشيفرة بسجلات وسجلات تشغيل ولقطات.<span class="tag">متحقق</span></li>
+<li>أوزان BiRefNet مفقودة، فإزالة الخلفية على الكرت لا تعمل.<span class="tag">متحقق</span></li>
+<li>دقة 1024 وثلاثة مراجع معًا لم تُختبر على هذا الجهاز.<span class="tag">من README</span></li>
+<li>كود مضغوط بأسطر طويلة جدًا في الخادم والواجهة يصعّب المراجعة.<span class="tag">استنتاج</span></li>
+</ul></section>
+
+<section class="q o"><h3>الفرص</h3><ul>
+<li>ربط مسارات القلم بالليزر أو بطابعة xTool P2S؛ وثائق البحث موجودة في <bdi>docs/xtool-p2s-research</bdi>.<span class="tag">من الوثائق</span></li>
+<li>تثبيت GTK3 runtime يزيل الاعتماد على PostgreSQL ويجعل مطابقة الحبر تعمل في كل التشغيلات.<span class="tag">متحقق</span></li>
+<li>معاينة WebGPU لتدقيق المسارات؛ قياساتها موجودة في مجلد القياس المؤرخ 28 أكتوبر.<span class="tag">من المجلد</span></li>
+<li>نموذج الاعتماد والمراجعة يصلح مرجعًا لبقية تطبيقات المشروع القديمة التي تفتقده.<span class="tag">استنتاج</span></li>
+<li>توحيد المنصات: دمج مسار القديم (8769) ومسار FLUX في تطبيق واحد يقلل التكرار.<span class="tag">استنتاج</span></li>
+</ul></section>
+
+<section class="q t"><h3>التهديدات</h3><ul>
+<li>الاعتماد على Hugging Face لتنزيل الأوزان؛ المراجعات مثبتة لكن إعادة التجهيز تحتاج اتصالًا وسعة 11.3 جيجابايت.<span class="tag">متحقق</span></li>
+<li>ترخيص النموذج والأوزان المكممة لم أراجعه؛ يجب فحصه قبل أي إعادة توزيع أو استعمال تجاري.<span class="tag">لم يُتحقق</span></li>
+<li>إصدارات التبعيات المثبتة حديثة (transformers 5 وdiffusers 0.42) وتعارض حزمًا أخرى في بايثون العام مثل camel-tools وPaddleX.<span class="tag">متحقق</span></li>
+<li>اعتماد على جهاز واحد وعتاد واحد (كرت 8 جيجابايت)؛ لا بديل عند تعطله أو تغيّر برامج التشغيل.<span class="tag">استنتاج</span></li>
+<li>مجلدات مخرجات متراكمة بلا سياسة احتفاظ (حدث في تريس: 114 مجلدًا).<span class="tag">متحقق</span></li>
+<li>استعمال كثيف لـ <bdi>innerHTML</bdi> في الواجهة؛ ما رأيته قوالب ثابتة، لكن لم أتتبع كل مسار إدخال.<span class="tag">فحص جزئي</span></li>
+</ul></section>
+</div>
+
+<h2>أولويات مقترحة</h2>
+<table>
+<tr><th>الأولوية</th><th>الإجراء</th><th>يعالج</th></tr>
+<tr><td>1</td><td>تثبيت GTK3 runtime يدويًا</td><td>ضعف Cairo وتهديد حذف PostgreSQL</td></tr>
+<tr><td>2</td><td>مراجعة ترخيص FLUX.2 Klein والأوزان المكممة</td><td>تهديد الترخيص</td></tr>
+<tr><td>3</td><td>تجربة تثبيت نظيف وتوليد ملف قفل للتبعيات</td><td>ضعف قابلية النقل</td></tr>
+<tr><td>4</td><td>اختبار دقة 1024 وثلاثة مراجع على الجهاز</td><td>ضعف الحدود غير المختبرة</td></tr>
+<tr><td>5</td><td>سياسة احتفاظ لمجلدات المخرجات وتنظيف الجذر</td><td>ضعف الازدحام وتهديد التراكم</td></tr>
+<tr><td>6</td><td>مراجعة مسارات <bdi>innerHTML</bdi> ضد نص مُدخل</td><td>تهديد أمني محتمل</td></tr>
+</table>
+</main>
+</body>
+</html>
