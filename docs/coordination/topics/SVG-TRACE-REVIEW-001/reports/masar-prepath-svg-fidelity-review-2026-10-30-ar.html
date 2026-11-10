@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="description" content="مراجعة تقنية لمطابقة الرسم المتجهي قبل حساب مسارات القلم، مع تدقيق FLUX ومهارة Trace وخوارزميات الحواف والعتاد.">
+<title>مراجعة ما قبل المسارات · SVG وTrace · مسار</title>
+<style>
+:root{--ink:#122d36;--muted:#4d626a;--paper:#f3f6f5;--card:#fff;--line:#d4dfdc;--teal:#087f78;--teal-soft:#e0f3ed;--amber:#8a5710;--amber-soft:#fff2d8;--red:#a33b35;--red-soft:#fae8e4;--blue:#385e87;--blue-soft:#e8eef6;--shadow:0 14px 38px #102b3210;--focus:#d28a26}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:18px}body{margin:0;background:var(--paper);color:var(--ink);font-family:"Dubai","Noto Sans Arabic","Segoe UI",Tahoma,sans-serif;line-height:1.8}a{color:#075f5a;text-decoration-thickness:1px;text-underline-offset:3px}a:hover{color:#063e3a}a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.skip{position:absolute;top:-60px;right:16px;background:#fff;padding:10px 14px;border-radius:8px;z-index:5}.skip:focus{top:10px}.wrap{max-width:1280px;margin:auto;padding:28px}.hero{background:#12353b;color:#f2fbf8;border-radius:24px;padding:34px 40px;position:relative;overflow:hidden;box-shadow:var(--shadow)}.hero:after{content:"";position:absolute;width:380px;height:380px;border:1px solid #ffffff22;border-radius:50%;left:-110px;top:-190px;box-shadow:0 0 0 26px #ffffff08,0 0 0 56px #ffffff05;pointer-events:none}.eyebrow{color:#9ce1d1;font-size:.9rem}.hero h1{font-size:clamp(2rem,4.2vw,3.25rem);line-height:1.22;margin:.4em 0}.hero p{max-width:850px;color:#d8e9e5;margin:.5em 0 1.2em}.pills{display:flex;gap:8px;flex-wrap:wrap}.pill{border:1px solid #ffffff45;border-radius:999px;padding:4px 12px;font-size:.9rem}.verdict{margin:18px 0 0;background:#e3f3ed;color:#12353b;border-radius:12px;padding:14px 18px;font-weight:700}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}.stat,.card,.panel,.toc{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}.stat{padding:16px 18px}.stat strong{display:block;font-size:1.35rem;color:var(--teal);direction:ltr;text-align:right}.stat span{font-size:.9rem;color:var(--muted)}.layout{display:grid;grid-template-columns:248px minmax(0,1fr);gap:18px;align-items:start}.toc{position:sticky;top:12px;padding:16px}.toc strong{display:block;margin:0 0 8px}.toc a{display:block;padding:5px 0;color:var(--muted);text-decoration:none;border-bottom:1px solid #edf1ef}.toc a:last-child{border-bottom:0}.content{min-width:0}.panel{padding:24px;margin-bottom:16px;scroll-margin-top:15px}.panel h2{font-size:1.45rem;line-height:1.4;margin:0 0 10px}.panel h3{font-size:1.08rem;margin:1.1em 0 .4em}.lead{font-size:1.06rem}.note{border-right:4px solid var(--teal);padding:10px 14px;background:#edf7f3;border-radius:8px}.warn{border-right-color:#d28a26;background:var(--amber-soft)}.bad{border-right-color:var(--red);background:var(--red-soft)}.good{border-right-color:var(--teal);background:var(--teal-soft)}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;margin:12px 0}table{border-collapse:collapse;width:100%;min-width:700px;background:#fff}caption{text-align:right;padding:10px 13px;color:var(--muted);font-size:.9rem}th,td{text-align:right;vertical-align:top;padding:11px 13px;border-bottom:1px solid var(--line)}th{background:#eaf2ef;font-weight:700}tbody tr:last-child td{border-bottom:0}.tag{display:inline-block;border-radius:6px;padding:1px 8px;font-size:.82rem;font-weight:700;white-space:nowrap}.p1{background:var(--red-soft);color:var(--red)}.p2{background:var(--amber-soft);color:var(--amber)}.p3{background:var(--blue-soft);color:var(--blue)}.ok{background:var(--teal-soft);color:#075e57}.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{padding:17px}.card h3{margin:0 0 6px}.card p:last-child{margin-bottom:0}.score{font-size:1.6rem;color:var(--teal);font-weight:800;direction:ltr;display:inline-block}.small{font-size:.92rem;color:var(--muted)}code{font-family:Consolas,"Cascadia Code",monospace;font-size:.9em;direction:ltr;unicode-bidi:isolate;background:#f0f3f2;padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}.path{direction:ltr;unicode-bidi:isolate;display:inline-block}.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}.flow div{padding:14px;border:1px solid var(--line);background:#f9fbfa;border-radius:12px}.flow b{display:block;color:var(--teal)}ol,ul{padding-right:1.35em}li{margin:.28em 0}.footer{color:var(--muted);font-size:.9rem;padding:10px 4px 34px}.flag{font-weight:750;color:var(--red)}@media(max-width:920px){.layout{grid-template-columns:1fr}.toc{position:static}.toc nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.wrap{padding:12px}.hero{padding:25px 22px;border-radius:17px}.panel{padding:18px}.two,.flow{grid-template-columns:1fr}.toc nav{grid-template-columns:1fr 1fr}.stats{gap:8px}.stat{padding:13px}.stat strong{font-size:1.15rem}table{min-width:680px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}@media print{body{background:#fff;color:#111;font-size:10.5pt}.wrap{max-width:none;padding:0}.hero{background:#12353b!important;color:#fff!important;box-shadow:none;print-color-adjust:exact;-webkit-print-color-adjust:exact}.hero:after,.toc{display:none}.layout{display:block}.panel,.stat,.card{box-shadow:none;break-inside:avoid}.panel{padding:16px;margin:0 0 10px}.stats{grid-template-columns:repeat(4,1fr)}.table-wrap{overflow:visible}table{min-width:0;font-size:9pt}th,td{padding:6px 8px}a{color:#075f5a}.footer{padding-bottom:0}}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">انتقل إلى محتوى التقرير</a>
+<div class="wrap">
+<header class="hero">
+ <span class="eyebrow">مراجعة تقنية · مسار · 30 أكتوبر 2026</span>
+ <h1>من الصورة المدخلة إلى SVG<br>قبل حساب مسارات القلم</h1>
+ <p>فحصٌ مركز للمطابقة الهندسية، مكتبة Trace المثبتة، خوارزميات الحواف، برومبتات FLUX وتحكم النموذج، الاعتماديات المحلية والعتاد. اعتبرت أن ملف SVG الوسيط هو المرجع الذي ستُشتق منه المسارات لاحقًا.</p>
+ <div class="pills"><span class="pill">مراجعة المصدر والقياسات</span><span class="pill">تجربة نموذج محلي واحدة</span><span class="pill">اختبار مهارة Trace الفعلية</span><span class="pill">لا تعديل على كود التطبيق</span></div>
+ <div class="verdict"><b>الحكم للطلب المحدد:</b> Masar لا يملك حاليًا مرحلة SVG مرئية بين اعتماد الصورة وحساب المسارات. الجاهزية لهذا المتطلب <span class="score">2 / 10</span>. هذا تقييم نقص المرحلة المطلوبة، وليس تقييمًا لكل المنصة. بُني على أربعة محاور: وجود المرحلة الوسيطة، صحة نوع المتجه، قياس هندسي مباشر، وإمكان مراجعة النتيجة قبل الحساب؛ الموجود الآن اعتماد للصورة ومراجعة للمسارات بعد الحساب فقط.</div>
+</header>
+
+<div class="stats" aria-label="ملخص القياسات">
+ <div class="stat"><strong>33.8 s</strong><span>توليد FLUX · 512×512 · CUDA</span></div>
+ <div class="stat"><strong>2.08 s</strong><span>Trace على رسم 158×200 · شامل الرندر</span></div>
+ <div class="stat"><strong>98.81%</strong><span>IoU للمحيط الخارجي بعينة Trace الهندسية</span></div>
+ <div class="stat"><strong>70 / 70</strong><span>اختبارات Python وNode المستهدفة نجحت</span></div>
+</div>
+
+<div class="layout">
+<aside class="toc" aria-label="فهرس التقرير"><strong>فهرس المراجعة</strong><nav>
+ <a href="#meaning">ما الذي تعنيه المطابقة؟</a><a href="#current">مسار Masar الحالي</a><a href="#model">النموذج والبرومبتات</a><a href="#trace">مهارة Trace</a><a href="#edges">مختبر الحواف</a><a href="#evidence">مقارنات fidelity</a><a href="#hardware">العتاد والزمن</a><a href="#risks">النتائج حسب الأولوية</a><a href="#gates">بوابات القبول المقترحة</a><a href="#tests">الاختبارات والحدود</a><a href="#sources">ملفات الأدلة</a>
+</nav></aside>
+
+<main class="content" id="content">
+<section class="panel" id="meaning">
+ <h2>1. المطابقة المطلوبة ثلاث مسائل مستقلة</h2>
+ <p class="lead">عند تحويل صورة إلى حواف، ثم إلى SVG، ثم إلى حركة ليزر أو ذراع، لا يمكن استخدام رقم واحد اسمه «نسبة التطابق» للحكم على المراحل كلها.</p>
+ <div class="flow" aria-label="مراحل التحقق"><div><b>أ · الصورة ← الرسم الخطي المعتمد</b>حفظ هوية الموضوع والعناصر المهمة قرار بصري/تحريري. تحويل صورة فوتوغرافية إلى حواف يغيّرها بطبيعته.</div><div><b>ب · الرسم الخطي ← SVG</b>هنا يجب أن يحافظ المتجه على الرسم الوسيط نفسه: الحواف والثقوب والمكونات ومواقعها، بعد تعريف مقياس البكسل إلى المليمتر.</div><div><b>ج · SVG ← خطة الآلة</b>تحقق مستقل من الأبعاد والتحويلات وترتيب الهندسة وعدم إسقاط/إضافة نقاط أو مسارات في الاستيراد اللاحق.</div></div>
+ <p class="note warn"><b>نتيجة حاسمة:</b> إذا كان المدخل صورة فوتوغرافية، فالـSVG لا يمكن أن يكون «مطابقًا لكل بكسل» وفي الوقت نفسه رسماً خطيًا بسيطًا. يجب أولًا اعتماد صورة الحواف/الخطوط المقصودة؛ بعد ذلك نقيس مدى محافظة SVG على تلك الصورة المعتمدة. مطابقة المصدر الفوتوغرافي ومطابقة الرسم الوسيط معياران مختلفان.</p>
+ <p>تطابق الحبر بعد رسم القلم يقيس مقدار المساحة السوداء التي غطاها طرف القلم، ولا يقيس مطابقة الحواف في مواقعها أو هوية الوجه. لتدقيق ما قبل المسارات نحتاج بالإضافة إليه مقارنة حدود الرسم المتجهي بمصدره بدقة تحويل معلومة إلى mm، وقياس انحراف الحد والملامح المهمة.</p>
+</section>
+
+<section class="panel" id="current">
+ <h2>2. أين يقف التطبيق الحالي؟</h2>
+ <div class="flow"><div><b>1 · إعداد الصورة</b>استيراد أو تحرير اختياري، ثم توليد FLUX اختياري. نتيجة النموذج PNG.</div><div><b>2 · مراجعة واعتماد</b>ينتقل الرسم المعروض نفسه دون نموذج وسيط أو فلتر تلقائي في شاشة الاعتماد.</div><div><b>3 · حساب المسارات</b>بعد الاعتماد يحسب التطبيق مسارات القلم، يعرض محاكاة، ويصدّر SVG للمسارات.</div></div>
+ <p class="note bad"><b>الفجوة البنيوية:</b> لا توجد شاشة أو مخرج SVG للحواف بعد الاعتماد وقبل حساب المسارات. زر SVG الحالي يعمل في المرحلة الثالثة بعد إنشاء الخطة؛ لذلك لا يحقق ترتيب العمل الذي وصفته.</p>
+ <div class="table-wrap"><table><caption>مسؤولية كل جزء في المستودع كما يظهر في المصدر</caption><thead><tr><th scope="col">المكوّن</th><th scope="col">ما يفعله</th><th scope="col">ما لا يفعله</th></tr></thead><tbody>
+ <tr><td><code>flux-studio/app.js</code></td><td>يحكم الانتقال من الصورة المعتمدة مباشرة إلى حساب الخطة؛ اعتماد الصورة شرط دخول المسارات.</td><td>لا ينشئ مرحلة SVG وسيطة قبل الخطة.</td></tr>
+ <tr><td><code>flux-studio/faithful_paths.py</code></td><td>يبدأ من قناع الحبر، يستخرج خطوطًا مركزية، ثم يضيف تعبئات داخلية تراعي قطر القلم لتحسين تغطية الحبر.</td><td>هذه خوارزمية تحويل إلى مسارات؛ ليست مولّد أو معاين SVG للحواف قبل حسابها.</td></tr>
+ <tr><td><code>flux-studio/path_fidelity.py</code></td><td>يعيد رسم المسارات بسماكة القلم ويقيس IoU والاسترجاع والدقة لقناع الحبر.</td><td>ينص المقياس نفسه أن النطاق ليس هوية أو مطابقة ألوان كاملة.</td></tr>
+ <tr><td><code>drawing-simulator/image-editor.js</code></td><td>يوفر تحريرًا نقطيًا: رمادي، حدة، تمويه، تنظيف، أسود/أبيض، عكس، إزالة خلفية، قص وطبقات.</td><td>لا يحتوي على تحويل محارف ASCII أو كرتون حتمي أو محرك vectorization للحواف.</td></tr>
+ </tbody></table></div>
+ <p class="small">مراجع المصدر: <a href="../../../../../flux-studio/app.js">app.js</a>، <a href="../../../../../flux-studio/faithful_paths.py">faithful_paths.py</a>، <a href="../../../../../flux-studio/path_fidelity.py">path_fidelity.py</a>، <a href="../../../../../drawing-simulator/image-editor.js">image-editor.js</a>.</p>
+</section>
+
+<section class="panel" id="model">
+ <h2>3. FLUX والبرومبتات والتحكم</h2>
+ <p>النموذج المحلي هو <b>FLUX.2 Klein 4B Q5_K_M</b>. واجهة البرومبت واضحة وقابلة للفحص: 24 قالبًا، وصف نهائي يراه المستخدم، 8 مجموعات توجيه نصية، 3 مفاتيح «حاول الحفاظ على…»، بذرة، 3 دقات (512/768/1024)، 6 نسب إخراج، حتى مرجعين إضافيين بأدوار محددة، وسجل جلسة بحد أقصى 8 نتائج. يرفض العامل البرومبت الذي يتجاوز 512 رمزًا ولا يقصه بصمت.</p>
+ <div class="table-wrap"><table><caption>ما الذي يتحكم به النموذج بالفعل؟</caption><thead><tr><th scope="col">المتاح</th><th scope="col">طبيعته</th><th scope="col">حده بالنسبة إلى الدقة الهندسية</th></tr></thead><tbody>
+ <tr><td>القالب والوصف الحر، تفاصيل/ظل/شعر/خلفية/إضاءة/خطوط/ملابس/ألوان</td><td>كلها نص يضاف إلى البرومبت النهائي.</td><td>ليست قيودًا على نقاط أو حواف. لا يوجد قفل هندسي أو خريطة حواف ملزمة.</td></tr>
+ <tr><td>حفظ الهوية والوضعية والملابس</td><td>توجيه لغوي يحاول النموذج اتباعه.</td><td>ليس ضمانًا حسابيًا؛ لا يوجد قياس تشابه وجه في المسار.</td></tr>
+ <tr><td>البذرة والدقة والنسبة</td><td>متحكمات فعلية للطلب. النسبة تطلب تكوينًا جديدًا ولا تقص الصورة الأصلية.</td><td>البذرة تساعد مقارنة الإعدادات؛ لا تجعل الناتج نسخة هندسية من المدخل.</td></tr>
+ <tr><td>ControlNet/LoRA/قوة img2img/negative prompt</td><td>غير موجودة في هذا التنفيذ.</td><td>مفاتيح API المجهولة تُرفض بدل قبول تحكم غير مدعوم.</td></tr>
+ </tbody></table></div>
+ <p>القوالب الفنية تشمل الكرتون المسطح، الكاريكاتير، الرصاص، الحبر وغسلات، الغواش والماء، إلى جانب رسم القلم. هذه أوضاع <b>إعادة تفسير مولّدة</b>؛ لا تحافظ على البكسل أو المسار. لا يوجد قالب مُهيكل لتحويل الصورة إلى فسيفساء محارف/ASCII؛ يمكن كتابة طلب كهذا في الوصف الحر، لكن الناتج سيكون صورة مولّدة لا حروفًا مضمونة قابلة للقراءة هندسيًا. وللتعبير عن المحارف بدقة يلزم محرّك glyph/raster مستقل، وهو غير موجود في الكود الحالي.</p>
+ <h3>تجربة محلية لهذا الفحص</h3>
+ <p>شغّلت قالب «خطوط قلم نظيفة» على رسم FLUX التجريبي المرفق، لا على صورة شخصية للمستخدم: خرج 512×512، 4 خطوات مكتملة، 154 رمزًا، CUDA، 33.8 ثانية، وتخصيص PyTorch أقصى 3765 MiB. المعاينة أظهرت اختلافات مرئية في الشعر والفم وتفاصيل الوجه عن المصدر. النتيجة بقيت مرشحًا للمراجعة ولم أوافقها إلى المسارات. هذا يبرهن تشغيل النموذج وسرعته على هذه العينة، ولا يثبت معدل حفظ هوية عام.</p>
+ <p class="note">لأعلى دقة في المصدر: لا تجعل FLUX المصدر المرجعي الإلزامي. اعرضه كخيار إبداعي فقط؛ أما مسار المحافظة على المصدر فيجب أن يكون منفصلًا، حتميًا قدر الإمكان، مع اعتماد الإنسان للرسم الخطي قبل تحويله إلى SVG.</p>
+ <p class="small">الدليل: <a href="../../../../../flux-studio/flux-catalog.json">مكتبة القوالب</a>، <a href="../../../../../flux-studio/generation.py">التحقق وبناء البرومبت</a>، <a href="../../../../../flux-studio/generation_service.py">تشغيل النموذج وإعداداته</a>، <a href="../../../../../flux-studio/README.md">توثيق المنصة</a>.</p>
+</section>
+
+<section class="panel" id="trace">
+ <h2>4. مهارة Trace المثبتة: أين تفيد وأين لا؟</h2>
+ <p>تحققت من المهارة الحقيقية <code>trace-mascot-svg 0.1.0</code> المثبتة على الجهاز، ومن التطبيق المنفصل الذي يستدعيها في WSL. ليست تسمية بديلة لخوارزمية OpenCV: المهارة تستخدم libpotrace لملاءمة الحدود بمنحنيات Bézier، ثم Inkscape لرندر SVG الفعلي. تنتج SVG نهائيًا بلا صورة نقطية، وملفًا رئيسيًا بطبقات رمادية مع PNG مرجعي مخفي ومقفل.</p>
+ <div class="table-wrap"><table><caption>نتيجة تشغيل المهارة على رسم الاختبار الشفاف أحادي اللون المرفق</caption><thead><tr><th scope="col">القياس</th><th scope="col">النتيجة</th><th scope="col">التفسير</th></tr></thead><tbody>
+ <tr><td>المصدر</td><td>158×200 بكسل، alpha حقيقي، أحادي اللون.</td><td>ملائم لشروط الإدخال؛ ليس صورة فوتوغرافية.</td></tr>
+ <tr><td>المخرج والزمن</td><td>SVG خالص، 28 طبقة فعلية، 422 مقطع Bézier، 21,097 بايت، 2.08 ثانية.</td><td>الزمن يشمل استدعاء WSL والرندر على هذه العينة الصغيرة.</td></tr>
+ <tr><td>IoU</td><td>98.81%</td><td>المقارنة للمحيط الخارجي فقط؛ لا تقيس صحة كل حافة داخلية أو هوية الوجه.</td></tr>
+ <tr><td>التحقق</td><td>10 اختبارات لواجهة المهارة، بينها تشغيل الأوضاع التسعة الحقيقية والرندر.</td><td>الاختبار يحافظ على فراغ العين في رسم السن، ولا يثبت تعميم الجودة على صور أخرى.</td></tr>
+ </tbody></table></div>
+ <p class="note warn"><b>ملاءمتها:</b> خيار قوي لتجسيم رسم شفاف، أحادي اللون، وحدوده مغلقة أو مناطق الحبر المقصودة. أما إخراجها اللوني فهو طبقات تعبئة/حدود متداخلة، وليس تلقائيًا خطًا مركزيًا واحدًا. تمرير كل حدّ تعبئة إلى ذراع قلم قد يرسم حدودًا مزدوجة/داخلية كثيرة؛ وقد يكون مناسبًا لبعض صور النقش، لكنه ليس مكافئًا لمسار قلم اقتصادي. لا تقبلها كدخل مباشر للمسارات حتى يُختبر هذا المعنى صراحة.</p>
+ <p>تطبيق Trace يطلب alpha حقيقيًا ومدخل PNG رماديًا غير ملوّن. تجهيز الصورة وإزالة الخلفية عملية مستقلة: BiRefNet محليًا، أو إزالة لون خارجي متصل بالحواف، ثم تسوية رمادية واعتماد بشري. لا توجد فيه أداة AI ترسم حواف الصورة أو تصلح الوجه؛ ملف الإعداد لا يزيل الخلفية دلاليًا، ولا يجوز اعتبار حدود silhouette دليل تشابه وجه.</p>
+ <p class="small">استخدمت المهارة على عينة الاختبار المرفقة فقط. قرأت <a href="file:///C:/Users/mesue/.codex/plugins/cache/created-by-me-remote/trace-mascot-svg/0.1.0/skills/trace-mascot-svg/SKILL.md">تعليمات Trace</a> ومرجع <a href="file:///C:/Users/mesue/.codex/plugins/cache/created-by-me-remote/trace-mascot-svg/0.1.0/skills/trace-mascot-svg/references/method.md">المنهج والقيود</a>. مسارات المستودع: <a href="../../../../../trace-studio/processing.py">processing.py</a> و<a href="../../../../../trace-studio/preparation.py">preparation.py</a> و<a href="../../../../../trace-studio/README.md">README</a>.</p>
+</section>
+
+<section class="panel" id="edges">
+ <h2>5. مختبر الحواف الموجود وخيارات الصورة</h2>
+ <p>يوجد تطبيق <code>edge-studio</code> مستقل بستة كواشف: Canny وEdgeDrawing وSobel وScharr وLaplacian والتدرج المورفولوجي. فيه قنوات وتجهيز وضوضاء وعمليات إغلاق/فتح وترقيق وسماكة، و52 تفضيلًا مضبوطًا حسب الكاشف. نجحت 18 وحدة اختبار ومرّت جميع الـ52 إعدادًا في اختبار preset.</p>
+ <p>هذا ينتج <b>صورة حواف PNG</b> فقط، لا SVG. هو حتمي نسبيًا وقابل للضبط، لكنه لا يعرف معنى العين أو الظل أو الشعر: يستطيع التقاط نسيج وظلال متعددة أو إسقاط تفاصيل صحيحة حسب العتبة والفتح والحذف. كما أن Canny على حدّ جسم ذي سماكة قد يرسم جانبي الحدّ، فينتج خطين متوازيين بدل خط تصميم واحد. لذلك لا يكفي توصيل هذه الصفحة بمسار قلم من دون اختيار تمثيل الخط/المحيط ومراجعة عينة فعلية.</p>
+ <p>المحرر الحالي يقدم كرتونًا كقالب FLUX فقط. مرشحات التحرير النقطية لا تشمل كرتونًا حتميًا أو محارف ASCII. في مشروع سابق، مقارنة كشف الحواف على رسم صناعي صغير أظهرت أن تتبع الحواف أعطى 16 خطًا مقابل 10 متوقعة وبطول 2.124×؛ الترقيق المركزي أعطى 10/10، وPrecision 100% وRecall 99.953% ضمن سماحية 2px. هذا اختبار شكل صناعي، لا صورة وجه أو أداء ذراع.</p>
+ <p class="small">الدليل: <a href="../../../../../edge-studio/README.md">تعريف الأدوات والحدود</a>، <a href="../../../../../edge-studio/processing.py">كود المعالجة</a>، <a href="../../../../../drawing-simulator/reference-benchmark/report-ar.html">مقارنة edge مقابل centerline</a>.</p>
+</section>
+
+<section class="panel" id="evidence">
+ <h2>6. ماذا تثبت صور المقارنة ومقاييس fidelity؟</h2>
+ <div class="two">
+  <article class="card"><h3>15 زوج استخراج من رسوم FLUX</h3><p>المسار المباشر كان أسرع في 12/15، ووسيط الوفر لصالحه 17.3%. تختلف الاستجابة بين الوجه الأمامي والجانبي والقطة والشخصية والغرض؛ الرصاص الخافت قد يخفي خطوطًا أصلية تحت العتبة، والنموذج الوسيط قد يضيف تقطيعًا. هذه مقارنة إعدادات على صور مولّدة، لا قياس حفظ صورة فوتوغرافية.</p></article>
+  <article class="card"><h3>تدقيق 15 صورة لمطابقة مساحة الحبر</h3><p>IoU المباشر بين 93.81% و98.92%، والوسيط 97.17%. التعريف يقارن قناع الحبر مع إعادة رسم footprint لقلم ثابت. المصدر بقي دون تغيير في الحالات الـ15. هذا يثبت جودة تغطية الحبر ضمن العينات، لا تطابق الوجه ولا fidelity SVG قبل المسارات.</p></article>
+ </div>
+ <p>تجربة مسافات التعبئة على صورة 1024×1024 واحدة سجلت baseline IoU 93.94%، Recall 98.47%، 13,822 مسارًا و13.159 ثانية عند spacing=0.8. زيادة المسافة إلى 1.5 رفعت سرعة هذه العينة إلى 10.326 ثانية لكن خفضت IoU إلى 85.77% وRecall إلى 89.91%. التجربة معلّمة بأنها غير مطبقة على الإعداد الافتراضي؛ لا يوجد مبرر لتفعيلها عمومًا.</p>
+ <p class="note bad"><b>سلامة مرجع القياس:</b> سجل التجربة نفسه يضع <code>exportReferenceHashMatchesImageData=false</code>، كما أن SHA-256 لمرجع التصدير يختلف عن SHA-256 المصدر المسجل. نتيجة فحص التصدير 77.66% لذلك لا أفسرها كفشل مؤكد أو نجاح مؤكد لنفس الصورة؛ يجب ربط صورة المرجع بالتصدير الصحيح قبل استخدامها كحكم.</p>
+ <p class="small">الأدلة: <a href="../../../../../flux-studio/comparison-review/index.html">مقارنة 15 تجربة</a>، <a href="../../../../../flux-studio/fidelity-review/index.html">تقرير fidelity</a>، <a href="../../../../../flux-studio/path-optimization-experiment-2026-10-28/results.json">بيانات تجربة المسافات</a>، <a href="../../../../../flux-studio/pipeline-audit/review-results.json">تدقيق SVG سابق</a> (1168 مسارًا، IoU 97.87% واختبارات قديمة 117؛ ليس تحققًا من ذراع فعلي).</p>
+</section>
+
+<section class="panel" id="hardware">
+ <h2>7. المكتبات والعتاد والزمن</h2>
+ <div class="table-wrap"><table><caption>لقطة البيئة على الجهاز الذي شغّل مسار العمل المحلي</caption><thead><tr><th scope="col">المورد</th><th scope="col">القراءة</th><th scope="col">استخدامه هنا</th></tr></thead><tbody>
+ <tr><td>المعالج والذاكرة</td><td>Intel Core i7-13650HX، 14 نواة/20 خيطًا؛ RAM مرئية 31.7 GiB وكان المتاح 8.7 GiB وقت اللقطة.</td><td>معالجة الصور/التهيئة وبعض أعمال WSL وInkscape.</td></tr>
+ <tr><td>بطاقة NVIDIA</td><td>RTX 4060 Laptop، VRAM 8188 MiB.</td><td>FLUX وBiRefNet لإزالة الخلفية. توليد العينة الحالية خصص PyTorch حتى 3765 MiB.</td></tr>
+ <tr><td>حالة البطاقة بعد التوليد</td><td>53°C، 4W، 80 MiB و0% استخدام في لقطة nvidia-smi؛ RAM المتاحة 12.7 GiB من 31.7.</td><td>قراءة خمول بعد انتهاء العملية؛ العامل المنفصل حرر ذاكرة النموذج.</td></tr>
+ <tr><td>بيئة FLUX</td><td>Python 3.12.10، Torch 2.6.0+cu124 / CUDA runtime 12.4، Diffusers 0.42.0، Transformers 5.21.0، Accelerate 1.15.0، GGUF 0.19.0.</td><td>أوزان Q5_K_M محلية؛ الأربع خطوات والتوجيه 1 ثابتان في عامل الخدمة.</td></tr>
+ <tr><td>معالجة/تدقيق</td><td>OpenCV 4.10.0، NumPy 2.4.6، Pillow 12.1.1، CairoSVG 2.9.0؛ ONNX Runtime 1.31.0.</td><td>عتبات وحواف ورسم footprint؛ BiRefNet GPU في بيئته المستقلة.</td></tr>
+ </tbody></table></div>
+ <p>زمن التوليد الفعلي لهذا الفحص <b>33.8 ثانية عند 512px</b>. قياس Trace <b>2.08 ثانية عند 158×200</b> على رسم بسيط. لا تقارن الرقمين مباشرة: الأول انتشار صور GPU، والثاني تتبع حدود/raster render CPU مع بدء WSL. سجل العامل فيه تحذير واحد: <code>force_upcast=True</code> الممرر إلى <code>AutoencoderKLFlux2</code> غير مدعوم ويُتجاهل؛ لم يمنع تحميل النموذج أو التوليد، لكنه يستحق مطابقة إعداد VAE مع إصدار Diffusers قبل الاعتماد العددي. لا يوجد قياس كافٍ لمتوسط 768/1024، أو صور عالية التفاصيل، أو ضغط متكرر/حراري، أو سرعة آلة فعلية. الإعداد المحلي يوثق أيضًا حد 1024 كخيار، لكن لم أجربه في هذه الجولة.</p>
+</section>
+
+<section class="panel" id="risks">
+ <h2>8. النتائج مرتبة حسب أثرها على طلبك</h2>
+ <div class="table-wrap"><table><caption>المسائل التي تمنع الادعاء بأن SVG وسيطًا مطابقًا جاهز حاليًا</caption><thead><tr><th scope="col">الأولوية</th><th scope="col">النتيجة</th><th scope="col">الأثر</th><th scope="col">ما يلزم</th></tr></thead><tbody>
+ <tr><td><span class="tag p1">P1 · مانع</span></td><td>لا توجد مرحلة SVG قبل حساب المسارات.</td><td>لا يمكن للمستخدم اعتماد/رفض شكل SVG قبل أن يتحول إلى ضربات.</td><td>إضافة حالة وواجهة output صريحة بين اعتماد الصورة وتخطيط القلم.</td></tr>
+ <tr><td><span class="tag p1">P1 · جوهري</span></td><td>FLUX يولّد إعادة تفسير نصية.</td><td>انحراف الملامح والخطوط ينتقل مباشرة إلى النتيجة اللاحقة، والبذرة لا تقفل الشكل.</td><td>افصل مسار المحافظة الحتمي عن المسار الفني التوليدي، واعرض مقارنة الأصل دائمًا.</td></tr>
+ <tr><td><span class="tag p1">P1 · مقياس ناقص</span></td><td>IoU الحالي لمساحة حبر القلم فقط.</td><td>قد تكون المساحة قريبة مع حواف مزاحة أو وجه متغير.</td><td>أضف boundary-F1/Chamfer أو Hausdorff95 بوحدات pixel ثم mm، ودقة محلية للملامح الحرجة.</td></tr>
+ <tr><td><span class="tag p2">P2 · معنى الهندسة</span></td><td>Trace يبني حدود مناطق رمادية ممتلئة.</td><td>استخراج كل حد كخط قلم قد يضاعف عدد الخطوط.</td><td>لا تخلطه مع skeleton/centerline؛ اختبر أنواع SVG كـstroke أو filled contour بحسب الغرض.</td></tr>
+ <tr><td><span class="tag p2">P2 · بيانات</span></td><td>إحدى نتائج تحسين التصدير تشير إلى hash مرجع غير مطابق.</td><td>أرقام هذه النتيجة لا تثبت مقارنة المصدر/التصدير الصحيح.</td><td>إعادة ربط hash الإدخال بالصورة المعتمدة والتصدير، ثم إعادة audit مستقل.</td></tr>
+ <tr><td><span class="tag p3">P3 · آلة</span></td><td>لم يجر اختبار CAM أو ليزر أو ذراع فعلي.</td><td>توقيت المحاكاة ليس معايرة سرعة/تسارع أو دقة تنفيذ.</td><td>عقد هندسي واختبار round-trip منفصل، ثم تحقق آمن من جهة مالك الآلة.</td></tr>
+ </tbody></table></div>
+ <p class="small">شرط الخطأ الهندسي ≤0.01 mm وفرق أبعاد CAM ≤±0.5 mm وصفر عناصر ناقصة/زائدة محفوظ في سجل المشروع كمعيار SVG/استيراد؛ يجب تطبيقه في نطاقه الصحيح، لا الخلط بينه وبين استعادة وجه من صورة أو مقياس IoU للصورة.</p>
+</section>
+
+<section class="panel" id="gates">
+ <h2>9. البنية المقترحة لبوابات ما قبل المسارات</h2>
+ <ol>
+  <li><b>بوابة الرسم الخطي:</b> الأصل محفوظ، مع معاينة جانبية/تراكب للنسخة الخطية. الخيارات: حواف حتمية، صورة فنية مولدة، أو صورة Trace شفافة أحادية اللون. يكتب مصدر النتيجة بوضوح.</li>
+  <li><b>اعتماد الرسم الوسيط:</b> فحص يدوي مكبّر للعين/الفم/التقاطعات، كشف الحواف الناقصة أو الزائدة، وتنبيه للكثافة والمسارات الأصغر من قطر القلم. لا تنتقل الصورة تلقائيًا إلى تخطيط القلم.</li>
+  <li><b>بوابة SVG:</b> ملف خالص لا يتضمن raster إلا إذا سُمّي ذلك صراحة؛ validate XML/viewBox/units/transforms/bounds. اعرض SVG المرندر فوق صورة الخط المعتمدة، مع boundary metrics وmm لكل مقياس. أي تغيير يبطل الموافقة والقياس القديمين.</li>
+  <li><b>بوابة هندسة الآلة:</b> احتفظ بمعنى كل مسار (stroke centerline أو closed filled contour)، واستبعد ترتيب الليزر/القدرة/سرعته من geometry SVG. تحقق من التحويل إلى mm، الدقة، حدود العمل، والتصدير/CAM منفصلًا.</li>
+ </ol>
+ <p class="note good"><b>توصية التوظيف:</b> FLUX للأثر الفني الاختياري فقط؛ OpenCV لإنتاج بدائل حواف قابلة للمراجعة عندما يكون الحفاظ على المصدر أولوية؛ Trace لصورة شفافة mono عندما يكون المطلوب تتبع مناطقها كمنحنيات Bézier. ولا يُختار بينهم آليًا باسم «أفضل نموذج» قبل تعريف نوع الهندسة التي ستنفذها الآلة.</p>
+</section>
+
+<section class="panel" id="tests">
+ <h2>10. التحقق المنفذ وحدوده</h2>
+ <div class="table-wrap"><table><caption>الاختبارات في هذه الجولة بتاريخ 30 أكتوبر 2026</caption><thead><tr><th scope="col">المجال</th><th scope="col">النتيجة</th><th scope="col">ما يغطيه</th></tr></thead><tbody>
+ <tr><td>Trace skill</td><td><span class="tag ok">10/10</span></td><td>الأوضاع التسعة على المهارة الحقيقية والرندر، alpha، المساحات السالبة، رفض الصورة المعتمة/الملونة.</td></tr>
+ <tr><td>تجهيز Trace</td><td><span class="tag ok">14/14</span></td><td>إزالة الخلفية الموكّلة في الاختبارات، حفظ alpha، الألوان، العتبات، الحدود والكاش؛ لم أشغّل إزالة خلفية صورة شخصية.</td></tr>
+ <tr><td>كواشف Edge</td><td><span class="tag ok">18/18</span></td><td>الكواشف الستة والفلاتر والعتبات والشفافية والـ52 preset.</td></tr>
+ <tr><td>Masar fidelity</td><td><span class="tag ok">11/11</span></td><td>قناع الحبر، حدود التعقيد، سماكة القلم، WebGPU reference، المساحات واللون.</td></tr>
+ <tr><td>Node: أساس + مطابقة prompts</td><td><span class="tag ok">17/17</span></td><td>تدفق الموافقات، صلاحية الخطة، SVG النهائي، parity بين برومبت المتصفح والعامل لجميع القوالب.</td></tr>
+ <tr><td>تدفقات واجهة مستقلة</td><td><span class="tag ok">4/4 scripts</span></td><td>Trace workflow/preparation وEdge workflow/presets؛ جميعها أعادت PASS.</td></tr>
+ <tr><td>تشغيل حقيقي لهذا الفحص</td><td><span class="tag ok">مكتمل</span></td><td>توليد محلي واحد عبر FLUX على عينة الاختبار؛ مرشح غير معتمد وغير مرسل إلى مرحلة المسارات.</td></tr>
+ </tbody></table></div>
+ <p class="note warn"><b>ما لم يثبت:</b> مطابقة صورة فوتوغرافية أرسلها المستخدم، حفظ هوية الوجه رقميًا، كل واحد من 24 قالبًا بتوليد حي، محارف ASCII، دقة FLUX 1024، جهاز ليزر/CAM، أو ذراع تحكم فعلي. لم أرفع ملفات أو أثبت مكتبات؛ لم أعدّل كود التطبيق.</p>
+</section>
+
+<section class="panel" id="live-photo-round">
+ <h2>11. جولة تفاعلية على صورة البورتريه الحالية · 30 أكتوبر 2026</h2>
+ <p>أُجريت الجولة داخل المتصفح المدمج على الصورة المحمّلة <code>pngtree-portrait-of-a-person-png-image_14289687.png</code>. أظهرت شاشة الاعتماد نسخة عمل 2000×2000، مطابقة بصريًا للمدخل المعروض، مع تصريح الواجهة بعدم تطبيق معالجة وسيطة. اعتمدت الصورة من زر التطبيق وانتقلت فعليًا إلى <code>/paths</code>.</p>
+ <div class="table-wrap"><table><caption>إعداد الطلب وما أمكن إثباته من واجهة مسار الحية</caption><thead><tr><th scope="col">البند</th><th scope="col">المشاهَد</th><th scope="col">الحكم</th></tr></thead><tbody>
+  <tr><td>إعداد الخطة</td><td>مطابقة الحبر بحسب قطر القلم؛ عتبة تلقائية (0)؛ سماكة القلم 0.2 مم؛ ورقة A4 عمودية 210×297 مم؛ هامش 15 مم؛ مساحة الصورة على الورقة 179.8×179.8 مم؛ دقة المصدر المحسوبة 282.5 بكسل/بوصة.</td><td>إعدادات افتراضية ظاهرة وليست اختيارًا مُحسّنًا خصيصًا للبورتريه.</td></tr>
+  <tr><td>الطلب الفعلي</td><td>بعد الاعتماد انتقلت الواجهة إلى مسارات القلم، ثم رجعت إلى صفحة الإعداد مع تنبيه صريح: «مساحات الحبر تحتاج تمريرات كثيرة جدًا؛ قلل مساحة التعبئة أو اختر قلمًا أعرض.» مصدر الرسالة هو حاجز في <code>faithful_paths.py</code> يرفض الخطة عندما يتجاوز عمق المساحة الداخلية 64 خطوة تعبئة.</td><td>فشل حساب هذه الصورة بالإعداد الحالي فشلًا متوقعًا من حد التعقيد، لا تعليق متصفح. لم ينتج عدد ضربات أو خطة.</td></tr>
+  <tr><td>المطابقة والتصدير</td><td>لم يظهر عدد الضربات/النقاط أو IoU/Precision/Recall/حدود. زر حفظ SVG بقي معطّلًا، وكذلك تدقيق المطابقة.</td><td>لم يُنتج SVG ولم يُجر تدقيق WebGPU أو CPU. لا يصح اشتقاق تقييم fidelity من مجرد انتقال المرحلة.</td></tr>
+  <tr><td>العتاد</td><td>لم تعرض الواجهة اسم المعالج أو محول الرسوم أو ذاكرتهما أو استهلاكهما أو نوع معالجة هذه العملية. قراءة عملية الخادم أثناء التعليق كانت محدودة وليست قياسًا لعينة العملية.</td><td>لا أنسب العملية إلى CPU أو GPU، ولا أقدم تقدير زمن/استخدام من هذا الرصد.</td></tr>
+ </tbody></table></div>
+ <p class="note warn"><b>سبب التعثر محسوم من الرسالة والكود:</b> مع مساحة عمل تقارب 179.8×179.8 مم وقلم 0.2 مم، تُحوّل دالة التعبئة عرض المناطق السوداء إلى مستويات متتابعة بفاصل مرتبط بقطر القلم. إذا تجاوز أعمق موضع 64 مستوىً، ترفض الخوارزمية بدل إنشاء خطة ضخمة. الصورة الفوتوغرافية ذات المساحات الداكنة العريضة وصلت لهذا الحد. التوجيه المقترح في الرسالة هو تقليل مساحة التعبئة أو اختيار قلم أعرض؛ لم أغيّر الإعدادات أو أعد التشغيل، لذا لا توجد نتيجة مقارنة لتلك البدائل.</p>
+ <p>فصل مشكلة التطبيق عن المتصفح: صفحة localhost استجابت وعرضت تنبيه الخطأ ونقلت الحالة إلى <code>/prepare</code>؛ لا توجد علامة على تعطل محرك المتصفح. لكن واجهة أتمتة Playwright في جلسة المتصفح المدمج ترفض الربط برسالة <code>browser.user is unavailable</code>، بينما بقيت الملاحظة/الصورة قابلة للفحص عبر واجهة Codex المضمنة ولقطات الشاشة. لذلك كان قيد التحكم البرمجي حقيقيًا، لكنه ليس سبب رفض حساب المسارات.</p>
+ <p>عليه تظل نتيجة تقييم ما قبل المسارات 2/10 كما في الخلاصة: غياب مرحلة SVG الوسيطة ما زال قائمًا. الجولة تثبت رفض الخطة الحالية بسبب حاجز 64 مستوى تعبئة، ولا تقدم قياس fidelity أو مخرج SVG. لا تجربة على الليزر أو الذراع، ولا تشغيل فعلي للعتاد.</p>
+</section>
+
+<section class="panel" id="sources">
+ <h2>12. سجل الأدلة المحلي</h2>
+ <ul>
+  <li><a href="../../../../../flux-studio/README.md">توثيق Masar · FLUX</a> · المعمارية وحدود النموذج والتدفق.</li>
+  <li><a href="../../../../../flux-studio/flux-catalog.json">24 قالبًا ومجموعات التوجيه</a>، <a href="../../../../../flux-studio/generation_service.py">إعدادات inference الفعلية</a>.</li>
+  <li><a href="../../../../../trace-studio/README.md">Trace Studio</a> · تكامل المهارة، حدود الشفافية، وملفات SVG.</li>
+  <li><a href="../../../../../edge-studio/README.md">Edge Studio</a> · الطرق الستة والـ52 preset والحدود.</li>
+  <li><a href="../../../../../flux-studio/fidelity-review/audit.json">بيانات قياس الحبر الخام</a> و<a href="../../../../../flux-studio/comparison-review/reviews.json">تحليل المقارنة الخام</a>.</li>
+  <li><a href="../../../../../flux-studio/path-optimization-experiment-2026-10-28/results.json">سجل تحسين spacing واختلاف hash</a>.</li>
+  <li><a href="masar-flux-review-2026-10-29-ar.html">التقرير السابق لمراجعة صفحة FLUX والتدفق الكامل</a>.</li>
+ </ul>
+ <p class="small">هذا تقرير تقييم وتوصية، وليس تكليف تنفيذ أو اعتمادًا صناعيًا. لا توجد موافقة على تشغيل ليزر أو ذراع، ولا على دمج Trace أو تعديل مرحلة التطبيق.</p>
+</section>
+</main>
+</div>
+<footer class="footer">مراجعة محلية مرتبطة بالأدلة المذكورة، بتاريخ قطر 30 أكتوبر 2026. صُممت الصفحة بتخطيط Swiss بسيط: تسلسل واضح، جداول قابلة للتمرير، تباين وتركيز لوحة مفاتيح، وطباعة نظيفة.</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>مراجعة تجربة لوحة استهلاك التوكنز</title>
+  <style>
+    :root{font-family:"Segoe UI",Tahoma,Arial,sans-serif;color:#193247;background:#f3f7fa;line-height:1.7;font-synthesis:none;text-rendering:optimizeLegibility;--ink:#193247;--muted:#526a7b;--teal:#087f8c;--line:#dce6ec;--surface:#fff;--soft:#eaf4f4;--warn:#8b4c16;--warn-bg:#fff3e6;--high:#9b3434;--high-bg:#fff0ef;--shadow:0 12px 32px #17334b0c}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 8% 0%,#d9f0ee 0,transparent 35%),#f3f7fa}.shell{max-width:1120px;margin:auto;padding:32px 22px 54px}.top,.panel,.finding,.verdict{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}.top{padding:27px 30px;border-top:5px solid var(--teal)}.eyebrow{font-size:13px;color:#3f6477;font-weight:700}.title{font-size:clamp(25px,4vw,38px);line-height:1.25;margin:5px 0 10px;letter-spacing:-.4px;text-wrap:balance}.intro{margin:0;color:#405d70;max-width:78ch}.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.chip{display:inline-flex;align-items:center;padding:5px 11px;border:1px solid #dbe7eb;background:#f6fafb;border-radius:999px;font-size:12px;color:#355568}.verdict{margin:18px 0;padding:19px 22px;border-right:5px solid #b66a22;background:var(--warn-bg)}.verdict strong{display:block;color:#773d0c;font-size:17px}.verdict p{margin:5px 0 0;color:#633f20}.score-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}.score{padding:16px 18px;background:#fff;border:1px solid var(--line);border-radius:15px}.score b{display:block;font-size:22px;color:var(--teal);font-variant-numeric:tabular-nums}.score span{font-size:13px;color:#405d70}.panel{padding:22px 24px;margin:15px 0}.panel h2{font-size:20px;margin:0 0 12px}.good{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 18px;margin:0;padding:0;list-style:none}.good li{position:relative;padding-right:22px;color:#29475b}.good li:before{content:"✓";position:absolute;right:0;color:#087f72;font-weight:800}.findings{display:grid;gap:12px}.finding{padding:18px 20px}.finding-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:8px}.finding h3{font-size:17px;margin:0}.priority{border-radius:999px;padding:2px 9px;font-weight:800;font-size:11px}.p1{color:var(--high);background:var(--high-bg)}.p2{color:var(--warn);background:var(--warn-bg)}.finding p{margin:5px 0;color:#355064}.finding .fix{border-right:3px solid #8dbbc0;padding-right:11px;margin-top:10px}.where{font-size:12px;color:#526a7b}.where code,code{direction:ltr;unicode-bidi:isolate;font-family:Consolas,"Courier New",monospace;background:#f0f4f6;padding:2px 5px;border-radius:4px}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px}table{width:100%;border-collapse:collapse;min-width:700px;background:#fff}th,td{text-align:right;vertical-align:top;padding:11px 13px;border-bottom:1px solid var(--line)}th{background:#eef5f7;color:#27485d;font-size:13px}td{font-size:13px;color:#29475b}tr:last-child td{border-bottom:0}.privacy{background:var(--soft);border:1px solid #cfe4e4;padding:17px 20px;border-radius:14px}.privacy h2{margin:0 0 7px;font-size:18px}.privacy p{margin:4px 0;color:#294c5b}.limits{color:#435e70}.footer{padding:15px 3px;color:#526a7b;font-size:12px}.footer a{color:#086d7c;text-underline-offset:3px}:focus-visible{outline:3px solid #165f9a;outline-offset:3px}@media print{.recommendations{break-before:page;page-break-before:always}.shell{max-width:none;padding:0}.recommendation{break-inside:avoid;box-shadow:none}}@media(max-width:680px){.shell{padding:16px 12px 32px}.top,.panel{padding:18px 16px}.score-grid{grid-template-columns:1fr}.good{grid-template-columns:1fr}.finding{padding:15px 14px}.panel h2{font-size:18px}}
+  </style>
+<link rel="stylesheet" href="../assets/identity.css">
+</head>
+<body>
+<main class="shell">
+  <header class="top">
+    <div class="eyebrow">مراجعة واجهة محلية · استخدام وبيانات</div>
+    <h1 class="title">تقرير تجربة لوحة استهلاك التوكنز</h1>
+    <p class="intro">مراجعة ساكنة للشفرة مع فحص شجرة الوصول للصفحة الحية. يركز التقرير على صحة معنى المؤشرات، سهولة القراءة، وإمكانية الوصول، والأداء المحلي.</p>
+    <div class="meta"><span class="chip">تاريخ المراجعة: 28 أكتوبر 2026</span><span class="chip">الصفحة: <code>scripts/usage_monitor/dashboard.html</code></span><span class="chip">النطاق: مراجعة وتنفيذ توصيات معتمدة</span></div>
+  </header>
+
+  <section class="verdict" aria-label="الحكم العام">
+    <strong>الحكم: نُفذت الإصلاحات الأساسية الموصى بها، والنسخة الحية اجتازت التحقق الوظيفي المحلي.</strong>
+    <p>فُصلت الحصة المشتركة عن قياسات الجلسات، وأضيفت بدائل نصية للمخططات، وحُسّن التباين والتفاعل وبنية الجدول، ووُحّدت دورة قراءة البيانات. تبقى مراجعة كاملة بقارئ شاشة وأحجام عرض متعددة خارج نطاق هذا التحقق.</p>
+  </section>
+
+  <section class="score-grid" aria-label="ملخص النتائج">
+    <div class="score"><b>2</b><span>ملاحظتان مرتفعتا الأولوية</span></div>
+    <div class="score"><b>5</b><span>ملاحظات تجربة وإمكانية وصول</span></div>
+    <div class="score"><b>محلي</b><span>الصفحة لا تستدعي نموذجًا</span></div>
+  </section>
+
+  <section class="panel">
+    <h2>ما يعمل جيدًا</h2>
+    <ul class="good">
+      <li>واجهة عربية صحيحة الاتجاه عبر <code>lang="ar"</code> و<code>dir="rtl"</code>.</li>
+      <li>الشريط الأسبوعي مستقل ويعرض المتبقي ووقت القراءة وموعد إعادة الضبط.</li>
+      <li>الصفحة تعرض حالة عدم توفر البيانات ورسائل تعذر التحميل.</li>
+      <li>الأرقام والتواريخ منسقة عبر <code>Intl</code>، ويوجد جدول بالقيم الحالية.</li>
+      <li>الخادم مربوط بـ <code>127.0.0.1</code> والصفحة تجلب ملف JSON محليًا فقط.</li>
+      <li>زر التحديث إجراء حقيقي بعنصر <code>button</code>، وشريط الحصة موسوم كـ <code>progressbar</code>.</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>ملاحظات المراجعة الأولية قبل التنفيذ</h2>
+    <div class="findings">
+      <article class="finding">
+        <div class="finding-head"><span class="priority p1">P1 · صحة المعلومة</span><h3>الحصة الأسبوعية المشتركة تظهر كأنها استهلاك خاص بكل جلسة</h3></div>
+        <p>مفتاح الجلسات يعرض «استخدام الحصة الأسبوعية» على كل مخطط، وملخص «أعلى استخدام أسبوعي» لكل جلسة، كما يظهر عمود الحصة في صفوف الجلسات. لكن هذه قراءة حد الحساب المشتركة عند وقت العينة؛ لا تثبت مقدار ما استهلكته تلك المحادثة من الحصة. قد توحي الرسوم بوجود استهلاك مستقل لكل جلسة.</p>
+        <p class="fix"><strong>المعالجة:</strong> أبقِ نسبة الحصة في بطاقة واحدة للحساب كله، واحذفها من الرسوم والجدول لكل جلسة. احتفظ بضغط السياق لكل جلسة، فهو قياس يخص نافذة المحادثة.</p>
+        <div class="where">الموضع: <code>dashboard.html:47</code> و<code>:49–55</code>؛ تجميع المؤشرات في <code>:61</code>، ورسوم الضغط في <code>:63</code>.</div>
+      </article>
+
+      <article class="finding">
+        <div class="finding-head"><span class="priority p1">P1 · إمكانية الوصول</span><h3>المخططات لا توفر بديلًا نصيًا للاتجاهات ونقاط البيانات</h3></div>
+        <p>وسم <code>aria-label</code> يعرّف الرسم باسمه فقط. لا يستطيع قارئ الشاشة استكشاف القيم أو اتجاه الخط، ولا توجد بيانات زمنية بديلة لكل نقطة؛ جدول الجلسات يعرض آخر عينة فقط.</p>
+        <p class="fix"><strong>المعالجة:</strong> أضف خلاصة نصية تلقائية لكل مخطط، وجدولًا قابلًا للفتح يعرض نقاطه الزمنية وقيمه، مع أسماء وحدات المحاور. لا تجعل اللون وسيلة التمييز الوحيدة.</p>
+        <div class="where">الموضع: <code>dashboard.html:42</code> و<code>:49–52</code> و<code>:60–64</code>.</div>
+      </article>
+
+      <article class="finding">
+        <div class="finding-head"><span class="priority p2">P2 · وضوح القراءة</span><h3>النصوص الثانوية الصغيرة لا تحقق تباين WCAG AA</h3></div>
+        <p>حُسب التباين للنص على خلفية بيضاء: <code>#8a99a6</code> يحقق نحو <strong>2.92:1</strong>، و<code>#718294</code> نحو <strong>3.95:1</strong>. كلاهما دون 4.5:1 للنص العادي، وتظهر هذه الألوان في تسميات صغيرة للمخططات والبطاقات.</p>
+        <p class="fix"><strong>المعالجة:</strong> استخدم لونًا أغمق للتسميات الصغيرة، وارفع حجم نص المحاور والتفاصيل إلى 12–14px على الأقل، ثم افحص التباين على الخلفيات الفعلية.</p>
+        <div class="where">الموضع: <code>dashboard.html:9–13</code>.</div>
+      </article>
+
+      <article class="finding">
+        <div class="finding-head"><span class="priority p2">P2 · لوحة المفاتيح وقارئ الشاشة</span><h3>لا توجد حالة تركيز واضحة أو إعلان للحالة المحدثة</h3></div>
+        <p>لا تحدد الصفحة نمطًا مخصصًا لـ <code>:focus-visible</code>، وتعتمد على مؤشر المتصفح الافتراضي. حالة التحديث المتغيرة لا تحمل <code>role="status"</code> أو <code>aria-live</code>، لذلك قد لا يسمع قارئ الشاشة نجاح التحديث أو فشله.</p>
+        <p class="fix"><strong>المعالجة:</strong> أضف مؤشر تركيز واضحًا للزر وعناصر التفاعل، واجعل إعلان الحالة موجزًا وحيًا، مع تعطيل زر التحديث مؤقتًا وإظهار تقدم أثناء الجلب.</p>
+        <div class="where">الموضع: <code>dashboard.html:23</code> و<code>:33</code> و<code>:59</code>.</div>
+      </article>
+
+      <article class="finding">
+        <div class="finding-head"><span class="priority p2">P2 · بنية HTML</span><h3>رسالة الفراغ موضوعة داخل عنصر الجدول مباشرة</h3></div>
+        <p>عنصر <code>div</code> الخاص بحالة الفراغ يأتي بعد <code>tbody</code> داخل <code>table</code>. هذا يخالف نموذج محتوى الجدول، وقد يعيد المتصفح ترتيب العنصر بطريقة تختلف عن المصدر وتؤثر على العرض وقارئ الشاشة.</p>
+        <p class="fix"><strong>المعالجة:</strong> انقل الرسالة خارج الجدول، أو اعرضها في صف <code>tr</code> وخلية <code>td colspan="6"</code>.</p>
+        <div class="where">الموضع: <code>dashboard.html:55</code>.</div>
+      </article>
+
+      <article class="finding">
+        <div class="finding-head"><span class="priority p2">P2 · كفاءة التحديث</span><h3>أربع حلقات تحديث تجلب ملف القياس كاملًا كل دقيقة</h3></div>
+        <p>ملف البيانات الحالي يقارب 0.9 ميغابايت؛ السكربت الرئيسي وثلاثة سكربتات منفصلة تعيد جلبه وتفسيره دوريًا. هذا لا يستهلك حصة نموذج، لكنه يكرر القراءة والتحليل ويخلق احتمال اختلاف لحظة التحديث بين البطاقة والمخططات.</p>
+        <p class="fix"><strong>المعالجة:</strong> اجلب الملف مرة واحدة في دورة تحديث موحدة، ومرر اللقطة نفسها إلى الملخصات والحصة والمخططات والجدول.</p>
+        <div class="where">الموضع: <code>dashboard.html:59–70</code>.</div>
+      </article>
+
+      <article class="finding">
+        <div class="finding-head"><span class="priority p2">P2 · تفسير الأرقام</span><h3>عنوان «توزيع» قد يوحي بأن المدخلات والمخزّن مؤقتًا فئات منفصلة</h3></div>
+        <p>في العينة الحية، عدد المدخلات أكبر من المدخلات المخزنة مؤقتًا؛ لذا فالمخزّن مؤقتًا يبدو تفصيلًا فرعيًا من المدخلات، لا فئة مستقلة. عرضهما كأشرطة متوازية تحت «توزيع» قد يشجع على جمعهما ذهنيًا.</p>
+        <p class="fix"><strong>المعالجة:</strong> أكد دلالة الحقول من سجل المصدر، ثم وضّح العلاقة بالتسمية مثل «مدخلات، منها مخزّن مؤقتًا» أو اعرض نسبة التخزين منفصلة.</p>
+        <div class="where">الموضع: <code>dashboard.html:43</code> و<code>:61</code>.</div>
+      </article>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="implementation-title">
+    <h2 id="implementation-title">نتيجة التنفيذ والتحقق</h2>
+    <div class="table-wrap"><table><thead><tr><th scope="col">التوصية</th><th scope="col">ما نُفذ</th><th scope="col">التحقق</th></tr></thead><tbody>
+      <tr><td>فصل الحصة الأسبوعية المشتركة</td><td>بقيت نسبة المستخدم والمتبقي في بطاقة الحساب؛ أزيلت الحصة من إسقاط بيانات الجلسات ورسومها وجدولها.</td><td>المعاينة تعرض الحصة مرة واحدة على مستوى الحساب؛ لقطة التحقق كانت 5٪ مستخدمة و95٪ متبقية.</td></tr>
+      <tr><td>إتاحة المخططات نصيًا</td><td>أضيف ملخص نصي لكل مخطط وتلميح عند المرور على المنحنى؛ ويمكن التنقل بين النقاط بالأسهم.</td><td>الملخصات موجودة، والمخططات تقبل التركيز والتنقل بلوحة المفاتيح؛ لم يُجر اختبار قارئ شاشة كامل.</td></tr>
+      <tr><td>سلامة الاتجاه الإجمالي</td><td>تُرتب عينات الجلسات الأربع بحسب الوقت، ويُعرض لكل جلسة خط مستقل بلون واضح على محور توكنز مشترك.</td><td>تظهر أربعة خطوط وأسماء جلسات في المفتاح؛ تعرض التلميحات قيمة كل جلسة عند الساعة المحددة.</td></tr>
+      <tr><td>التباين ولوحة المفاتيح</td><td>دُكنّت ألوان النصوص والمحاور، رُفع النص الصغير إلى 12px، وأضيف رابط تجاوز ومؤشر تركيز وتقليل حركة.</td><td>فُحصت القيم في الشفرة وشجرة الوصول؛ لم يُجر اختبار قارئ شاشة كامل.</td></tr>
+      <tr><td>بنية الجدول والحالة</td><td>أصبحت حالة الفراغ صفًا صالحًا داخل الجدول، وأضيف إعلان حالة موجز عند التحديث اليدوي أو الخطأ.</td><td>ظهرت الأعمدة الخمسة وصفوف الجلسات بترتيب صحيح في الصفحة الحية.</td></tr>
+      <tr><td>توحيد القراءة وتفسير التفصيلات</td><td>تجلب الصفحة JSON مرة واحدة في كل دورة؛ صارت التسميات توضّح أن التخزين المؤقت والاستدلال تفصيلان ضمن الإجماليين.</td><td>يوجد استدعاء <code>fetch</code> واحد في واجهة الصفحة؛ لا اتصال بنموذج.</td></tr>
+    </tbody></table></div>
+    <p class="limits">اجتاز <code>dashboard.js</code> فحص صياغة Node، واجتاز مولّد البيانات فحص صياغة Python، وشُغلت أداة القياس محليًا بنجاح لعدد 13 جلسة. عُرضت الصفحة من <code>127.0.0.1:8768</code>.</p>
+  </section>
+
+  <section class="panel recommendations" aria-labelledby="recommendations-title">
+    <div class="eyebrow">صفحة مستقلة · مقترح التنفيذ</div>
+    <h2 id="recommendations-title">التوصيات ومعايير القبول</h2>
+    <p class="limits">ترتيب التنفيذ يبدأ بصحة معنى البيانات، ثم إتاحة المخططات، ثم صقل العرض والتحديث.</p>
+    <div class="findings">
+      <article class="finding recommendation">
+        <div class="finding-head"><span class="priority p1">الأولوية 1</span><h3>فصل الحصة الأسبوعية المشتركة عن قياسات الجلسات</h3></div>
+        <p>اجعل شريط الحصة الأسبوعية وتمثيلها الزمني على مستوى الحساب فقط. أبقِ ضغط السياق لكل جلسة.</p>
+        <p class="fix"><strong>معيار القبول:</strong> لا يظهر وصف أو قيمة للحصة الأسبوعية داخل مخطط جلسة أو صفها؛ وتظهر قراءة الحساب بوضوح مرة واحدة مع وقتها وموعد إعادة الضبط.</p>
+      </article>
+      <article class="finding recommendation">
+        <div class="finding-head"><span class="priority p1">الأولوية 2</span><h3>إتاحة المخططات نصيًا وباستخدام لوحة المفاتيح</h3></div>
+        <p>أضف خلاصة مفهومة للمخطط وتلميحًا تفاعليًا عند المرور على المنحنى، مع دعم التنقل بلوحة المفاتيح.</p>
+        <p class="fix"><strong>معيار القبول:</strong> يستطيع المستخدم استكشاف القيم بالمرور على المنحنى أو باستخدام الأسهم وHome وEnd؛ وتبقى الخلاصة النصية بديلًا للقراءة المساعدة.</p>
+      </article>
+      <article class="finding recommendation">
+        <div class="finding-head"><span class="priority p2">الأولوية 3</span><h3>تحسين التباين والتركيز والإعلانات المساعدة</h3></div>
+        <p>غمّق النصوص الثانوية، وثبّت مؤشر تركيز، وأعلن حالة التحديث لقارئ الشاشة مع إظهار تقدم الزر.</p>
+        <p class="fix"><strong>معيار القبول:</strong> تباين النص العادي لا يقل عن 4.5:1؛ لكل عنصر تفاعلي تركيز مرئي؛ وتُعلن حالات التحميل والنجاح والخطأ دون نقل التركيز.</p>
+      </article>
+      <article class="finding recommendation">
+        <div class="finding-head"><span class="priority p2">الأولوية 4</span><h3>تصحيح بنية الجدول وحالة عدم وجود بيانات</h3></div>
+        <p>انقل رسالة الفراغ خارج الجدول أو ضعها داخل صف واحد بخلية ممتدة، واستخدم عناوين أعمدة مرتبطة دلاليًا.</p>
+        <p class="fix"><strong>معيار القبول:</strong> لا يحتوي <code>table</code> إلا على عناصر الجدول المسموحة؛ وتظهر حالة الفراغ كاملة في المتصفح وقارئ الشاشة.</p>
+      </article>
+      <article class="finding recommendation">
+        <div class="finding-head"><span class="priority p2">الأولوية 5</span><h3>توحيد دورة تحديث البيانات</h3></div>
+        <p>اجلب JSON مرة واحدة في كل دورة، ومرر اللقطة نفسها إلى الملخص والحصة والمخططات والجدول. احترم إعداد تقليل الحركة.</p>
+        <p class="fix"><strong>معيار القبول:</strong> طلب واحد للبيانات في كل تحديث؛ زر التحديث يعرض حالة انتظار ويمنع النقر المتكرر؛ ورسالة الفشل تشرح الإجراء التالي.</p>
+      </article>
+      <article class="finding recommendation">
+        <div class="finding-head"><span class="priority p2">الأولوية 6</span><h3>توضيح علاقة المدخلات بالتوكنز المخزنة مؤقتًا</h3></div>
+        <p>تحقق من معنى الحقول في المصدر، ثم عدّل تسمية «التوزيع» إلى صياغة توضح إن كانت القيم متداخلة.</p>
+        <p class="fix"><strong>معيار القبول:</strong> يستطيع المستخدم فهم ما إذا كانت الأرقام فئات منفصلة أو أن التخزين المؤقت جزء من المدخلات دون الحاجة لتخمين أو جمع مضلل.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>حدود الفحص</h2>
+    <p class="limits">فُحصت نسخة الصفحة الحية على المتصفح وشجرة الوصول، والشفرة وملف البيانات المحلي. لم يُجرَ اختبار تفاعلي كامل بلوحة المفاتيح أو قارئ شاشة، ولا تحقق بصري بأحجام شاشات متعددة. لذلك تعد هذه مراجعة تصميم وإمكانية وصول أولية، وليست شهادة WCAG.</p>
+  </section>
+
+  <section class="privacy" aria-label="الخصوصية واستهلاك التوكنز">
+    <h2>الخصوصية واستهلاك التوكنز</h2>
+    <p><strong>تشغيل المسجل والصفحة:</strong> لا يستدعيان نموذجًا ولا يستهلكان حصة التوكنز؛ المسجل يقرأ سجل Codex المحلي، والصفحة تطلب ملف JSON من الخادم المحلي على <code>127.0.0.1</code>.</p>
+    <p><strong>هذه المراجعة:</strong> جرى إعدادها عبر المحادثة الحالية، ولذلك تستهلك توكنز المحادثة نفسها. لا تُرسل الصفحة ولا ملفات القياس إلى خدمة خارجية ضمن تشغيلها الطبيعي.</p>
+  </section>
+
+  <footer class="footer">مرجع الواجهة: <a href="https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md">Web Interface Guidelines</a> · إرشادات الوصول والمخططات من مرجع UI/UX Pro Max المحلي. تم تحديث هذا التقرير بعد تنفيذ التوصيات المعتمدة.</footer>
+</main>
+</body>
+</html>
