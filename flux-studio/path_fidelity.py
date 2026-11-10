@@ -47,13 +47,37 @@ def validate_paths(paths,width,height):
                     raise ValueError('إحداثيات المسار خارج الصورة.')
 
 
+def _pycairo_raster(paths,width,height,pen_pixels,pad,scale):
+    """Same Cairo engine without a system DLL: the pycairo wheel bundles Cairo on Windows."""
+    import cairo
+    pixels_x,pixels_y=(width+2*pad)*scale,(height+2*pad)*scale
+    surface=cairo.ImageSurface(cairo.FORMAT_ARGB32,pixels_x,pixels_y)
+    context=cairo.Context(surface)
+    context.set_source_rgb(1,1,1);context.paint()
+    context.scale(scale,scale);context.translate(pad+.5,pad+.5)
+    context.set_source_rgb(0,0,0);context.set_line_width(pen_pixels)
+    context.set_line_cap(cairo.LINE_CAP_ROUND);context.set_line_join(cairo.LINE_JOIN_ROUND)
+    for path in paths:
+        for index,(x,y) in enumerate(path):
+            (context.move_to if index==0 else context.line_to)(x,y)
+        context.stroke()
+    surface.flush()
+    rows=np.ndarray((pixels_y,surface.get_stride()//4,4),dtype=np.uint8,buffer=surface.get_data())
+    return np.ascontiguousarray(rows[:,:pixels_x,0])
+
+
 def render_svg(paths,width,height,pen_pixels,upscale=4):
-    import cairosvg
+    try:
+        import cairosvg
+    except (ImportError,OSError):
+        cairosvg=None
     pad=max(3,math.ceil(pen_pixels)+2)
     if max(width+2*pad,height+2*pad)>8192 or (width+2*pad)*(height+2*pad)>40_000_000:
         raise ValueError('أثر القلم بالنسبة إلى الصورة أكبر من مساحة التدقيق الآمنة؛ كبّر حجم الرسم أو قلّل سماكة القلم.')
     scale=min(upscale,max(1,int(min(8192/max(width+2*pad,height+2*pad),
         math.sqrt(40_000_000/((width+2*pad)*(height+2*pad)))))))
+    if cairosvg is None:
+        return _pycairo_raster(paths,width,height,pen_pixels,pad,scale),pad,scale
     pieces=[]
     for path in paths:
         pieces.append('<path d="'+' '.join(f'{"M" if i==0 else "L"}{x:.6f},{y:.6f}' for i,(x,y) in enumerate(path))+'"/>')
