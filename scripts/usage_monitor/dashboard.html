@@ -28,13 +28,14 @@
     .weekly-empty{color:#754b0c}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
+  <link rel="stylesheet" href="/identity.css">
 </head>
 <body>
 <a class="skip-link" href="#summary">تجاوز إلى ملخص الاستهلاك</a>
 <main class="shell">
   <header class="top">
     <div class="brand"><div class="mark" aria-hidden="true">◒</div><div><div class="eyebrow">مركز متابعة الاستخدام المحلي</div><h1 class="title">لوحة استهلاك التوكنز</h1></div></div>
-    <div class="actions"><span class="status"><i class="dot" aria-hidden="true"></i><span id="live-status">مزامنة محلية تلقائية كل دقيقة</span></span><span id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span><button class="btn" id="refresh" type="button" aria-busy="false">تحديث الآن ↻</button></div>
+    <div class="actions"><span class="status"><i class="dot is-stale" id="live-status-dot" aria-hidden="true"></i><span id="live-status">بانتظار قراءة قاعدة البيانات…</span></span><span id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span><button class="btn" id="refresh" type="button" aria-busy="false">تحديث الآن ↻</button></div>
   </header>
   <section class="hero"><div><h2>صورة واضحة لاستهلاك جلساتك</h2><p>تجميع محلي لقياسات Codex، مع فصل استهلاك السياق عن الحصة الأسبوعية.</p></div><div class="hero-badge">🔒 البيانات تبقى على هذا الجهاز</div></section>
   <nav class="workspace-tabs" aria-label="أقسام لوحة المتابعة" role="tablist">
@@ -49,7 +50,7 @@
     <article class="card metric" style="--wash:#f8eaea"><div class="metric-label">أعلى ضغط سياق</div><div class="metric-value" id="peak-context">—</div><div class="metric-note">أعلى قراءة في آخر عينات الجلسات</div></article>
   </section>
   <section class="weekly-panel usage-status-panel" aria-label="الحصة الأسبوعية">
-    <div class="usage-status-head"><div class="usage-status-title"><span class="dot" id="usage-status-dot"></span><strong>استهلاك الحصة الأسبوعية</strong><span class="status-chip" id="usage-status-state">جارٍ التحميل</span></div><span class="weekly-caption" id="usage-status-updated">—</span></div>
+    <div class="usage-status-head"><div class="usage-status-title"><span class="dot is-stale" id="usage-status-dot" aria-hidden="true"></span><strong>استهلاك الحصة الأسبوعية</strong><span class="status-chip" id="usage-status-state">جارٍ التحميل</span></div><span class="weekly-caption" id="usage-status-updated">—</span></div>
     <div class="usage-weekly"><div class="usage-status-row"><span class="usage-status-label">حد 7 أيام</span><strong class="weekly-remaining" id="weekly-remaining">—</strong></div>
       <div class="weekly-track" id="weekly-track" role="progressbar" aria-label="نسبة الحصة الأسبوعية المتبقية" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="weekly-fill" id="weekly-fill"></div></div>
       <div class="weekly-foot"><span><b id="weekly-used">—</b> مستخدمة</span><span><b id="weekly-remaining-foot">—</b> متبقية</span></div>
@@ -132,7 +133,7 @@
   </section>
 </main>
 <span id="chart-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
-<script src="dashboard.js" defer></script>
+<script src="dashboard.js?v=time-minute-2" defer></script>
 <script src="workflow.js" defer></script>
 </body>
 </html>
