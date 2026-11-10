@@ -4,3 +4,4 @@ Pillow==12.1.1
 opencv-contrib-python-headless==4.10.0.84
 CairoSVG==2.9.0
 requests==2.33.1
+pycairo==1.29.2; sys_platform == "win32"
