@@ -105,8 +105,7 @@ jobs:
         working-directory: pipeline-studio
       - run: python -m unittest test_generation
         working-directory: flux-studio
-      - name: Physical pen raster fidelity (Cairo on Linux)
-        if: runner.os == 'Linux'
+      - name: Physical pen raster fidelity (system Cairo on Linux, pycairo wheel on Windows)
         run: python -m unittest test_fidelity
         working-directory: flux-studio
       - run: python -m unittest test_processing test_presets
