@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مراجعة مشروع مرسم · 11 نوفمبر 2026</title>
+<style>
+:root{--bg:#fbfaf7;--fg:#1d1d1b;--mut:#5f5e5a;--line:#d9d6cc;--card:#fff;--ok:#27500a;--okbg:#eaf3de;--warn:#633806;--warnbg:#faeeda;--bad:#791f1f;--badbg:#fceaea}
+@media (prefers-color-scheme:dark){:root{--bg:#171715;--fg:#ecebe6;--mut:#a9a79f;--line:#3a3935;--card:#201f1d;--ok:#c0dd97;--okbg:#27341a;--warn:#fac775;--warnbg:#3a2c12;--bad:#f7c1c1;--badbg:#3d2020}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.8 "Dubai","Cairo",system-ui,sans-serif;padding:24px 16px}
+main{max-width:920px;margin:0 auto}
+h1{font-size:26px;font-weight:500;margin:0 0 4px}
+h2{font-size:20px;font-weight:500;margin:36px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+p{margin:8px 0}
+.sub{color:var(--mut);margin:0 0 20px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);margin:12px 0;font-size:15px}
+th,td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
+th{background:var(--bg);font-weight:500}
+code,bdi{font-family:Consolas,monospace;font-size:13px;direction:ltr;unicode-bidi:embed}
+.t{display:inline-block;padding:0 10px;border-radius:10px;font-size:13px}
+.ok{background:var(--okbg);color:var(--ok)}
+.warn{background:var(--warnbg);color:var(--warn)}
+.bad{background:var(--badbg);color:var(--bad)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 16px;margin:12px 0}
+ul{margin:8px 0;padding-inline-start:22px}
+@media print{body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<main>
+<h1>مراجعة مشروع مرسم</h1>
+<p class="sub">مجلد المشروع: <bdi>C:\Codex\Projects\local-pen-studio</bdi> · التاريخ: 11 نوفمبر 2026 · الفرع: <bdi>codex/webgpu-adaptive-validation</bdi></p>
+
+<h2>1. النطاق وحدود المراجعة</h2>
+<p>شملت المراجعة تشغيل اختبارات CI نفسها محليًا، ومسح البنية، وفحصًا سطحيًا للأمن، وتجهيز تطبيق مسار FLUX وتشغيله. هي ليست قراءة سطرًا بسطر لكل الشيفرة. لم أفحص استعمالات <code>innerHTML</code> واحدًا واحدًا، ولم أفحص بصريًا الصورة التي ولّدها اختبار FLUX.</p>
+
+<h2>2. التطبيقات والمنافذ</h2>
+<table>
+<tr><th>التطبيق</th><th>المجلد</th><th>المنفذ</th><th>ملاحظة</th></tr>
+<tr><td>مرسم</td><td><bdi>drawing-simulator</bdi></td><td>8765</td><td>لا توجد ترويسة CSP في خادمه، وبقية الخوادم فيها</td></tr>
+<tr><td>حافّة</td><td><bdi>edge-studio</bdi></td><td>8771</td><td>كان 8766 فتعارض مع منصة سِمة</td></tr>
+<tr><td>تريس</td><td><bdi>trace-studio</bdi></td><td>8767</td><td>—</td></tr>
+<tr><td>مسار</td><td><bdi>pipeline-studio</bdi></td><td>8769</td><td>قديم؛ بقايا SDXL حُذفت</td></tr>
+<tr><td>مسار · FLUX</td><td><bdi>flux-studio</bdi></td><td>8770</td><td>التطبيق الحالي</td></tr>
+</table>
+
+<h2>3. نتائج الاختبارات</h2>
+<table>
+<tr><th>المجموعة</th><th>النتيجة</th></tr>
+<tr><td>الجذر وسكربتات التسليم (68 اختبارًا)</td><td><span class="t ok">نجحت</span></td></tr>
+<tr><td>بايثون: مرسم وتريس ومسار وحافّة (91 اختبارًا)</td><td><span class="t ok">نجحت</span></td></tr>
+<tr><td>جافاسكربت في التطبيقات الخمسة (67 اختبارًا)</td><td><span class="t ok">نجحت</span></td></tr>
+<tr><td>flux-studio: توليد ودقة (24 اختبارًا)</td><td><span class="t warn">نجحت بشرط</span> تحتاج مكتبة Cairo؛ وفّرتُها لعمليات الاختبار والخادم بمسار مؤقت لا بتثبيت دائم</td></tr>
+<tr><td>مراقب الاستهلاك (9 اختبارات)</td><td><span class="t ok">نجحت</span> بعد تحديث توقع إصدار المخطط من 4 إلى 6</td></tr>
+<tr><td>سياسة المستودع</td><td><span class="t ok">نجحت</span> (275 ملفًا مثبتًا)</td></tr>
+</table>
+
+<h2>4. ما نُفّذ في هذه الجلسة</h2>
+<ul>
+<li>تجهيز بيئة <bdi>.venv-flux</bdi> وتنزيل أوزان FLUX.2 Klein 4B Q5_K_M (11.3 جيجابايت) مع التحقق من SHA-256، وتشغيل المنصة، ونجاح توليد من النص بأربع خطوات في 51 ثانية.</li>
+<li>حذف 114 مجلد نتائج تريس (346 ميغابايت) وبقايا تنزيل SDXL الناقص (4.3 جيجابايت) وملف <bdi>verified.json</bdi> المضلِّل. الحذف نهائي بموافقتك.</li>
+<li>نقل منفذ حافّة إلى 8771.</li>
+<li>أربعة commits محلية للتعديلات المعلّقة، إضافةً إلى commitين للتقارير المحذوفة والأرشيف. لم يُدفع شيء.</li>
+</ul>
+<table>
+<tr><th>الـcommit</th><th>الموضوع</th></tr>
+<tr><td><bdi>5ce36b5</bdi></td><td>تثبيت حذف تقارير الجذر القديمة</td></tr>
+<tr><td><bdi>0c4b279</bdi></td><td>تتبّع أرشيف المشروع وتحديث قائمة السماح</td></tr>
+<tr><td><bdi>c0fb1e4</bdi></td><td>رفع حد المسارات من 6000 إلى 10000</td></tr>
+<tr><td><bdi>1339273</bdi></td><td>منفذ حافّة 8771</td></tr>
+<tr><td><bdi>4b7abbe</bdi></td><td>مراقب الاستهلاك في <bdi>scripts/usage_monitor</bdi></td></tr>
+<tr><td><bdi>d761791</bdi></td><td>نظام تنسيق الجلسات ووثائق الليزر</td></tr>
+</table>
+
+<h2>5. قضايا مفتوحة</h2>
+<div class="box">
+<p><span class="t bad">تعارض منافذ في وثائق مراقب الاستهلاك</span></p>
+<p>وثيقة <bdi>docs/CODEX-USAGE-MONITORING.md</bdi> تقول إن اللوحة على 8768، بينما الشيفرة في <bdi>dashboard_server.py</bdi> تجعل الافتراضي 8769، وهو منفذ تطبيق مسار القديم. لم أغيّر شيئًا منهما لأنهما عمل جلسة أخرى؛ يلزم قرار بمنفذ ثالث موحّد.</p>
+</div>
+<div class="box">
+<p><span class="t warn">Cairo غير مثبت دائمًا</span></p>
+<p>قياس مطابقة الحبر يعمل فقط حين يحمل مسار العملية مجلد <bdi>C:\Program Files\PostgreSQL\18\bin\postgisgui</bdi>، وهو حل هش يتوقف بحذف PostgreSQL أو تغيير إصداره. الحل الدائم تثبيت GTK3 runtime لويندوز بصلاحيات مدير.</p>
+</div>
+<div class="box">
+<p><span class="t warn">أوزان BiRefNet مفقودة</span></p>
+<p>إزالة الخلفية على الكرت لن تعمل قبل إعادة التجهيز. أجّلتَ ذلك بقرارك.</p>
+</div>
+<div class="box">
+<p><span class="t warn">ملف PDF في الأرشيف خارج git</span></p>
+<p>الأرشيف صار متتبَّعًا، لكن ملف <bdi>local-ai-report-print-check.pdf</bdi> مستثنى عمدًا في <bdi>.gitignore</bdi> فهو على القرص فقط.</p>
+</div>
+<div class="box">
+<p><span class="t warn">أمن: فحص سطحي فقط</span></p>
+<p>الخوادم تستمع على 127.0.0.1 فقط وتتحقق من المضيف والأصل عند POST. لم يُكتشف سر في الشيفرة. استعمال <bdi>innerHTML</bdi> كثير في الواجهات وما رأيته قوالب ثابتة، لكن لم أتتبع كل مسار للتأكد من خلوه من نص مُدخل.</p>
+</div>
+
+<h2>6. التوصية</h2>
+<ul>
+<li>حسم منفذ لوحة الاستهلاك ثم توحيد الوثيقة والشيفرة.</li>
+<li>تثبيت Cairo بصورة دائمة قبل الاعتماد على قياس المطابقة.</li>
+<li>تنظيف جذور التطبيقات من لقطات المراجعة والسجلات بنقلها إلى مجلدات مراجعة مستقلة (مرسم وFLUX).</li>
+<li>تتبع مخرجات الاختبار التراكمية في تريس بسياسة احتفاظ، لئلا تعود إلى مئات الملفات.</li>
+</ul>
+</main>
+</body>
+</html>
