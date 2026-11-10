@@ -135,7 +135,7 @@ def extract(data):
         fill_distance=cv2.distanceTransform(filled,cv2.DIST_L2,cv2.DIST_MASK_PRECISE)
         retained=[path for path in paths if not covered_seed(path,fill_distance,pad,audit_factor,pen/scale*audit_factor/2)]
     candidate=retained+fill_paths
-    if len(candidate)>6000 or sum(len(p) for p in candidate)>400_000:raise ValueError('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف خطوط.')
+    if len(candidate)>10_000 or sum(len(p) for p in candidate)>400_000:raise ValueError('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف خطوط.')
     final=measure(rgb,gray,mask,candidate,scale,pen)
     contours_added=len(fill_paths)
     # Never silently choose a fill that worsens the measured mask agreement.
