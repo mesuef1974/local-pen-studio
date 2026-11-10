@@ -1,13 +1,12 @@
 # Keep source, project documentation and intentional fixtures only.
 /*
+!/AGENTS.md
 !/.gitignore
 !/README.md
 !/*.py
-!/*.html
-!/local-ai-report-*.png
-!/models-guide-*.png
-!/local-ai-report-sources.json
-!/models-evidence.json
+!/أرشيف المشروع/
+!/أرشيف المشروع/**
+أرشيف المشروع/تقارير الذكاء الاصطناعي المحلي/local-ai-report-print-check.pdf
 !/drawing-simulator/
 !/edge-studio/
 /edge-studio/*
@@ -137,6 +136,7 @@
 !/.github/
 !/docs/
 !/scripts/
+/scripts/usage_monitor/dashboard-data.json
 !/CONTRIBUTING.md
 !/SECURITY.md
 !/.gitleaksignore

@@ -1,0 +1,582 @@
+{
+  "retrieved_at_utc": "2026-10-25T12:30:54.238540+00:00",
+  "stars_source": "LM Studio individual entries on linked family pages; captured in browser",
+  "models": [
+    {
+      "name": "Qwen3.5 2B",
+      "origin": "Qwen/Qwen3.5-2B",
+      "lmid": "qwen/qwen3.5-2b",
+      "stars": 58,
+      "kind": "نص وصور",
+      "use": "مساعد خفيف، تصنيف وتلخيص، فهم صور بسيطة",
+      "fit": "مريح مبدئيًا",
+      "context": "4096–8192",
+      "family": "qwen3.5",
+      "likes": 454,
+      "license": "apache-2.0",
+      "license_url": "https://huggingface.co/Qwen/Qwen3.5-2B/blob/main/LICENSE",
+      "downloads": 3125364,
+      "gguf_repo": "lmstudio-community/Qwen3.5-2B-GGUF",
+      "gguf_files": [
+        "Qwen3.5-2B-Q4_K_M.gguf"
+      ],
+      "file_gb": 1.27,
+      "quant": "Q4_K_M",
+      "projector_files": [
+        {
+          "name": "mmproj-Qwen3.5-2B-BF16.gguf",
+          "gb": 0.67
+        }
+      ]
+    },
+    {
+      "name": "Qwen3.5 4B",
+      "origin": "Qwen/Qwen3.5-4B",
+      "lmid": "qwen/qwen3.5-4b",
+      "stars": 70,
+      "kind": "نص وصور",
+      "use": "محادثة عربية، شرح لقطات الشاشة والمخططات",
+      "fit": "مريح مبدئيًا",
+      "context": "4096–8192",
+      "family": "qwen3.5",
+      "likes": 1123,
+      "license": "apache-2.0",
+      "license_url": "https://huggingface.co/Qwen/Qwen3.5-4B/blob/main/LICENSE",
+      "downloads": 7430684,
+      "gguf_repo": "lmstudio-community/Qwen3.5-4B-GGUF",
+      "gguf_files": [
+        "Qwen3.5-4B-Q4_K_M.gguf"
+      ],
+      "file_gb": 2.71,
+      "quant": "Q4_K_M",
+      "projector_files": [
+        {
+          "name": "mmproj-Qwen3.5-4B-BF16.gguf",
+          "gb": 0.68
+        }
+      ]
+    },
+    {
+      "name": "Qwen3.5 9B",
+      "origin": "Qwen/Qwen3.5-9B",
+      "lmid": "qwen/qwen3.5-9b",
+      "stars": 246,
+      "kind": "نص وصور",
+      "use": "تجربة نموذج أكبر للمحادثة وتحليل الصور",
+      "fit": "مشروط؛ قد يحتاج توزيعًا على RAM",
+      "context": "4096",
+      "family": "qwen3.5",
+      "likes": 2240,
+      "license": "apache-2.0",
+      "license_url": "https://huggingface.co/Qwen/Qwen3.5-9B/blob/main/LICENSE",
+      "downloads": 6085485,
+      "gguf_repo": "lmstudio-community/Qwen3.5-9B-GGUF",
+      "gguf_files": [
+        "Qwen3.5-9B-Q4_K_M.gguf"
+      ],
+      "file_gb": 5.63,
+      "quant": "Q4_K_M",
+      "projector_files": [
+        {
+          "name": "mmproj-Qwen3.5-9B-BF16.gguf",
+          "gb": 0.92
+        }
+      ]
+    },
+    {
+      "name": "Qwen3-VL 2B Instruct",
+      "origin": "Qwen/Qwen3-VL-2B-Instruct",
+      "lmid": "qwen/qwen3-vl-2b",
+      "stars": 22,
+      "kind": "فهم بصري",
+      "use": "قراءة عناصر واجهة ووصف صور ضمن مهام بسيطة",
+      "fit": "مريح مبدئيًا",
+      "context": "4096–8192",
+      "family": "qwen3-vl",
+      "likes": 504,
+      "license": "apache-2.0",
+      "license_url": null,
+      "downloads": 1776668,
+      "gguf_repo": "lmstudio-community/Qwen3-VL-2B-Instruct-GGUF",
+      "gguf_files": [
+        "Qwen3-VL-2B-Instruct-Q4_K_M.gguf"
+      ],
+      "file_gb": 1.11,
+      "quant": "Q4_K_M",
+      "projector_files": [
+        {
+          "name": "mmproj-Qwen3-VL-2B-Instruct-F16.gguf",
+          "gb": 0.82
+        }
+      ]
+    },
+    {
+      "name": "Qwen3-VL 4B Instruct",
+      "origin": "Qwen/Qwen3-VL-4B-Instruct",
+      "lmid": "qwen/qwen3-vl-4b",
+      "stars": 37,
+      "kind": "فهم بصري",
+      "use": "تحليل مستندات مصورة ولقطات شاشة؛ إخراجه نص",
+      "fit": "مريح مبدئيًا",
+      "context": "4096–8192",
+      "family": "qwen3-vl",
+      "likes": 511,
+      "license": "apache-2.0",
+      "license_url": null,
+      "downloads": 3796825,
+      "gguf_repo": "lmstudio-community/Qwen3-VL-4B-Instruct-GGUF",
+      "gguf_files": [
+        "Qwen3-VL-4B-Instruct-Q4_K_M.gguf"
+      ],
+      "file_gb": 2.5,
+      "quant": "Q4_K_M",
+      "projector_files": [
+        {
+          "name": "mmproj-Qwen3-VL-4B-Instruct-F16.gguf",
+          "gb": 0.84
+        }
+      ]
+    },
+    {
+      "name": "Qwen3-VL 8B Instruct",
+      "origin": "Qwen/Qwen3-VL-8B-Instruct",
+      "lmid": "qwen/qwen3-vl-8b",
+      "stars": 58,
+      "kind": "فهم بصري",
+      "use": "تحليل صور أكثر تعقيدًا مع سياق قصير",
+      "fit": "مشروط؛ الصور تزيد الذاكرة",
+      "context": "4096",
+      "family": "qwen3-vl",
+      "likes": 1220,
+      "license": "apache-2.0",
+      "license_url": null,
+      "downloads": 5518605,
+      "gguf_repo": "lmstudio-community/Qwen3-VL-8B-Instruct-GGUF",
+      "gguf_files": [
+        "Qwen3-VL-8B-Instruct-Q4_K_M.gguf"
+      ],
+      "file_gb": 5.03,
+      "quant": "Q4_K_M",
+      "projector_files": [
+        {
+          "name": "mmproj-Qwen3-VL-8B-Instruct-F16.gguf",
+          "gb": 1.16
+        }
+      ]
+    },
+    {
+      "name": "Qwen3 4B",
+      "origin": "Qwen/Qwen3-4B",
+      "lmid": "qwen/qwen3-4b",
+      "stars": 12,
+      "kind": "نص واستدلال",
+      "use": "تلخيص وترجمة ومحادثة مع وضع تفكير اختياري",
+      "fit": "مريح مبدئيًا",
+      "context": "8192",
+      "family": "qwen3-2504",
+      "likes": 772,
+      "license": "apache-2.0",
+      "license_url": "https://huggingface.co/Qwen/Qwen3-4B/blob/main/LICENSE",
+      "downloads": 11268043,
+      "gguf_repo": "lmstudio-community/Qwen3-4B-GGUF",
+      "gguf_files": [
+        "Qwen3-4B-Q4_K_M.gguf"
+      ],
+      "file_gb": 2.5,
+      "quant": "Q4_K_M",
+      "projector_files": []
+    },
+    {
+      "name": "Qwen3 8B",
+      "origin": "Qwen/Qwen3-8B",
+      "lmid": "qwen/qwen3-8b",
+      "stars": 22,
+      "kind": "نص واستدلال",
+      "use": "مساعدك الحالي: كتابة عربية، شرح كود وتحليل نص",
+      "fit": "مجرّب التحميل على جهازك",
+      "context": "8192؛ و16384 تقديريًا",
+      "family": "qwen3-2504",
+      "likes": 2144,
+      "license": "apache-2.0",
+      "license_url": "https://huggingface.co/Qwen/Qwen3-8B/blob/main/LICENSE",
+      "downloads": 8114096,
+      "gguf_repo": "lmstudio-community/Qwen3-8B-GGUF",
+      "gguf_files": [
+        "Qwen3-8B-Q4_K_M.gguf"
+      ],
+      "file_gb": 5.03,
+      "quant": "Q4_K_M",
+      "projector_files": []
+    },
+    {
+      "name": "Ministral 3 3B Instruct",
+      "origin": "mistralai/Ministral-3-3B-Instruct-2512",
+      "lmid": "mistralai/ministral-3-3b",
+      "stars": 41,
+      "kind": "مساعد بصري وأدوات",
+      "use": "محادثة وصور وJSON؛ الأدوات تحتاج تطبيقًا ينفذها",
+      "fit": "مريح مبدئيًا",
+      "context": "4096–8192",
+      "family": "ministral",
+      "likes": 312,
+      "license": "apache-2.0",
+      "license_url": null,
+      "downloads": 87360,
+      "gguf_repo": "lmstudio-community/Ministral-3-3B-Instruct-2512-GGUF",
+      "gguf_files": [
+        "Ministral-3-3B-Instruct-2512-Q4_K_M.gguf"
+      ],
+      "file_gb": 2.15,
+      "quant": "Q4_K_M",
+      "projector_files": [
+        {
+          "name": "mmproj-Ministral-3-3B-Instruct-2512-F16.gguf",
+          "gb": 0.84
+        }
+      ]
+    },
+    {
+      "name": "Ministral 3 3B Reasoning",
+      "origin": "mistralai/Ministral-3-3B-Reasoning-2512",
+      "lmid": "mistralai/ministral-3-3b-reasoning",
+      "stars": 32,
+      "kind": "استدلال صغير",
+      "use": "مسائل منطق ورياضيات، مع كلفة وقت إضافية للتفكير",
+      "fit": "مريح مبدئيًا",
+      "context": "8192",
+      "family": "ministral",
+      "likes": 140,
+      "license": "apache-2.0",
+      "license_url": null,
+      "downloads": 17782,
+      "gguf_repo": "lmstudio-community/Ministral-3-3B-Reasoning-2512-GGUF",
+      "gguf_files": [
+        "Ministral-3-3B-Reasoning-2512-Q4_K_M.gguf"
+      ],
+      "file_gb": 2.15,
+      "quant": "Q4_K_M",
+      "projector_files": [
+        {
+          "name": "mmproj-Ministral-3-3B-Reasoning-2512-F16.gguf",
+          "gb": 0.84
+        }
+      ]
+    },
+    {
+      "name": "Ministral 3 8B Instruct",
+      "origin": "mistralai/Ministral-3-8B-Instruct-2512",
+      "lmid": "mistralai/ministral-3-8b",
+      "stars": 12,
+      "kind": "مساعد بصري وأدوات",
+      "use": "محادثة متعددة اللغات وصور وإخراج منظم",
+      "fit": "مشروط؛ ابدأ بسياق قصير",
+      "context": "4096",
+      "family": "ministral",
+      "likes": 231,
+      "license": "apache-2.0",
+      "license_url": null,
+      "downloads": 79382,
+      "gguf_repo": "lmstudio-community/Ministral-3-8B-Instruct-2512-GGUF",
+      "gguf_files": [
+        "Ministral-3-8B-Instruct-2512-Q4_K_M.gguf"
+      ],
+      "file_gb": 5.2,
+      "quant": "Q4_K_M",
+      "projector_files": [
+        {
+          "name": "mmproj-Ministral-3-8B-Instruct-2512-F16.gguf",
+          "gb": 0.86
+        }
+      ]
+    },
+    {
+      "name": "Granite 4.1 3B",
+      "origin": "ibm-granite/granite-4.1-3b",
+      "lmid": "ibm/granite-4.1-3b",
+      "stars": 16,
+      "kind": "نص وأدوات",
+      "use": "استخراج حقول، JSON، تلخيص ومهام RAG",
+      "fit": "مريح مبدئيًا",
+      "context": "8192",
+      "family": "granite-4.1",
+      "likes": 118,
+      "license": "apache-2.0",
+      "license_url": null,
+      "downloads": 602022,
+      "gguf_repo": "lmstudio-community/granite-4.1-3b-GGUF",
+      "gguf_files": [
+        "granite-4.1-3b-Q4_K_M.gguf"
+      ],
+      "file_gb": 2.1,
+      "quant": "Q4_K_M",
+      "projector_files": []
+    },
+    {
+      "name": "Granite 4.1 8B",
+      "origin": "ibm-granite/granite-4.1-8b",
+      "lmid": "ibm/granite-4.1-8b",
+      "stars": 28,
+      "kind": "نص وأدوات",
+      "use": "اتباع تعليمات ومساعدة برمجية وتلخيص مستندات",
+      "fit": "مناسب تقديريًا بسياق محدود",
+      "context": "4096–8192",
+      "family": "granite-4.1",
+      "likes": 256,
+      "license": "apache-2.0",
+      "license_url": null,
+      "downloads": 89098,
+      "gguf_repo": "lmstudio-community/granite-4.1-8b-GGUF",
+      "gguf_files": [
+        "granite-4.1-8b-Q4_K_M.gguf"
+      ],
+      "file_gb": 5.35,
+      "quant": "Q4_K_M",
+      "projector_files": []
+    },
+    {
+      "name": "Phi-4 mini reasoning",
+      "origin": "microsoft/Phi-4-mini-reasoning",
+      "lmid": "microsoft/phi-4-mini-reasoning",
+      "stars": 33,
+      "kind": "استدلال رياضي",
+      "use": "حل مسائل متعددة الخطوات؛ لا نفترض تفوقه في العربية",
+      "fit": "مريح مبدئيًا",
+      "context": "8192",
+      "family": "phi-4-reasoning",
+      "likes": 249,
+      "license": "mit",
+      "license_url": "https://huggingface.co/microsoft/Phi-4-mini-instruct-reasoning/resolve/main/LICENSE",
+      "downloads": 37970,
+      "gguf_repo": "lmstudio-community/Phi-4-mini-reasoning-GGUF",
+      "gguf_files": [
+        "Phi-4-mini-reasoning-Q4_K_M.gguf"
+      ],
+      "file_gb": 2.49,
+      "quant": "Q4_K_M",
+      "projector_files": []
+    },
+    {
+      "name": "Gemma 3 1B IT",
+      "origin": "google/gemma-3-1b-it",
+      "lmid": "google/gemma-3-1b",
+      "stars": 27,
+      "kind": "نص خفيف",
+      "use": "صياغة وتصنيف وتجارب سريعة؛ هذه النسخة لا تفهم الصور",
+      "fit": "مريح مبدئيًا",
+      "context": "4096–8192",
+      "family": "gemma-3",
+      "likes": 1269,
+      "license": "gemma",
+      "license_url": null,
+      "downloads": 839278,
+      "gguf_repo": "lmstudio-community/gemma-3-1b-it-GGUF",
+      "gguf_files": [
+        "gemma-3-1b-it-Q4_K_M.gguf"
+      ],
+      "file_gb": 0.81,
+      "quant": "Q4_K_M",
+      "projector_files": []
+    },
+    {
+      "name": "Gemma 3 4B IT",
+      "origin": "google/gemma-3-4b-it",
+      "lmid": "google/gemma-3-4b",
+      "stars": 65,
+      "kind": "نص وصور",
+      "use": "تلخيص وفهم صور ومقارنة الإجابات مع Qwen",
+      "fit": "مريح مبدئيًا",
+      "context": "4096–8192",
+      "family": "gemma-3",
+      "likes": 1596,
+      "license": "gemma",
+      "license_url": null,
+      "downloads": 970319,
+      "gguf_repo": "lmstudio-community/gemma-3-4b-it-GGUF",
+      "gguf_files": [
+        "gemma-3-4b-it-Q4_K_M.gguf"
+      ],
+      "file_gb": 2.49,
+      "quant": "Q4_K_M",
+      "projector_files": [
+        {
+          "name": "mmproj-model-f16.gguf",
+          "gb": 0.85
+        }
+      ]
+    },
+    {
+      "name": "DeepSeek R1 0528 Qwen3 8B",
+      "origin": "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+      "lmid": "deepseek/deepseek-r1-0528-qwen3-8b",
+      "stars": 181,
+      "kind": "استدلال",
+      "use": "مسائل رياضيات ومنطق وبرمجة؛ الردود قد تطول",
+      "fit": "مناسب تقديريًا بسياق محدود",
+      "context": "8192",
+      "family": "deepseek-r1",
+      "likes": 1124,
+      "license": "mit",
+      "license_url": null,
+      "downloads": 355790,
+      "gguf_repo": "lmstudio-community/DeepSeek-R1-0528-Qwen3-8B-GGUF",
+      "gguf_files": [
+        "DeepSeek-R1-0528-Qwen3-8B-Q4_K_M.gguf"
+      ],
+      "file_gb": 5.03,
+      "quant": "Q4_K_M",
+      "projector_files": []
+    },
+    {
+      "name": "Mistral 7B Instruct v0.3",
+      "origin": "mistralai/Mistral-7B-Instruct-v0.3",
+      "lmid": "mistralai/mistral-7b-instruct-v0.3",
+      "stars": 55,
+      "kind": "نص عام",
+      "use": "بديل أقدم للمحادثة الإنجليزية وتوليد النص والكود",
+      "fit": "مناسب تقديريًا بسياق محدود",
+      "context": "8192",
+      "family": "mistral",
+      "likes": 3812,
+      "license": "apache-2.0",
+      "license_url": null,
+      "downloads": 1724933,
+      "gguf_repo": "lmstudio-community/Mistral-7B-Instruct-v0.3-GGUF",
+      "gguf_files": [
+        "Mistral-7B-Instruct-v0.3-Q4_K_M.gguf"
+      ],
+      "file_gb": 4.37,
+      "quant": "Q4_K_M",
+      "projector_files": []
+    },
+    {
+      "name": "Qwen2.5 Coder 7B Instruct",
+      "origin": "Qwen/Qwen2.5-Coder-7B-Instruct",
+      "lmid": "qwen/qwen2.5-coder-7b",
+      "stars": null,
+      "kind": "برمجة متخصصة",
+      "use": "توليد دوال وشرح أخطاء ومراجعة مقاطع كود؛ لا يرى مستودعك تلقائيًا",
+      "fit": "مناسب تقديريًا بسياق محدود",
+      "context": "8192",
+      "family": "qwen/qwen2.5-coder-7b",
+      "likes": 844,
+      "license": "apache-2.0",
+      "license_url": "https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct/blob/main/LICENSE",
+      "downloads": 1457962,
+      "gguf_repo": "lmstudio-community/Qwen2.5-Coder-7B-Instruct-GGUF",
+      "gguf_files": [
+        "Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"
+      ],
+      "file_gb": 4.68,
+      "quant": "Q4_K_M",
+      "projector_files": []
+    },
+    {
+      "name": "Granite Vision 3.2 2B",
+      "origin": "ibm-granite/granite-vision-3.2-2b",
+      "lmid": "ibm/granite-vision-3.2-2b",
+      "stars": null,
+      "kind": "رؤية مستندات",
+      "use": "قراءة الجداول والرسوم والمخططات وOCR؛ موجه أساسًا للإنجليزية، والعربية تحتاج اختبارًا",
+      "fit": "مريح مبدئيًا",
+      "context": "4096",
+      "family": "ibm/granite-vision-3.2-2b",
+      "likes": 126,
+      "license": "apache-2.0",
+      "license_url": null,
+      "downloads": 4682,
+      "gguf_repo": "lmstudio-community/granite-vision-3.2-2b-GGUF",
+      "gguf_files": [
+        "granite-vision-3.2-2b-Q4_K_M.gguf"
+      ],
+      "file_gb": 1.55,
+      "quant": "Q4_K_M",
+      "projector_files": [
+        {
+          "name": "mmproj-model-f16.gguf",
+          "gb": 0.89
+        }
+      ]
+    },
+    {
+      "name": "Qwen2.5-VL 3B Instruct",
+      "origin": "Qwen/Qwen2.5-VL-3B-Instruct",
+      "lmid": "qwen/qwen2.5-vl-3b",
+      "stars": 7,
+      "kind": "فهم بصري وتحديد مواقع",
+      "use": "فهم صور وفواتير وواجهات، وإرجاع إحداثيات أو JSON عند الطلب؛ دقتها تحتاج تحققًا",
+      "fit": "مريح مبدئيًا؛ للاستخدام البحثي غير التجاري",
+      "context": "4096",
+      "family": "qwen2.5-vl",
+      "likes": 737,
+      "license": "qwen-research",
+      "license_url": "https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/blob/main/LICENSE",
+      "downloads": 1636755,
+      "gguf_repo": "lmstudio-community/Qwen2.5-VL-3B-Instruct-GGUF",
+      "gguf_files": [
+        "Qwen2.5-VL-3B-Instruct-Q4_K_M.gguf"
+      ],
+      "file_gb": 1.93,
+      "quant": "Q4_K_M",
+      "projector_files": [
+        {
+          "name": "mmproj-model-f16.gguf",
+          "gb": 1.34
+        }
+      ]
+    },
+    {
+      "name": "Qwen2.5-VL 7B Instruct",
+      "origin": "Qwen/Qwen2.5-VL-7B-Instruct",
+      "lmid": "qwen/qwen2.5-vl-7b",
+      "stars": 27,
+      "kind": "فهم بصري وتحديد مواقع",
+      "use": "تحليل جداول ورسوم وصور مستندات وتحديد عناصر في صورة؛ ليس كشفًا لحظيًا مضمونًا",
+      "fit": "مشروط؛ صورة واحدة وسياق قصير",
+      "context": "4096",
+      "family": "qwen2.5-vl",
+      "likes": 1753,
+      "license": "apache-2.0",
+      "license_url": null,
+      "downloads": 5133806,
+      "gguf_repo": "lmstudio-community/Qwen2.5-VL-7B-Instruct-GGUF",
+      "gguf_files": [
+        "Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf"
+      ],
+      "file_gb": 4.68,
+      "quant": "Q4_K_M",
+      "projector_files": [
+        {
+          "name": "mmproj-model-f16.gguf",
+          "gb": 1.35
+        }
+      ]
+    },
+    {
+      "name": "olmOCR 2 7B 1025",
+      "origin": "allenai/olmOCR-2-7B-1025",
+      "lmid": "allenai/olmocr-2-7b",
+      "stars": 23,
+      "kind": "OCR للمستندات",
+      "use": "استخراج صفحات إلى نص منظم؛ يتطلب صورة صفحة وتعليمات خاصة، وتدريبه على الإنجليزية",
+      "fit": "مشروط؛ قد يحتاج توزيعًا على RAM",
+      "context": "4096",
+      "family": "olmocr2",
+      "likes": 159,
+      "license": "apache-2.0",
+      "license_url": null,
+      "downloads": 76658,
+      "gguf_repo": "lmstudio-community/olmOCR-2-7B-1025-GGUF",
+      "gguf_files": [
+        "olmOCR-2-7B-1025-Q4_K_M.gguf"
+      ],
+      "file_gb": 4.68,
+      "quant": "Q4_K_M",
+      "projector_files": [
+        {
+          "name": "mmproj-olmOCR-2-7B-1025-F16.gguf",
+          "gb": 1.35
+        }
+      ]
+    }
+  ]
+}
