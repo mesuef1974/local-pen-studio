@@ -57,7 +57,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8766);args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8771);args=parser.parse_args()
     server=ThreadingHTTPServer(('127.0.0.1',args.port),Handler)
     print(f'Edge Studio: http://127.0.0.1:{args.port}',flush=True)
     try:server.serve_forever()
