@@ -23,7 +23,7 @@
 | التطبيق | الوظيفة | التشغيل من جذر المستودع | المنفذ |
 |---|---|---|---|
 | مرسم | التطبيق الأصلي ومحاكاة القلم | `python drawing-simulator/launch.py` | 8765 |
-| حافّة | ست خوارزميات OpenCV و52 تفضيلًا للحواف | `python edge-studio/launch.py` | 8766 |
+| حافّة | ست خوارزميات OpenCV و52 تفضيلًا للحواف | `python edge-studio/launch.py` | 8771 |
 | تريس | تجهيز الصور ثم مهارة التحويل إلى SVG | `python trace-studio/launch.py` | 8767 |
 | مسار | أنبوب تجهيز الصورة ← Lineart الدقيق ← مسارات القلم | `python pipeline-studio/launch.py` | 8769 |
 

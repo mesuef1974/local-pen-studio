@@ -8,7 +8,7 @@
 python edge-studio/launch.py
 ```
 
-الرابط: http://127.0.0.1:8766/ . للتشغيل دون فتح المتصفح: `python edge-studio/server.py`.
+الرابط: http://127.0.0.1:8771/ . للتشغيل دون فتح المتصفح: `python edge-studio/server.py`.
 
 ## الاعتماديات
 
