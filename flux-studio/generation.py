@@ -5,6 +5,7 @@ import io
 import json
 import logging
 import math
+import os
 import subprocess
 import sys
 import threading
@@ -134,12 +135,25 @@ def availability():
     return True, 'FLUX.2 Klein 4B · Q5_K_M · أوزان محلية مكتملة'
 
 
+def keep_warm_seconds():
+    """Idle seconds the loaded model is kept after a job; 0 restores one process per job."""
+    try:
+        value = float(os.environ.get('FLUX_KEEP_WARM_S', '300'))
+    except ValueError:
+        return 300.0
+    return value if math.isfinite(value) and 0 <= value <= 3600 else 300.0
+
+
 class Jobs:
-    def __init__(self, gate):
+    def __init__(self, gate, keep_warm=None):
         self.gate = gate
         self.lock = threading.Lock()
         self.job = None
         self.jobs = OrderedDict()
+        self.keep_warm = keep_warm_seconds() if keep_warm is None else keep_warm
+        self.worker = None
+        self.worker_log = None
+        self.idle_token = 0
 
     def status(self, job_id=None, summary=False):
         available, reason = availability()
@@ -153,8 +167,10 @@ class Jobs:
                 selected = {key: self.job[key] for key in ('state', 'step', 'total')}
             else:
                 selected = None
+            worker = self.worker
             return {'available': available, 'reason': reason, 'processing': self.gate.locked(),
-                    'model': 'FLUX.2 Klein 4B Q5_K_M', 'job': copy.deepcopy(selected)}
+                    'model': 'FLUX.2 Klein 4B Q5_K_M', 'job': copy.deepcopy(selected),
+                    'modelLoaded': bool(worker and worker.poll() is None)}
 
     def start(self, data):
         settings = validate(data)
@@ -178,63 +194,121 @@ class Jobs:
             raise
         return {'job': job_id}
 
+    # The worker is touched only by the thread that holds the compute gate.
+    def _spawn(self):
+        # Stderr is diagnostic-only, kept outside HTTP responses and user images.
+        self.worker_log = (ROOT / 'generation-runtime.log').open('w', encoding='utf-8')
+        try:
+            self.worker = subprocess.Popen([str(PYTHON), str(ROOT / 'generation_service.py')],
+                                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.worker_log,
+                                           text=True, encoding='utf-8',
+                                           creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+        except BaseException:
+            self.worker_log.close()
+            self.worker_log = None
+            raise
+        return self.worker
+
+    def _discard_worker(self):
+        """End the worker process; the driver returns its VRAM once it has exited."""
+        process, log = self.worker, self.worker_log
+        self.worker = self.worker_log = None
+        if process:
+            try:
+                process.stdin.close()  # EOF is the worker's normal exit signal
+            except OSError:
+                pass
+            try:
+                process.wait(timeout=5 if process.poll() is None else 0)
+            except subprocess.TimeoutExpired:
+                terminate_tree(process)
+                process.wait()
+            if process.stdout:
+                process.stdout.close()
+        if log:
+            log.close()
+
+    def _unload_if_idle(self, token):
+        if not self.gate.acquire(blocking=False):
+            return  # a job or another local stage is running; that job re-arms the timer
+        try:
+            if token == self.idle_token:
+                self._discard_worker()
+        finally:
+            self.gate.release()
+
+    def unload(self):
+        """Free the model now. The caller must hold the compute gate."""
+        self.idle_token += 1
+        self._discard_worker()
+
     def _run(self, settings):
-        process = None
         watchdog = None
+        keep = False
         try:
             with self.lock:
                 self.job['state'] = 'loading'
-            # Stderr is diagnostic-only, kept outside HTTP responses and user images.
-            with (ROOT / 'generation-runtime.log').open('w', encoding='utf-8') as log:
-                process = subprocess.Popen([str(PYTHON), str(ROOT / 'generation_service.py')],
-                                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=log,
-                                           text=True, encoding='utf-8',
-                                           creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
-                watchdog = threading.Timer(1200, terminate_tree,args=(process,))
-                watchdog.daemon = True
-                watchdog.start()
-                process.stdin.write(json.dumps(settings))
+            self.idle_token += 1  # invalidates any pending idle unload
+            process = self.worker if self.worker and self.worker.poll() is None else None
+            if not process:
+                self._discard_worker()
+                process = self._spawn()
+            watchdog = threading.Timer(1200, terminate_tree,args=(process,))
+            watchdog.daemon = True
+            watchdog.start()
+            process.stdin.write(json.dumps(settings) + '\n')
+            process.stdin.flush()
+            if not self.keep_warm:
                 process.stdin.close()
-                result = None
-                failure = None
-                for line in process.stdout:
-                    try:
-                        event = json.loads(line)
-                    except ValueError:
-                        continue  # a library printed to stdout; not a protocol event
-                    if not isinstance(event, dict):
-                        continue
-                    with self.lock:
-                        if event.get('state') in ('loading', 'running'):
-                            self.job.update({key: event[key] for key in ('state', 'step', 'total')})
-                    if 'result' in event:
-                        result = event['result']
-                    if 'error' in event:
-                        failure = event['error']
-                code = process.wait()
-                if code or not result:
-                    raise ValueError(failure or 'انتهت عملية التوليد قبل إخراج صورة. جرّب دقة أقل.')
-                if not isinstance(result, dict) or not isinstance(result.get('image'), str) or not result['image'].startswith('data:image/png;base64,'):
-                    raise ValueError('لم ينتج النموذج صورة PNG صالحة.')
-                image_bytes(result['image'])
-                with Image.open(io.BytesIO(base64.b64decode(result['image'].split(',', 1)[1])), formats=('PNG',)) as image:
-                    if image.size != (result.get('width'), result.get('height')):
-                        raise ValueError('أبعاد الصورة الناتجة غير متطابقة.')
-                # Complete only after process exit: CUDA memory is now released.
+            result = None
+            failure = None
+            done = False
+            for line in iter(process.stdout.readline, ''):
+                try:
+                    event = json.loads(line)
+                except ValueError:
+                    continue  # a library printed to stdout; not a protocol event
+                if not isinstance(event, dict):
+                    continue
                 with self.lock:
-                    self.job.update(state='complete', result=result)
+                    if event.get('state') in ('loading', 'running'):
+                        self.job.update({key: event[key] for key in ('state', 'step', 'total')})
+                if 'result' in event:
+                    result = event['result']
+                if 'error' in event:
+                    failure = event['error']
+                if event.get('done'):
+                    done = True
+                    break
+            # A worker that answered and is still alive keeps the model for the next job.
+            keep = bool(self.keep_warm) and done and process.poll() is None
+            if not keep:
+                self._discard_worker()
+            if not result:
+                raise ValueError(failure or 'انتهت عملية التوليد قبل إخراج صورة. جرّب دقة أقل.')
+            if not isinstance(result, dict) or not isinstance(result.get('image'), str) or not result['image'].startswith('data:image/png;base64,'):
+                raise ValueError('لم ينتج النموذج صورة PNG صالحة.')
+            image_bytes(result['image'])
+            with Image.open(io.BytesIO(base64.b64decode(result['image'].split(',', 1)[1])), formats=('PNG',)) as image:
+                if image.size != (result.get('width'), result.get('height')):
+                    raise ValueError('أبعاد الصورة الناتجة غير متطابقة.')
+            # Without keep-warm the process has exited and CUDA memory is released;
+            # with it the model stays loaded until the idle timer or unload() ends the worker.
+            with self.lock:
+                self.job.update(state='complete', result=result)
         except Exception as error:
             if not isinstance(error, ValueError):
+                keep = False
                 LOG.exception('generation job failed')
             with self.lock:
                 self.job.update(state='failed', error=str(error) if isinstance(error, ValueError) else 'تعذر تشغيل مهمة التوليد المحلية.')
         finally:
             if watchdog:
                 watchdog.cancel()
-            if process:
-                if process.poll() is None:
-                    terminate_tree(process)
-                process.wait()
-                if process.stdout:
-                    process.stdout.close()
+            if keep:
+                timer = threading.Timer(self.keep_warm, self._unload_if_idle, args=(self.idle_token,))
+                timer.daemon = True
+                timer.start()
+            else:
+                self._discard_worker()
             self.gate.release()

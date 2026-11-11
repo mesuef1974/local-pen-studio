@@ -110,7 +110,10 @@ class Handler(SimpleHTTPRequestHandler):
             return
         locked=path in ['/api/prepare','/api/paths','/api/path-audit','/api/path-audit-target','/api/background']
         if locked and not GATE.acquire(blocking=False):self.reply(429,{'error':'هناك معالجة محلية أخرى. أعد المحاولة بعد اكتمالها.'});return
-        try:status,result=200,process(path,data)
+        try:
+            # Background removal runs its own GPU model; give it the VRAM a warm FLUX worker holds.
+            if path=='/api/background':GENERATION.unload()
+            status,result=200,process(path,data)
         except ValueError as error:status,result=400,{'error':str(error)}
         except Exception:
             LOG.exception('processing failed: %s',path);status,result=500,{'error':'تعذرت المعالجة. جرّب إعدادات أخف أو دقة أصغر.'}
@@ -125,4 +128,6 @@ if __name__=='__main__':
     server=ThreadingHTTPServer(('127.0.0.1',args.port),Handler);print(f'FLUX Studio: http://127.0.0.1:{args.port}',flush=True)
     try:server.serve_forever()
     except KeyboardInterrupt:pass
-    finally:server.server_close()
+    finally:
+        server.server_close()
+        if GATE.acquire(timeout=5):GENERATION.unload()
