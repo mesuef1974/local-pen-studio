@@ -161,7 +161,7 @@ class FluxTests(unittest.TestCase):
             def __init__(self, lines):
                 self.stdin = io.StringIO()
                 self.stdout = io.StringIO(lines)
-            def wait(self):
+            def wait(self, timeout=None):
                 return 0
             def poll(self):
                 return 0
@@ -181,6 +181,124 @@ class FluxTests(unittest.TestCase):
             self.assertEqual(jobs.status(job_id)['job']['error'], 'تعذر تشغيل مهمة التوليد المحلية.')
             self.assertIn('boom', logs.output[0])
             self.assertFalse(gate.locked())
+
+    def live_worker(self, events):
+        """A worker that stays alive until its stdin closes, answering from a scripted event list."""
+        class Pipe:
+            def __init__(self):
+                self.lines = []
+                self.closed = False
+            def write(self, text):
+                self.lines.append(text)
+            def flush(self):
+                pass
+            def close(self):
+                self.closed = True
+        class Output:
+            def readline(self):
+                return events.pop(0) if events else ''
+            def close(self):
+                pass
+        class Worker:
+            def __init__(self):
+                self.stdin = Pipe()
+                self.stdout = Output()
+            def poll(self):
+                return 0 if self.stdin.closed else None
+            def wait(self, timeout=None):
+                return 0
+        return Worker()
+
+    def test_warm_worker_serves_consecutive_jobs_and_unloads_when_idle(self):
+        result = json.dumps({'result': {'image': image(), 'width': 80, 'height': 120}}) + '\n'
+        done = json.dumps({'done': True}) + '\n'
+        rejected = json.dumps({'error': 'طلب مرفوض'}) + '\n'
+        worker = self.live_worker([result, done, rejected, done, result, done])
+        with tempfile.TemporaryDirectory() as folder, patch('generation.ROOT', Path(folder)), patch('generation.availability', return_value=(True, '')), \
+                patch('threading.Thread.start'), patch('generation.subprocess.Popen', return_value=worker) as popen:
+            gate = threading.Lock()
+            jobs = generation.Jobs(gate, keep_warm=60)
+            states = []
+            for _ in range(3):
+                job_id = jobs.start({'image': image()})['job']
+                jobs._run({'seed': 1})
+                states.append(jobs.status(job_id)['job'])
+                self.assertFalse(gate.locked())
+                self.assertTrue(jobs.status()['modelLoaded'])
+            self.assertEqual([job['state'] for job in states], ['complete', 'failed', 'complete'])
+            self.assertEqual(states[1]['error'], 'طلب مرفوض')
+            self.assertEqual(popen.call_count, 1)
+            self.assertEqual(len(worker.stdin.lines), 3)
+            self.assertTrue(all(line.endswith('\n') for line in worker.stdin.lines))
+            # A stale timer token must not unload, a busy gate must not unload, the current token does.
+            jobs._unload_if_idle(jobs.idle_token - 1)
+            self.assertTrue(jobs.status()['modelLoaded'])
+            gate.acquire()
+            jobs._unload_if_idle(jobs.idle_token)
+            self.assertTrue(jobs.status()['modelLoaded'])
+            gate.release()
+            jobs._unload_if_idle(jobs.idle_token)
+            self.assertFalse(jobs.status()['modelLoaded'])
+            self.assertTrue(worker.stdin.closed)
+            self.assertFalse(gate.locked())
+
+    def test_worker_is_replaced_after_it_dies_and_not_kept_without_keep_warm(self):
+        result = json.dumps({'result': {'image': image(), 'width': 80, 'height': 120}}) + '\n'
+        done = json.dumps({'done': True}) + '\n'
+        crashed = self.live_worker([json.dumps({'error': 'نفدت الذاكرة'}) + '\n', done])
+        crashed.poll = lambda: 1  # the worker exits after a fatal error
+        fresh = self.live_worker([result, done])
+        with tempfile.TemporaryDirectory() as folder, patch('generation.ROOT', Path(folder)), patch('generation.availability', return_value=(True, '')), \
+                patch('threading.Thread.start'), patch('generation.subprocess.Popen', side_effect=[crashed, fresh]) as popen:
+            gate = threading.Lock()
+            jobs = generation.Jobs(gate, keep_warm=60)
+            first = jobs.start({'image': image()})['job']
+            jobs._run({})
+            self.assertEqual(jobs.status(first)['job']['error'], 'نفدت الذاكرة')
+            self.assertFalse(jobs.status()['modelLoaded'])
+            second = jobs.start({'image': image()})['job']
+            jobs._run({})
+            self.assertEqual(jobs.status(second)['job']['state'], 'complete')
+            self.assertEqual(popen.call_count, 2)
+            gate.acquire()
+            jobs.unload()
+            gate.release()
+            self.assertFalse(jobs.status()['modelLoaded'])
+            cold = self.live_worker([result, done])
+            popen.side_effect = [cold]
+            jobs.keep_warm = 0
+            third = jobs.start({'image': image()})['job']
+            jobs._run({})
+            self.assertEqual(jobs.status(third)['job']['state'], 'complete')
+            self.assertTrue(cold.stdin.closed)
+            self.assertFalse(jobs.status()['modelLoaded'])
+
+    def test_worker_loop_survives_rejected_requests_and_stops_on_fatal_errors(self):
+        import generation_service
+
+        class Engine:
+            def generate(self, data):
+                if data.get('bad'):
+                    raise ValueError('طلب مرفوض')
+                if data.get('crash'):
+                    raise RuntimeError('CUDA out of memory')
+                return {'seed': data['seed']}
+        events = []
+        lines = ['\n', json.dumps({'seed': 1}) + '\n', json.dumps({'bad': True}) + '\n', 'not json\n',
+                 json.dumps({'seed': 2}) + '\n', json.dumps({'crash': True}) + '\n', json.dumps({'seed': 3}) + '\n']
+        with patch('generation_service.emit', side_effect=events.append), patch('sys.stderr', io.StringIO()):
+            self.assertEqual(generation_service.serve(lines, Engine()), 1)
+        self.assertEqual([event['result']['seed'] for event in events if 'result' in event], [1, 2])
+        self.assertEqual(sum(1 for event in events if event.get('done')), 5)
+        self.assertEqual(events[2], {'error': 'طلب مرفوض'})
+        self.assertNotIn('CUDA', json.dumps(events))
+        with patch('generation_service.emit', side_effect=events.append):
+            self.assertEqual(generation_service.serve([], Engine()), 0)
+
+    def test_keep_warm_setting_is_bounded(self):
+        for raw, expected in (('0', 0.0), ('45', 45.0), ('-1', 300.0), ('99999', 300.0), ('abc', 300.0), ('nan', 300.0)):
+            with patch.dict('os.environ', {'FLUX_KEEP_WARM_S': raw}):
+                self.assertEqual(generation.keep_warm_seconds(), expected)
 
 
 if __name__ == '__main__':
