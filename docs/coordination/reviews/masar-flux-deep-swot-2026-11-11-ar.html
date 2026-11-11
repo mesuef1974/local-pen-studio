@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مراجعة مسار FLUX العميقة</title>
+<style>
+:root{--bg:#fbfaf7;--fg:#1d1d1b;--mut:#5f5e5a;--line:#d9d6cc;--card:#fff;--acc:#185fa5;
+--s:#eaf3de;--sf:#27500a;--w:#faeeda;--wf:#633806;--o:#e6f1fb;--of:#0c447c;--t:#fceaea;--tf:#791f1f;
+--hi:#a32d2d;--md:#b06a12;--lo:#3b6d11}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171715;--fg:#ecebe6;--mut:#a9a79f;--line:#3a3935;--card:#201f1d;--acc:#85b7eb;
+--s:#27341a;--sf:#c0dd97;--w:#3a2c12;--wf:#fac775;--o:#16293d;--of:#b5d4f4;--t:#3d2020;--tf:#f7c1c1;--hi:#f09595;--md:#efb45a;--lo:#97c459}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.85 "Dubai","Cairo",system-ui,sans-serif;padding:24px 16px}
+main{max-width:1040px;margin:0 auto}
+h1{font-size:28px;font-weight:500;margin:0 0 4px}
+h2{font-size:21px;font-weight:500;margin:36px 0 12px;border-block-end:1px solid var(--line);padding-block-end:6px}
+h3{font-size:18px;font-weight:500;margin:0 0 6px}
+p{margin:8px 0}
+.sub{color:var(--mut);margin:0 0 18px}
+.lead{background:var(--card);border:1px solid var(--line);border-inline-start:4px solid var(--acc);border-radius:10px;padding:14px 18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:10px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.kpi b{display:block;font-size:22px;font-weight:500;direction:ltr;text-align:end;unicode-bidi:isolate}
+.kpi span{color:var(--mut);font-size:14px}
+.q{border-radius:12px;padding:12px 18px}
+.q ol{margin:6px 0;padding-inline-start:22px}
+.q li{margin:8px 0}
+.s{background:var(--s);color:var(--sf)}.w{background:var(--w);color:var(--wf)}.o{background:var(--o);color:var(--of)}.t{background:var(--t);color:var(--tf)}
+.tag{font-size:12px;border:1px solid currentColor;border-radius:8px;padding:0 6px;margin-inline-start:6px;white-space:nowrap}
+.sev{font-size:12px;border-radius:8px;padding:1px 7px;color:#fff;white-space:nowrap}
+.sev.h{background:var(--hi)}.sev.m{background:var(--md)}.sev.l{background:var(--lo)}
+.sev.h,.sev.m,.sev.l{color:var(--bg)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;background:var(--card);font-size:15px}
+th,td{padding:8px 12px;border-block-end:1px solid var(--line);text-align:start;vertical-align:top}
+th{font-weight:500;background:var(--bg)}
+tr:last-child td{border-block-end:0}
+.bar{display:inline-block;height:8px;border-radius:4px;background:var(--acc);vertical-align:middle;margin-inline-end:8px}
+bdi,code{font-family:Consolas,monospace;font-size:13px;direction:ltr;unicode-bidi:isolate}
+.num{direction:ltr;unicode-bidi:isolate;white-space:nowrap}
+.note{color:var(--mut);font-size:14px}
+@media print{body{background:#fff;color:#000}.q,.kpi,.lead{break-inside:avoid}}
+</style>
+</head>
+<body>
+<main>
+<h1>مراجعة مسار FLUX العميقة وتحليل SWOT</h1>
+<p class="sub">المجلد <bdi>flux-studio</bdi> · المنفذ <span class="num">8770</span> · فرع <bdi>main</bdi> عند <bdi>de853e9</bdi> · 11 نوفمبر 2026. يحلّ هذا التقرير محل تقرير SWOT المختصر الصادر في اليوم نفسه.</p>
+
+<div class="lead">
+<h3>الخلاصة التنفيذية</h3>
+<p>مسار FLUX تطبيق محلي ناضج في جوهره، وأقوى ما فيه الأمانة في القياس: يقيس مطابقة الحبر بأرقام فلا يدّعي نسخًا لا يحققه، ويعزل الكرت في عملية مستقلة، ويرفض المدخلات المريبة بدل أن يقصّها بصمت. الحماية الشبكية جيدة، ولم تُكتشف ثغرة عالية الخطورة.</p>
+<p>وأضعف ما فيه ثلاثة أمور:</p>
+<ul>
+<li>زمن التوليد يضيع معظمه في إعادة تحميل النموذج مع كل طلب: التحميل نحو 51 ثانية من 57، والتوليد الفعلي نحو 5 ثوانٍ.</li>
+<li>حد 10000 مسار يرفض خطط الطباعة الحقيقية لصور 1024.</li>
+<li>الواجهة متكدسة في ملف واحد كبير، والتبعيات غير مقفلة، والتطبيق مرتبط بمجلدات تطبيقات المشروع الأخرى.</li>
+</ul>
+<p>أعلى عائد ممكن: إبقاء النموذج محمّلًا بين الطلبات، وجعل pycairo المسار الافتراضي للتدقيق، وإصلاحات أمنية صغيرة في ثلاثة مواضع.</p>
+</div>
+
+<h2>مؤشرات رئيسية</h2>
+<div class="cards">
+<div class="kpi"><b>45 s</b><span>توليد 768 بمرجعين، مقيس اليوم مرتين (المرة الأولى والثانية متساويتان)</span></div>
+<div class="kpi"><b>51 / 57 s</b><span>نصيب تحميل النموذج من زمن الطلب عند 512 (ملف القياس)</span></div>
+<div class="kpi"><b>5802 MiB</b><span>ذروة ذاكرة الكرت عند 768 من <span class="num">8188</span></span></div>
+<div class="kpi"><b>93.8–98.9</b><span>IoU للحبر في الوضع الأمين على 15 حالة، مقابل 25.9–47.6 للخط المركزي</span></div>
+<div class="kpi"><b>24 + 37</b><span>اختبارًا في بايثون وجافاسكربت، كلها ناجحة على ويندوز ولينكس</span></div>
+<div class="kpi"><b>13822</b><span>مسارًا في خطة A4 لصورة 1024، والحد 10000</span></div>
+<div class="kpi"><b>~64%</b><span>من زمن الرسم المحاكى يضيع في رفع القلم والتنقل</span></div>
+<div class="kpi"><b>30 / 61</b><span>من الملفات المتتبَّعة تقارير وقياسات ونصوص لمرة واحدة</span></div>
+</div>
+
+<h2>بطاقة التقييم</h2>
+<p class="note">الدرجات حكم تقديري من خمس بعد المراجعة، لا قياس آلي.</p>
+<div class="tbl"><table>
+<tr><th>المحور</th><th>الدرجة</th><th>السبب المختصر</th></tr>
+<tr><td>الخصوصية والمعالجة المحلية</td><td><span class="bar" style="inline-size:90px"></span><span class="num">4.5</span></td><td>لا اتصال شبكي وقت التشغيل، ووضع عدم الاتصال مفروض قبل الاستيراد، ولا تُكتب المطالبات ولا الصور على القرص.</td></tr>
+<tr><td>أمانة القياس</td><td><span class="bar" style="inline-size:90px"></span><span class="num">4.5</span></td><td>IoU واسترجاع ودقة، ومطابقة بين WebGPU وCairo (<span class="num">97.878</span> مقابل <span class="num">97.85</span>)، ورفض التعبئة التي تخفض الدقة.</td></tr>
+<tr><td>الأمن</td><td><span class="bar" style="inline-size:80px"></span><span class="num">4.0</span></td><td>تحقق صارم من المضيف والأصل، وCSP، وقائمة ملفات صريحة؛ مع ثغرة متوسطة في فك الصور وأخرى منخفضة في كشف نتيجة آخر طلب.</td></tr>
+<tr><td>الاختبارات</td><td><span class="bar" style="inline-size:70px"></span><span class="num">3.5</span></td><td>سريعة ولا تحتاج الكرت، لكنها لا تغطي معالج HTTP ولا طابور المهام ولا app.js.</td></tr>
+<tr><td>تجربة الاستعمال</td><td><span class="bar" style="inline-size:70px"></span><span class="num">3.5</span></td><td>ثلاث خطوات واضحة بالعربية، وتعمل بلوحة المفاتيح وعلى الجوال؛ لكن لا إلغاء، وشريط التقدم صامت أثناء التحميل.</td></tr>
+<tr><td>أداء التوليد</td><td><span class="bar" style="inline-size:50px"></span><span class="num">2.5</span></td><td>يُعاد التحميل في كل طلب، ولا بديل تلقائي عند نفاد الذاكرة.</td></tr>
+<tr><td>جاهزية مخرجات القلم</td><td><span class="bar" style="inline-size:50px"></span><span class="num">2.5</span></td><td>SVG بالمليمتر فقط؛ لا G-code ولا دمج للخطوط ولا تهشير.</td></tr>
+<tr><td>قابلية الصيانة</td><td><span class="bar" style="inline-size:50px"></span><span class="num">2.5</span></td><td>ملف واجهة بحجم 66 كيلوبايت، وأسطر تبلغ آلاف الأحرف، وتكرار منطق، واقتران بمجلدات أخرى.</td></tr>
+<tr><td>قابلية النقل وإعادة الإنتاج</td><td><span class="bar" style="inline-size:40px"></span><span class="num">2.0</span></td><td>لا ملف قفل، وtorch غير مثبّت الإصدار، ومسار ويندوز مكتوب في الشيفرة.</td></tr>
+</table></div>
+
+<h2>تحليل SWOT</h2>
+<p class="note">وسم «متحقق» يعني قراءة الشيفرة كاملة في موضعها أو قياسًا أو طلبًا فعليًا أثناء المراجعة؛ ووسم «مسجّل» يعني رقمًا من ملفات القياس في المجلد؛ ووسم «استنتاج» يعني رأيًا لم يُختبر.</p>
+<div class="grid">
+<section class="q s"><h3>نقاط القوة</h3><ol>
+<li>عزل الكرت: كل توليد في عملية مستقلة لها مهلة 1200 ثانية تُنهي شجرتها، وبوابة واحدة غير حابسة تعيد 429، والمهمة لا تكتمل قبل خروج العملية فتتحرر ذاكرة CUDA. <bdi>generation.py:153,178,182,207</bdi><span class="tag">متحقق</span></li>
+<li>محلية تامة: <bdi>HF_HUB_OFFLINE</bdi> و<bdi>local_files_only</bdi> في كل تحميل، ولا pickle ولا <bdi>trust_remote_code</bdi>، والأوزان safetensors وGGUF فقط. <bdi>generation_service.py:10-12</bdi><span class="tag">متحقق</span></li>
+<li>حماية الخادم: يقتصر على 127.0.0.1، ويرفض المضيف الغريب ومحاولات DNS rebinding، ويرفض الأصل الغائب أو null أو الغريب، ويشترط JSON فيفرض فحص CORS المسبق؛ ومحاولات الخروج من المجلد كلها 404. <bdi>server.py:68,90,117</bdi><span class="tag">متحقق بطلبات فعلية</span></li>
+<li>تحقق صارم من الطلب: مفاتيح ومجموعات قيم محددة، وأنواع صحيحة لا تقبل القيم المنطقية، وحد 512 رمزًا يُفحص بقالب المحادثة الحقيقي قبل تحميل النموذج فيرفض الطلب ولا يقصّه. <bdi>generation.py:59-114</bdi><span class="tag">متحقق</span></li>
+<li>تدقيق أمين: الوضع الأمين يبلغ IoU بين 93.81 و98.92 على 15 حالة، ويُرفض أي ملء ينقص IoU أكثر من نقطة. <bdi>faithful_paths.py:142</bdi><span class="tag">مسجّل</span></li>
+<li>تطابق المتصفح والخادم: عدّ WebGPU يطابق عدّ المعالج حرفيًا، وفرق IoU عن Cairo ثلاثة أجزاء من مئة نقطة، واختبار يضمن أن المتصفح وبايثون يبنيان المطالبة نفسها. <bdi>test-prompts.mjs:15</bdi><span class="tag">مسجّل ومتحقق</span></li>
+<li>صدق الواجهة: الخادم يرفض مفتاح قوة التحويل، والواجهة تقول صراحة إن التوليد يعيد الرسم، ويوجد مسار مباشر يعتمد الصورة كما هي. <bdi>generation.py:64</bdi> و<bdi>app.js:202</bdi><span class="tag">متحقق</span></li>
+<li>اختبارات سريعة: 24 اختبار بايثون في ثانيتين، و37 اختبار جافاسكربت، كلها لا تحتاج الكرت وتعمل على نظامي CI.<span class="tag">متحقق</span></li>
+<li>عربية سليمة: <bdi>dir=rtl</bdi>، وأرقام لاتينية في كل الصفحة، وعزل اتجاه الأرقام، وتنقّل بلوحة المفاتيح، وتعمل على عرض 375 بكسل بلا تمرير أفقي.<span class="tag">متحقق في المتصفح</span></li>
+</ol></section>
+
+<section class="q w"><h3>نقاط الضعف</h3><ol>
+<li><span class="sev h">عالية</span> إعادة تحميل النموذج في كل طلب: العملية الجديدة تحمّل المحوّل ومشفّر Qwen3 والـVAE من جديد. التحميل 51.2 ثانية من 57.4 والاستدلال 5.1 ثوانٍ، وتوليدان متتاليان اليوم أخذا 45 ثانية لكلٍّ بلا أي تسريع، ومقارنة A/B/C تدفع الكلفة ثلاث مرات. <bdi>generation_service.py:46-51</bdi><span class="tag">متحقق ومسجّل</span></li>
+<li><span class="sev h">عالية</span> حد 10000 مسار يرفض خطة حقيقية لصورة 1024 على A4 بقلم 0.2 مم، وقد بلغت 13822 مسارًا بـIoU يساوي 93.94؛ والمستند يذكر 6000 خلافًا للشيفرة. <bdi>faithful_paths.py:97,138</bdi> و<bdi>README.md:53</bdi><span class="tag">متحقق ومسجّل</span></li>
+<li><span class="sev h">عالية</span> app.js ملف واحد بحجم 66 كيلوبايت يحمل الحالة والقوالب والمعاينة والتحرير والتنسيق، وأطول سطر فيه 4567 حرفًا؛ وفي styles.css سطر من 12760 حرفًا. لا اختبار يستورده.<span class="tag">متحقق</span></li>
+<li><span class="sev h">عالية</span> الخادم يعطّل سجل الطلبات ويحوّل كل استثناء إلى رسالة 500 عامة بلا أثر مسجّل، فتضيع أسباب الأعطال. <bdi>server.py:67,108</bdi><span class="tag">متحقق</span></li>
+<li><span class="sev m">متوسطة</span> لا إلغاء للتوليد ولا بديل عند نفاد الذاكرة: الإيقاف الوحيد بانتهاء مهلة 1200 ثانية، والعميل ينتظر 1260 ثانية، والخطأ يصل رسالة عامة.<span class="tag">متحقق</span></li>
+<li><span class="sev m">متوسطة</span> اقتران بمجلدات المشروع الأخرى عبر <bdi>sys.path</bdi>: drawing-simulator وtrace-studio وpipeline-studio وملف process_guard في المجلد الأعلى؛ فلا يُبنى التطبيق ولا يُختبر ولا يُنقل وحده. <bdi>server.py:8-10</bdi>، <bdi>setup_flux.py:20</bdi><span class="tag">متحقق</span></li>
+<li><span class="sev m">متوسطة</span> تكرار منطق: حدود مساحة التدقيق مكتوبة في ثلاثة مواضع، وبصمة SHA-256 في ثلاثة، واسم النموذج في خمسة، وأسماء المسارات مذكورة أربع مرات في server.py.<span class="tag">متحقق</span></li>
+<li><span class="sev m">متوسطة</span> التبعيات: أربع حزم مثبّتة الإصدار بلا بصمات، وtorch 2.6.0 يأتي من بايثون العام بلا تثبيت، ومسار <bdi>.venv-flux/Scripts/python.exe</bdi> مكتوب في <bdi>generation.py:19</bdi>.<span class="tag">متحقق</span></li>
+<li><span class="sev m">متوسطة</span> CairoSVG يستهلك 9.6 ثوانٍ من 12.9 في تخطيط أكبر حالة، بينما pycairo المطابق بكسلًا ببكسل يُستعمل احتياطًا فقط؛ وسجل التدقيق يكتب «CairoSVG» حتى حين يرسم pycairo. <bdi>path_fidelity.py:79,122</bdi><span class="tag">مسجّل ومتحقق</span></li>
+<li><span class="sev m">متوسطة</span> في الواجهة: تغيير السرعة يعيد ترتيب المسارات بخوارزمية O(n²) على الخيط الرئيسي لما يصل إلى 10000 مسار، وكل تحديث يعيد ترميز اللوحة PNG. <bdi>geometry.js:47</bdi>، <bdi>app.js:166</bdi><span class="tag">متحقق</span></li>
+<li><span class="sev l">منخفضة</span> مسارات يخدمها الخادم لملفات غير متتبَّعة (/swot ونماذج الأساليب والقياسات)، فتعيد 404 في نسخة نظيفة؛ و<bdi>typography.css</bdi> يعيد 404، وflux.css لا يُستعمل.<span class="tag">متحقق</span></li>
+<li><span class="sev l">منخفضة</span> المستند يصف «نقلًا متتابعًا بين الذاكرة والكرت»، والشيفرة تنقل المشفّر وحده إلى المعالج ثم تضع المحوّل والـVAE كاملين على الكرت.<span class="tag">متحقق</span></li>
+</ol></section>
+
+<section class="q o"><h3>الفرص</h3><ol>
+<li>عامل دائم يبقي النموذج محمّلًا ويفرّغه بعد مدة خمول: يقترب زمن الطلب الثاني وما بعده من 5 إلى 10 ثوانٍ بدل 45، وتصير مقارنة A/B/C عملية. يوازن ذلك بقاء نحو 4 إلى 5 جيجابايت محجوزة في الكرت.<span class="tag">استنتاج من القياس</span></li>
+<li>pycairo مسارًا افتراضيًا للتدقيق: الناتج مطابق، ويُتوقع أن يقصّر التخطيط نحو 70% في الحالات الكبيرة.<span class="tag">استنتاج من cProfile</span></li>
+<li>تحسين مسار القلم على طريقة vpype: دمج الخطوط المتلامسة، وبدء الحلقات المغلقة من أي نقطة، وترتيب أفضل. هذا يستهدف 64% من زمن الرسم الضائع في التنقل.<span class="tag">استنتاج</span></li>
+<li>تصدير G-code أو HPGL أو طبقات AxiDraw، وربطه بـxTool P2S الموثّق في <bdi>docs/xtool-p2s-research</bdi>، ينقل التطبيق من المعاينة إلى الإنتاج.<span class="tag">من الوثائق</span></li>
+<li>حد مسارات متكيّف: يقترح تكبير القلم أو تصغير الدقة حين تتجاوز الخطة الحد بدل الرفض، فتعمل صور 1024.<span class="tag">استنتاج</span></li>
+<li>تعبئة بالتهشير وتهشير متقاطع إلى جانب الحلقات المتراكزة، وملاءمة منحنيات Bézier بدل الخطوط المتكسرة.<span class="tag">استنتاج</span></li>
+<li>نموذج الاعتماد والتدقيق يصلح معيارًا لبقية التطبيقات، ودمج مسار القديم (8769) في هذا التطبيق يزيل التكرار.<span class="tag">استنتاج</span></li>
+</ol></section>
+
+<section class="q t"><h3>التهديدات</h3><ol>
+<li>الترخيص غير محسوم: ملفات نموذج 4B تقول Apache 2.0، وصفحة BFL تضع klein في باقات تجارية مدفوعة؛ فلا بيع ولا توزيع قبل جواب مكتوب من BFL أو مستشار.<span class="tag">متحقق، غير محسوم</span></li>
+<li><span class="sev m">متوسطة</span> فك الصورة قبل فحص حجمها في <bdi>/api/editor</bdi>: <bdi>exif_transpose</bdi> يفك الصورة كاملة قبل شرط 4 ملايين بكسل، فملف PNG دون 6 ميغابايت قد يستهلك نحو 1.4 جيجابايت في الطلب الواحد، والمسار خارج البوابة. <bdi>drawing-simulator/lineart_processing.py:13-14</bdi><span class="tag">متحقق في الشيفرة</span></li>
+<li><span class="sev l">منخفضة</span> نتيجة آخر توليد (الصورة والمطالبة والإعدادات) تُقرأ من <bdi>GET /api/generation</bdi> بلا رقم مهمة، ويقدر عليها أي برنامج على الجهاز. <bdi>server.py:78-80</bdi><span class="tag">متحقق بطلب فعلي</span></li>
+<li><span class="sev l">منخفضة</span> لا قائمة صيغ مسموحة عند فك الصور في التوليد والتدقيق، فكل ملحقات Pillow متاحة (PSD وSGI وغيرها). ولا تحقق من بصمات الأوزان وقت التشغيل، بل من أحجامها فقط. <bdi>generation.py:44,124</bdi><span class="tag">متحقق</span></li>
+<li><span class="sev l">منخفضة</span> خيط لكل طلب بلا سقف، وجسم حتى 22 ميغابايت يُحلَّل JSON قبل أي حد، وأجسام مشوهة قد تُسقط الاتصال بلا رد. الوصول محصور في الصفحة نفسها والبرامج المحلية.<span class="tag">استنتاج</span></li>
+<li>انجراف التبعيات: transformers 5 وnumpy 2.4 تعارض camel-tools وPaddleX في بايثون العام، وهي مشتركة عبر <bdi>--system-site-packages</bdi>.<span class="tag">متحقق بـpip check</span></li>
+<li>جهاز واحد وكرت 8 جيجابايت: عند 1024 بلغت الذاكرة 7881 من 8188، وأي تغيير في برنامج التشغيل (616.56) أو CUDA (12.4) قد يكسر البيئة، وإعادة التجهيز تحتاج 11.3 جيجابايت من Hugging Face.<span class="tag">متحقق</span></li>
+<li>دَين الصيانة يتراكم مع مطوّر واحد: ملفات طويلة الأسطر، و30 من 61 ملفًا متتبَّعًا ليست شيفرة منتج، وقاعدة التتبع بالامتداد تضيف كل نص جديد تلقائيًا.<span class="tag">متحقق</span></li>
+</ol></section>
+</div>
+
+<h2>القياسات</h2>
+<div class="tbl"><table>
+<tr><th>القياس</th><th>القيمة</th><th>المصدر</th></tr>
+<tr><td>توليد 768، مرجعان، أربع خطوات، طلبان متتاليان</td><td class="num">45 s · 45 s · peak 5802 MiB</td><td>قياس اليوم</td></tr>
+<tr><td>توليد 1024 بثلاث صور</td><td class="num">70 s · ~7881 / 8188 MiB</td><td>قياس سابق في الجلسة نفسها</td></tr>
+<tr><td>مراحل طلب 512</td><td class="num">57.42 s wall · load 51.2 s · infer 5.1 s</td><td><bdi>gpu-cpu-measurement-2026-10-28/flux-phase-profile.json</bdi></td></tr>
+<tr><td>IoU الوضع الأمين مقابل الخط المركزي (15 حالة، قلم 0.2 مم)</td><td class="num">93.81–98.92 / 25.9–47.6</td><td><bdi>fidelity-review/audit.json</bdi></td></tr>
+<tr><td>زمن التخطيط / زمن الرسم المحاكى</td><td class="num">5.8–14.2 s / 385–1470 s</td><td>المصدر السابق</td></tr>
+<tr><td>خطة 1024 على A4</td><td class="num">13822 paths · IoU 93.94</td><td><bdi>path-optimization-experiment-2026-10-28/results.json</bdi></td></tr>
+<tr><td>WebGPU مقابل Cairo</td><td class="num">IoU 97.878 / 97.85</td><td><bdi>webgpu-audit-results.json</bdi></td></tr>
+<tr><td>نموذج WebGPU التكيفي مقابل الثابت (10 حالات)</td><td class="num">error 0.435 / 0.067</td><td><bdi>webgpu-direct-fixed-heldout-comparison.json</bdi></td></tr>
+<tr><td>تسريع CUDA للمسافة وSobel</td><td class="num">0.88–0.99×</td><td><bdi>measurement-summary.json</bdi></td></tr>
+<tr><td>الاختبارات</td><td class="num">24 Python · 37 JS · 0 failed</td><td>تشغيل اليوم</td></tr>
+</table></div>
+
+<h2>استراتيجيات TOWS</h2>
+<div class="grid">
+<section class="q s"><h3>قوة × فرصة</h3><p>العزل في عملية مستقلة قائم، فيكفي أن تبقى العملية حيّة بين الطلبات مع تفريغ بعد خمول، دون المساس بالحماية. والتدقيق الأمين أساس جاهز لتصدير G-code مع إثبات المطابقة قبل الطباعة.</p></section>
+<section class="q o"><h3>ضعف × فرصة</h3><p>الحد المتكيّف للمسارات ودمج الخطوط يعالجان رفض صور 1024 وزمن التنقل معًا. وتقسيم app.js إلى وحدات يسبق إضافة التصدير والتهشير، وإلا تضخّم الملف أكثر.</p></section>
+<section class="q w"><h3>قوة × تهديد</h3><p>المحلية التامة تقلّل خطر الخصوصية، فتُستكمل بثلاثة إصلاحات أمنية صغيرة. والأوزان مثبّتة على مراجعة محددة، فيكتمل ذلك بتحقق من البصمات وقت التشغيل وملف قفل كامل.</p></section>
+<section class="q t"><h3>ضعف × تهديد</h3><p>الاقتران بمجلدات أخرى وغياب ملف القفل يجعلان تعطل الجهاز أو تحديث التبعيات خطرًا حقيقيًا. والحل نسخة قابلة لإعادة البناء: ملف قفل، ومسار مفسّر نسبي، وفصل الوحدات المشتركة في حزمة واحدة.</p></section>
+</div>
+
+<h2>خارطة طريق مرتبة بالعائد</h2>
+<div class="tbl"><table>
+<tr><th>الأفق</th><th>الإجراء</th><th>يعالج</th><th>الجهد</th></tr>
+<tr><td>الآن</td><td>فحص الأبعاد بعد <bdi>Image.open</bdi> مباشرة وقبل <bdi>exif_transpose</bdi>، وقائمة صيغ PNG وJPEG وWEBP في كل فك</td><td>تهديدا الذاكرة والصيغ</td><td>ساعة</td></tr>
+<tr><td>الآن</td><td>اشتراط رقم المهمة لقراءة النتيجة، وحذفها بعد أول قراءة</td><td>كشف نتيجة آخر طلب</td><td>ساعة</td></tr>
+<tr><td>الآن</td><td>تسجيل أثر الاستثناءات في ملف دوّار، وتصحيح اسم أداة الرسم في سجل التدقيق، وتصحيح المستند (6000، والنقل المتتابع)</td><td>ضعف التشخيص والتوثيق</td><td>ساعتان</td></tr>
+<tr><td>الآن</td><td>زر إلغاء يُنهي عملية التوليد، ونص للمرحلة أثناء التحميل</td><td>تجربة الانتظار</td><td>نصف يوم</td></tr>
+<tr><td>قريبًا</td><td>عامل دائم للنموذج يفرّغه بعد خمول قابل للضبط، مع بديل تلقائي عند نفاد الذاكرة</td><td>الضعف الأول</td><td>يومان</td></tr>
+<tr><td>قريبًا</td><td>pycairo مسارًا افتراضيًا، وحد مسارات متكيّف يقترح سماكة أكبر</td><td>زمن التخطيط ورفض 1024</td><td>يوم</td></tr>
+<tr><td>قريبًا</td><td>ملف قفل ببصمات يشمل torch، ومسار مفسّر نسبي، واختبارات لمعالج HTTP وطابور المهام</td><td>قابلية النقل والاختبار</td><td>يومان</td></tr>
+<tr><td>قريبًا</td><td>تقسيم app.js إلى وحدات، ونقل ترتيب المسارات إلى Web Worker</td><td>الصيانة والسلاسة</td><td>ثلاثة أيام</td></tr>
+<tr><td>لاحقًا</td><td>دمج الخطوط، وتهشير، وتصدير G-code وAxiDraw وxTool</td><td>جاهزية الإنتاج</td><td>أسبوعان</td></tr>
+<tr><td>لاحقًا</td><td>فصل الوحدات المشتركة مع drawing-simulator وtrace-studio، ونقل التقارير والقياسات من مجلد الشيفرة</td><td>الاقتران والازدحام</td><td>أسبوع</td></tr>
+<tr><td>قبل أي استعمال تجاري</td><td>جواب مكتوب من BFL أو مستشار عن ترخيص klein 4B</td><td>تهديد الترخيص</td><td>خارج الشيفرة</td></tr>
+</table></div>
+
+<h2>المنهج وحدوده</h2>
+<p>المراجعة قراءة كاملة لشيفرة <bdi>flux-studio</bdi> وما يستورده من المجلدات المجاورة، على ثلاثة محاور متوازية: الأمن والخصوصية، والبنية والاختبارات، وخط التوليد وتجربة الاستعمال. وتحققتُ بنفسي من الادعاءات الحاسمة:</p>
+<ul>
+<li>ترتيب فك الصورة في <bdi>lineart_processing.py</bdi>.</li>
+<li>كشف نتيجة آخر مهمة بطلب فعلي.</li>
+<li>ترويسة <bdi>Server</bdi>.</li>
+<li>حد 10000 مقابل 6000 في المستند.</li>
+<li>إطلاق عملية جديدة لكل توليد.</li>
+</ul>
+<p>وشغّلتُ الاختبارات وتوليدين على 768. لم يُنفَّذ اختبار اختراق بملفات ضارة؛ ونتيجتا الأجسام المشوهة والخيوط غير المحدودة مستنتجتان من الشيفرة. والدرجات في بطاقة التقييم حكم تقديري. ولم يُعدَّل أي ملف من ملفات التطبيق أثناء المراجعة.</p>
+</main>
+</body>
+</html>

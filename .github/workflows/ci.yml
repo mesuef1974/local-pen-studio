@@ -104,7 +104,7 @@ jobs:
         working-directory: trace-studio
       - run: python -m unittest test_generation test_server
         working-directory: pipeline-studio
-      - run: python -m unittest test_generation
+      - run: python -m unittest test_generation test_server
         working-directory: flux-studio
       - name: Physical pen raster fidelity (system Cairo on Linux, pycairo wheel on Windows)
         run: python -m unittest test_fidelity

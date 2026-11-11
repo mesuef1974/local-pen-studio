@@ -9,9 +9,9 @@ from PIL import Image, ImageOps
 
 
 def decode_image(encoded):
-    from generation import image_bytes
+    from generation import IMAGE_FORMATS,image_bytes
     raw=image_bytes(encoded)
-    image=ImageOps.exif_transpose(Image.open(io.BytesIO(raw))).convert('RGBA')
+    image=ImageOps.exif_transpose(Image.open(io.BytesIO(raw),formats=IMAGE_FORMATS)).convert('RGBA')
     if max(image.size)>4096:raise ValueError('أكبر ضلع للتخطيط والتدقيق 4096 بكسل؛ صغّر النسخة دون تغيير الأصل.')
     canvas=Image.new('RGBA',image.size,'white');canvas.alpha_composite(image)
     rgb=np.asarray(canvas.convert('RGB'))
@@ -66,11 +66,16 @@ def _pycairo_raster(paths,width,height,pen_pixels,pad,scale):
     return np.ascontiguousarray(rows[:,:pixels_x,0])
 
 
-def render_svg(paths,width,height,pen_pixels,upscale=4):
+def _cairosvg():
     try:
         import cairosvg
     except (ImportError,OSError):
-        cairosvg=None
+        return None
+    return cairosvg
+
+
+def render_svg(paths,width,height,pen_pixels,upscale=4):
+    cairosvg=_cairosvg()
     pad=max(3,math.ceil(pen_pixels)+2)
     if max(width+2*pad,height+2*pad)>8192 or (width+2*pad)*(height+2*pad)>40_000_000:
         raise ValueError('أثر القلم بالنسبة إلى الصورة أكبر من مساحة التدقيق الآمنة؛ كبّر حجم الرسم أو قلّل سماكة القلم.')
@@ -119,7 +124,7 @@ def measure(rgb,gray,mask,paths,mm_per_pixel,pen_mm,include_images=True):
         'penMm':pen_mm,'mmPerPixel':mm_per_pixel,'auditUpscale':upscale,
         'auditIncludesOutsideImage':True,'scope':'thresholded ink mask; not identity or full-color equivalence',
         'grayMeasurement':'native source resolution; union of target ink and reconstructed pixels below 250',
-        'renderer':'CairoSVG round-cap round-join physical pen footprint'}
+        'renderer':('CairoSVG' if _cairosvg() else 'pycairo')+' round-cap round-join physical pen footprint'}
     if include_images:
         result['reconstruction']=png_data(native)
         heat=np.full((*target.shape,3),255,np.uint8);heat[target&actual]=[35,49,61];heat[target&~actual]=[214,58,64];heat[~target&actual]=[50,107,213]

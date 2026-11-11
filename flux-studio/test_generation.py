@@ -137,6 +137,51 @@ class FluxTests(unittest.TestCase):
                 (root / generation.QUANT_FILE).write_bytes(b'1234')
                 self.assertTrue(generation.availability()[0])
 
+    def test_status_without_job_id_exposes_progress_only(self):
+        gate = threading.Lock()
+        jobs = generation.Jobs(gate)
+        self.assertIsNone(jobs.status()['job'])
+        with patch('generation.availability', return_value=(True, '')), patch('threading.Thread.start'):
+            job_id = jobs.start({'image': image()})['job']
+            jobs.job.update(state='complete', step=4, total=4, result={'image': image(), 'effectivePrompt': 'secret'})
+            for summary in (False, True):
+                self.assertEqual(jobs.status(summary=summary)['job'], {'state': 'complete', 'step': 4, 'total': 4})
+            self.assertEqual(jobs.status(job_id)['job']['result']['effectivePrompt'], 'secret')
+            gate.release()
+
+    def test_only_png_jpeg_webp_content_is_decoded(self):
+        buffer = io.BytesIO()
+        Image.new('RGB', (8, 8), 'white').save(buffer, 'BMP')
+        with self.assertRaises(ValueError):
+            generation.image_bytes('data:image/png;base64,' + base64.b64encode(buffer.getvalue()).decode())
+        self.assertTrue(generation.image_bytes(image()))
+
+    def test_worker_noise_on_stdout_is_ignored_and_crashes_are_logged(self):
+        class Worker:
+            def __init__(self, lines):
+                self.stdin = io.StringIO()
+                self.stdout = io.StringIO(lines)
+            def wait(self):
+                return 0
+            def poll(self):
+                return 0
+        result = {'image': image(), 'width': 80, 'height': 120}
+        lines = 'library banner, not JSON\n[1, 2]\n' + json.dumps({'state': 'running', 'step': 2, 'total': 4}) + '\n' + json.dumps({'result': result}) + '\n'
+        with tempfile.TemporaryDirectory() as folder, patch('generation.ROOT', Path(folder)), patch('generation.availability', return_value=(True, '')), patch('threading.Thread.start'):
+            gate = threading.Lock()
+            jobs = generation.Jobs(gate)
+            job_id = jobs.start({'image': image()})['job']
+            with patch('generation.subprocess.Popen', return_value=Worker(lines)):
+                jobs._run({})
+            self.assertEqual(jobs.status(job_id)['job']['state'], 'complete')
+            self.assertFalse(gate.locked())
+            job_id = jobs.start({'image': image()})['job']
+            with patch('generation.subprocess.Popen', side_effect=RuntimeError('boom')), self.assertLogs('flux-studio', 'ERROR') as logs:
+                jobs._run({})
+            self.assertEqual(jobs.status(job_id)['job']['error'], 'تعذر تشغيل مهمة التوليد المحلية.')
+            self.assertIn('boom', logs.output[0])
+            self.assertFalse(gate.locked())
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -10,13 +10,14 @@ def decode(value,*,preserve_alpha=False):
     except (ValueError,binascii.Error):raise ValueError('بيانات الصورة غير صحيحة.')
     if not 0<len(raw)<=6_000_000:raise ValueError('تجاوز حجم الصورة الحد.')
     try:
-        im=ImageOps.exif_transpose(Image.open(io.BytesIO(raw)))
+        # Header-only size check first: exif_transpose decodes the whole image.
+        im=Image.open(io.BytesIO(raw),formats=('PNG','JPEG','WEBP'))
         if im.width*im.height>4_000_000:raise ValueError('الصورة تتجاوز أربعة ملايين بكسل.')
-        rgba=im.convert('RGBA')
+        rgba=ImageOps.exif_transpose(im).convert('RGBA')
         if preserve_alpha:return np.array(rgba)
         bg=Image.new('RGBA',rgba.size,'white');bg.alpha_composite(rgba)
         return np.array(bg.convert('RGB'))
-    except OSError:raise ValueError('تعذر قراءة الصورة.')
+    except (OSError,Image.DecompressionBombError):raise ValueError('تعذر قراءة الصورة.')
 
 def encode(image):
     buffer=io.BytesIO();Image.fromarray(image).save(buffer,format='PNG')

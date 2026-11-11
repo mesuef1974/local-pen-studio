@@ -119,5 +119,16 @@ class FidelityTests(unittest.TestCase):
         for retired in ['/api/model','/api/post']:
             with self.assertRaises(ValueError):process(retired,{})
 
+    def test_audit_names_the_engine_that_actually_drew(self):
+        from unittest.mock import patch
+        image=np.full((40,40),255,np.uint8);cv2.line(image,(5,5),(30,30),0,3)
+        data=settings(image)|{'paths':[[[5,5],[30,30]]]}
+        with patch('path_fidelity._cairosvg',return_value=object()),patch('path_fidelity.render_svg',return_value=(np.full((46*4,46*4),255,np.uint8),3,4)):
+            self.assertTrue(audit(data)['renderer'].startswith('CairoSVG'))
+        try:import cairo
+        except ImportError:self.skipTest('pycairo is not installed')
+        with patch('path_fidelity._cairosvg',return_value=None):
+            self.assertTrue(audit(data)['renderer'].startswith('pycairo'))
+
 
 if __name__=='__main__':unittest.main()
