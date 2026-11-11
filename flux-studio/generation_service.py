@@ -26,7 +26,7 @@ def prompt_token_count(tokenizer, prompt):
 
 
 def run(data):
-    from generation import validate, prompts, dimensions, image_bytes
+    from generation import validate, prompts, dimensions, image_bytes, IMAGE_FORMATS
     from setup_flux import MODEL_DIR, QUANT_FILE
     from PIL import Image, ImageOps
     import torch
@@ -65,7 +65,7 @@ def run(data):
     images = []
     if settings['mode'] != 'generate':
         for encoded in [settings['image']] + [ref['image'] for ref in settings['references']]:
-            image = ImageOps.exif_transpose(Image.open(io.BytesIO(image_bytes(encoded)))).convert('RGBA')
+            image = ImageOps.exif_transpose(Image.open(io.BytesIO(image_bytes(encoded)), formats=IMAGE_FORMATS)).convert('RGBA')
             canvas = Image.new('RGBA', image.size, 'white')
             canvas.alpha_composite(image)
             # Reference frames keep their own aspect ratio; only the output uses aspect.

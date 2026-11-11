@@ -3,6 +3,7 @@ import base64
 import copy
 import io
 import json
+import logging
 import math
 import subprocess
 import sys
@@ -14,6 +15,7 @@ from PIL import Image
 from setup_flux import MODEL_DIR, MODEL_ID, REVISION, QUANT_FILE
 
 ROOT = Path(__file__).resolve().parent
+LOG = logging.getLogger('flux-studio')
 sys.path.insert(0,str(ROOT.parent))
 from process_guard import terminate_tree
 PYTHON = ROOT / '.venv-flux/Scripts/python.exe'
@@ -34,6 +36,9 @@ def prompts(settings):
     return ' '.join(part for part in parts if part)
 
 
+IMAGE_FORMATS = ('PNG', 'JPEG', 'WEBP')
+
+
 def image_bytes(image):
     if not isinstance(image, str) or not image.startswith(('data:image/png;base64,', 'data:image/jpeg;base64,', 'data:image/webp;base64,')):
         raise ValueError('اختر صورة صالحة أولًا.')
@@ -41,7 +46,7 @@ def image_bytes(image):
         raw = base64.b64decode(image.split(',', 1)[1], validate=True)
         if len(raw) > 6_000_000:
             raise ValueError()
-        with Image.open(io.BytesIO(raw)) as im:
+        with Image.open(io.BytesIO(raw), formats=IMAGE_FORMATS) as im:
             if im.width * im.height > 4_000_000:
                 raise ValueError()
             im.verify()
@@ -139,9 +144,15 @@ class Jobs:
     def status(self, job_id=None, summary=False):
         available, reason = availability()
         with self.lock:
-            selected = self.jobs.get(job_id) if job_id else self.job
-            if selected and summary:
-                selected = {key: value for key, value in selected.items() if key != 'result'}
+            if job_id:
+                selected = self.jobs.get(job_id)
+                if selected and summary:
+                    selected = {key: value for key, value in selected.items() if key != 'result'}
+            elif self.job:
+                # Without the job id expose progress only: never the id, image, prompt or error text.
+                selected = {key: self.job[key] for key in ('state', 'step', 'total')}
+            else:
+                selected = None
             return {'available': available, 'reason': reason, 'processing': self.gate.locked(),
                     'model': 'FLUX.2 Klein 4B Q5_K_M', 'job': copy.deepcopy(selected)}
 
@@ -187,7 +198,12 @@ class Jobs:
                 result = None
                 failure = None
                 for line in process.stdout:
-                    event = json.loads(line)
+                    try:
+                        event = json.loads(line)
+                    except ValueError:
+                        continue  # a library printed to stdout; not a protocol event
+                    if not isinstance(event, dict):
+                        continue
                     with self.lock:
                         if event.get('state') in ('loading', 'running'):
                             self.job.update({key: event[key] for key in ('state', 'step', 'total')})
@@ -201,13 +217,15 @@ class Jobs:
                 if not isinstance(result, dict) or not isinstance(result.get('image'), str) or not result['image'].startswith('data:image/png;base64,'):
                     raise ValueError('لم ينتج النموذج صورة PNG صالحة.')
                 image_bytes(result['image'])
-                with Image.open(io.BytesIO(base64.b64decode(result['image'].split(',', 1)[1]))) as image:
+                with Image.open(io.BytesIO(base64.b64decode(result['image'].split(',', 1)[1])), formats=('PNG',)) as image:
                     if image.size != (result.get('width'), result.get('height')):
                         raise ValueError('أبعاد الصورة الناتجة غير متطابقة.')
                 # Complete only after process exit: CUDA memory is now released.
                 with self.lock:
                     self.job.update(state='complete', result=result)
         except Exception as error:
+            if not isinstance(error, ValueError):
+                LOG.exception('generation job failed')
             with self.lock:
                 self.job.update(state='failed', error=str(error) if isinstance(error, ValueError) else 'تعذر تشغيل مهمة التوليد المحلية.')
         finally:

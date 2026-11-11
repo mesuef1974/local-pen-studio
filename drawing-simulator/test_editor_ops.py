@@ -81,5 +81,15 @@ class EditorTests(unittest.TestCase):
         result=extract_paths({'image':encode(image),'lineMode':'ink','lineDenoise':0,'minLength':2,'tolerance':0})
         self.assertEqual((result['width'],result['height']),(2000,2000))
         self.assertTrue(result['paths'])
+    def test_decode_rejects_large_dimensions_before_full_decode_and_foreign_formats(self):
+        from unittest.mock import patch
+        stream=io.BytesIO();Image.new('1',(5000,5000),1).save(stream,format='PNG',optimize=True)
+        self.assertLess(len(stream.getvalue()),6_000_000)
+        big='data:image/png;base64,'+base64.b64encode(stream.getvalue()).decode()
+        with patch('lineart_processing.ImageOps.exif_transpose',side_effect=AssertionError('decoded before size check')):
+            with self.assertRaisesRegex(ValueError,'أربعة ملايين'):decode(big)
+        stream=io.BytesIO();Image.new('RGB',(8,8),'white').save(stream,format='BMP')
+        with self.assertRaisesRegex(ValueError,'تعذر قراءة'):decode('data:image/png;base64,'+base64.b64encode(stream.getvalue()).decode())
+        self.assertEqual(decode(self.url).shape,(60,80,3))
 
 if __name__=='__main__':unittest.main()

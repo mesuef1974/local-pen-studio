@@ -1,11 +1,16 @@
 """Standalone three-stage local workspace. Reuses existing engines, no remote services."""
-import argparse,hashlib,json,sys,threading
+import argparse,hashlib,json,logging,logging.handlers,sys,threading
 from http.server import SimpleHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit,parse_qs
 
 ROOT=Path(__file__).resolve().parent
 DRAW=ROOT.parent/'drawing-simulator';TRACE=ROOT.parent/'trace-studio'
+# Tracebacks only (no request bodies): two rotated 512 KB files, created on the first failure.
+LOG=logging.getLogger('flux-studio')
+if not LOG.handlers:
+    _handler=logging.handlers.RotatingFileHandler(ROOT/'server-errors.log',maxBytes=512_000,backupCount=2,encoding='utf-8',delay=True)
+    _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'));LOG.addHandler(_handler);LOG.setLevel(logging.INFO)
 sys.path[:0]=[str(TRACE),str(DRAW)]
 ASSETS={'/':ROOT/'index.html','/prepare':ROOT/'index.html','/review':ROOT/'index.html','/adoption':ROOT/'platform-adoption.html','/paths':ROOT/'index.html','/app.js':ROOT/'app.js','/webgpu-audit.js':ROOT/'webgpu-audit.js','/webgpu-path-raster.js':ROOT/'webgpu-path-raster.js','/workspace.css':ROOT/'workspace.css','/paper.js':ROOT/'paper.js','/styles.css':ROOT/'styles.css','/workflow.js':ROOT/'workflow.js','/geometry.js':ROOT/'geometry.js','/sample-ink.png':ROOT/'sample-ink.png','/sample.png':DRAW/'photo-lineart-comparison/original.png','/sample-art.png':TRACE/'sample.png','/image-editor.js':DRAW/'image-editor.js','/image-editor.css':DRAW/'image-editor.css'}
 ASSETS['/swot']=ROOT/'ui-swot-report-ar.html'
@@ -61,6 +66,7 @@ def process(path,data):
     raise ValueError('مسار معالجة غير معروف.')
 
 class Handler(SimpleHTTPRequestHandler):
+    server_version='FluxStudio';sys_version=''
     def __init__(self,*args,**kwargs):super().__init__(*args,directory=str(ROOT),**kwargs)
     def setup(self):
         super().setup();self.connection.settimeout(30)
@@ -95,7 +101,8 @@ class Handler(SimpleHTTPRequestHandler):
             if self.headers.get_content_type()!='application/json' or not 0<size<=(22_000_000 if path in ['/api/import','/api/generate','/api/path-audit','/api/path-audit-target'] else 9_000_000):raise ValueError()
             data=json.loads(self.rfile.read(size))
             if not isinstance(data,dict):raise ValueError()
-        except (ValueError,UnicodeError):self.reply(400,{'error':'بيانات الطلب غير صالحة أو أكبر من الحد.'});return
+        except (ValueError,UnicodeError,RecursionError):self.reply(400,{'error':'بيانات الطلب غير صالحة أو أكبر من الحد.'});return
+        except OSError:self.close_connection=True;return  # body shorter than declared or client gone
         if path=='/api/generate':
             try:self.reply(202,GENERATION.start(data))
             except BlockingIOError as error:self.reply(429,{'error':str(error)})
@@ -105,7 +112,8 @@ class Handler(SimpleHTTPRequestHandler):
         if locked and not GATE.acquire(blocking=False):self.reply(429,{'error':'هناك معالجة محلية أخرى. أعد المحاولة بعد اكتمالها.'});return
         try:status,result=200,process(path,data)
         except ValueError as error:status,result=400,{'error':str(error)}
-        except Exception:status,result=500,{'error':'تعذرت المعالجة. جرّب إعدادات أخف أو دقة أصغر.'}
+        except Exception:
+            LOG.exception('processing failed: %s',path);status,result=500,{'error':'تعذرت المعالجة. جرّب إعدادات أخف أو دقة أصغر.'}
         finally:
             if locked:GATE.release()
         # A cancelled/slow browser must not keep the compute gate locked while writing.
