@@ -43,6 +43,15 @@ class PreparationTests(unittest.TestCase):
         with self.background_fixture(),patch.object(p,'run_bounded',return_value=response) as run:
             self.assertEqual(p.remove_subject(value),value);self.assertEqual(p.remove_subject(value),value)
         self.assertEqual(run.call_count,1)
+    def test_unanswering_card_is_queried_and_retried_once(self):
+        value=p.encoded(source());asleep=SimpleNamespace(returncode=3,stdout=json.dumps({'error':'كرت NVIDIA غير متاح','retry':'cuda'}))
+        awake=SimpleNamespace(returncode=0,stdout=json.dumps({'image':value,'device':'CUDA'}))
+        with self.background_fixture(),patch.object(p,'run_bounded',side_effect=[asleep,SimpleNamespace(returncode=0,stdout=''),awake]) as run:
+            self.assertEqual(p.remove_subject(value),value)
+        self.assertEqual([call.args[0][0] for call in run.call_args_list][1],'nvidia-smi');self.assertEqual(run.call_count,3)
+        p.SUBJECT_CACHE.clear()
+        with self.background_fixture(),patch.object(p,'run_bounded',side_effect=[asleep,OSError(),asleep,awake]) as run,self.assertRaisesRegex(ValueError,'NVIDIA'):p.remove_subject(value)
+        self.assertEqual(run.call_count,3);self.assertEqual(len(p.SUBJECT_CACHE),0)
     def test_empty_model_output_is_not_cached_or_accepted(self):
         value=p.encoded(source());empty=p.encoded(Image.new('RGBA',(100,120)))
         response=SimpleNamespace(returncode=0,stdout=json.dumps({'image':empty,'device':'CUDA'}))
