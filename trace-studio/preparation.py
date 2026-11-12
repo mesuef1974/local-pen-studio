@@ -47,27 +47,17 @@ def validate(supplied):
         s[key]=int(value)
     return s
 
-def background_worker(python,image):
-    try:
-        result=run_bounded([str(python),str(ROOT/'background_worker.py')],input=json.dumps({'image':image}),timeout=180)
-    except subprocess.TimeoutExpired:raise ValueError('انتهت مهلة إزالة الخلفية. جرّب دقة أصغر أو خلفية بسيطة.')
-    try:return result,json.loads(result.stdout)
-    except ValueError:return result,None
-
-def wake_gpu():
-    try:run_bounded(['nvidia-smi'],input='',timeout=15)
-    except (OSError,subprocess.TimeoutExpired):pass
-
 def remove_subject(image):
     source,_=decode(image);key=sha256(image.encode()).hexdigest()
     if key in SUBJECT_CACHE:
         SUBJECT_CACHE.move_to_end(key);return SUBJECT_CACHE[key]
     python=ROOT.parent/'drawing-simulator/.venv-background-gpu/Scripts/python.exe'
     if not python.is_file():raise ValueError('بيئة إزالة الخلفية على كرت NVIDIA غير جاهزة.')
-    result,data=background_worker(python,image)
-    if isinstance(data,dict) and data.get('retry')=='cuda':
-        # A laptop card in a low-power state can refuse the first CUDA request; query it once and retry once.
-        wake_gpu();result,data=background_worker(python,image)
+    try:
+        result=run_bounded([str(python),str(ROOT/'background_worker.py')],input=json.dumps({'image':image}),timeout=180)
+    except subprocess.TimeoutExpired:raise ValueError('انتهت مهلة إزالة الخلفية. جرّب دقة أصغر أو خلفية بسيطة.')
+    try:data=json.loads(result.stdout)
+    except ValueError:raise ValueError('تعذر تشغيل إزالة الخلفية المحلية.')
     if not isinstance(data,dict):raise ValueError('تعذر تشغيل إزالة الخلفية المحلية.')
     if result.returncode or data.get('error'):raise ValueError(data.get('error','تعذرت إزالة الخلفية.'))
     if data.get('device')!='CUDA':raise ValueError('لم تؤكد أداة إزالة الخلفية تنفيذ CUDA؛ لم تُقبل نتيجة من المعالج.')

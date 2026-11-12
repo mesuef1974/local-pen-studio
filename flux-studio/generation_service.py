@@ -109,8 +109,8 @@ class Engine:
         settings = validate(data)
         import torch
         if not torch.cuda.is_available():
-            raise CudaUnavailable('كرت NVIDIA غير ظاهر للنظام الآن، وقد يحدث ذلك بعد استيقاظ الجهاز من السكون. '
-                                  'افتح «إدارة الأجهزة» واختر «البحث عن تغييرات الأجهزة»، أو أعد تشغيل الجهاز، ثم أعد المحاولة.')
+            raise CudaUnavailable('كرت NVIDIA غير ظاهر للنظام الآن. يحدث ذلك حين يعمل الحاسوب المحمول على البطارية '
+                                  'بوضع الرسوميات التلقائي أو بعد السكون. وصّل الشاحن أو أعد تشغيل الجهاز ثم أعد المحاولة.')
         started = time.perf_counter()
         warm = self.pipe is not None
         emit({'state': 'loading', 'step': 0, 'total': 0, 'phase': 'prompt' if warm else 'model'})

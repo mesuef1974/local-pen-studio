@@ -7,15 +7,12 @@ ROOT=Path(__file__).resolve().parent
 os.environ['REMBG_HOME']=str(ROOT/'models/background')
 os.environ['OMP_NUM_THREADS']='6'
 
-class CudaUnavailable(ValueError):
-    """The card did not answer CUDA; a laptop GPU in a low-power state may answer a second attempt."""
-
 def local_session(model_path, *, device='cpu', profile_path=None):
     if device not in ('cpu','cuda'):raise ValueError('جهاز إزالة الخلفية غير صحيح.')
     if device=='cuda':
         # Load the existing PyTorch CUDA/cuDNN DLLs before ONNX Runtime on Windows.
         import torch
-        if not torch.cuda.is_available():raise CudaUnavailable('كرت NVIDIA غير متاح لإزالة الخلفية؛ لم يُستخدم المعالج بديلًا.')
+        if not torch.cuda.is_available():raise ValueError('كرت NVIDIA غير ظاهر للنظام الآن؛ لم يُستخدم المعالج بديلًا. يحدث ذلك حين يعمل الحاسوب المحمول على البطارية بوضع الرسوميات التلقائي أو بعد السكون. وصّل الشاحن أو أعد تشغيل الجهاز ثم أعد المحاولة.')
     import onnxruntime as ort
     if device=='cuda' and 'CUDAExecutionProvider' not in ort.get_available_providers():
         raise ValueError('مشغّل CUDA لإزالة الخلفية غير جاهز؛ لم يُستخدم المعالج بديلًا.')
