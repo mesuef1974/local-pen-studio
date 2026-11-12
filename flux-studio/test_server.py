@@ -74,6 +74,21 @@ class HandlerTests(unittest.TestCase):
             self.assertEqual(self.request('GET', '/api/generation?job=' + job['id'])[2]['job']['result']['effectivePrompt'], 'secret')
             self.assertNotIn('result', self.request('GET', '/api/generation?summary=1&job=' + job['id'])[2]['job'])
 
+    def test_shared_identity_stylesheets_and_fonts_are_served_with_their_types(self):
+        root = Path(server.__file__).resolve().parent.parent
+        font = next((root / 'assets/fonts').glob('*.woff2')).name
+        for path, kind in (('/typography.css?v=1', 'text/css'), ('/assets/fonts/fonts.css', 'text/css'), ('/assets/fonts/' + font, 'font/woff2')):
+            connection = http.client.HTTPConnection('127.0.0.1', self.port, timeout=10)
+            try:
+                connection.request('GET', path, headers={'Host': f'127.0.0.1:{self.port}'})
+                response = connection.getresponse()
+                body = response.read()
+            finally:
+                connection.close()
+            self.assertEqual((response.status, response.getheader('Content-Type').split(';')[0]), (200, kind), path)
+            self.assertTrue(body)
+        self.assertEqual(self.request('GET', '/assets/fonts/../server.py')[0], 404)
+
     def test_cancel_needs_the_job_id_and_reports_whether_it_applied(self):
         self.assertEqual(self.request('POST', '/api/generation/cancel', body='{}')[0], 400)
         self.assertEqual(self.request('POST', '/api/generation/cancel', body='{"job": 5}')[0], 400)
