@@ -15,6 +15,23 @@ test('excluded and short strokes never enter the export plan',()=>{const paths=[
 test('paper centering and margin respect physical dimensions',()=>{const m=g.layout(101,101,210,297,15);assert.equal(m.scale,1.8);assert.equal(m.x,15);assert.equal(m.y,58.5);});
 test('time includes drawing, movement and lifting',()=>{const result=g.timeline([{p:[[10,0],[20,0]]},{p:[[20,10],[20,20]]}],1,10,20,.5);assert.equal(result.ink,20);assert.equal(result.movement,20);assert.equal(result.seconds,4);assert.ok(result.segments.every((v,i,a)=>!i||v.start===a[i-1].end));});
 test('box selection includes crossing segments without vertices inside',()=>{assert.equal(g.intersectsBox([[-10,5],[20,5]],[0,0,10,10]),true);assert.equal(g.intersectsBox([[-10,-5],[20,-5]],[0,0,10,10]),false);});
+test('grid nearest ordering matches the exhaustive scan, ties included',()=>{
+ // The scan this replaced: every remaining path is examined at every step.
+ function exhaustive(paths){const items=paths.map((p,i)=>({p,i})),remaining=items.slice(),ordered=[];let last=[0,0];while(remaining.length){let best=0,reverse=false,score=Infinity;remaining.forEach((v,i)=>{for(const end of [0,v.p.length-1]){const q=v.p[end],distance=(q[0]-last[0])**2+(q[1]-last[1])**2;if(distance<score){score=distance;best=i;reverse=end!==0;}}});const v=remaining.splice(best,1)[0];ordered.push({i:v.i,p:reverse?v.p.slice().reverse():v.p});last=ordered.at(-1).p.at(-1);}return g.travel(ordered)<=g.travel(items)?ordered:items;}
+ let seed=11;const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+ const cases={
+  scattered:Array.from({length:700},()=>{const x=random()*1000,y=random()*1000;return [[x,y],[x+random()*30-15,y+random()*30-15],[x+random()*30-15,y+random()*30-15]];}),
+  // Integer lattice: many equal distances, duplicate paths and closed loops.
+  lattice:Array.from({length:500},()=>{const x=Math.floor(random()*12),y=Math.floor(random()*12),closed=random()<.3;return [[x,y],[x+1,y],closed?[x,y]:[x+Math.floor(random()*3),y+Math.floor(random()*3)]];}),
+  clustered:Array.from({length:400},(_,i)=>{const far=i%50===0,x=far?5000+random():random()*4,y=far?-3000+random():random()*4;return [[x,y],[x+random(),y+random()]];}),
+  line:Array.from({length:120},()=>{const x=random()*100;return [[x,7],[x+random(),7]];}),
+  single:[[[3,4],[5,6]]]};
+ for(const [name,paths]of Object.entries(cases)){const copy=JSON.stringify(paths);assert.deepEqual(g.order(paths),exhaustive(paths),name);assert.equal(JSON.stringify(paths),copy,name);}
+ // Excluded strokes: the scan runs on the kept paths, then its indices map back to the full list.
+ const hidden=new Set([0,3,4,99]),kept=cases.lattice.map((p,i)=>i).filter(i=>!hidden.has(i));
+ assert.deepEqual(g.order(cases.lattice,hidden),exhaustive(kept.map(i=>cases.lattice[i])).map(v=>({i:kept[v.i],p:v.p})));
+ const longest=g.order(cases.scattered,new Set(),'longest');for(let i=1;i<longest.length;i++)assert.ok(g.length(longest[i-1].p)>=g.length(longest[i].p));
+});
 test('SVG has physical units and pure selected paths',()=>{const svg=g.svg([{p:[[0,0],[100,100]]}],g.layout(101,101),.3);assert.ok(svg.includes('width="210mm"'));assert.ok(svg.includes('stroke-width="0.3"'));assert.ok(!svg.includes('<image'));assert.equal((svg.match(/<path /g)||[]).length,1);});
 
 test('text-only review has no unrelated source reference and does not alter timing settings',()=>{const w=new Workflow();w.reviewImage({image:'generated',width:512,height:512},'');assert.equal(w.outputs[1].reference,'');assert.equal(w.original,'generated');assert.deepEqual(w.approved,[true,false]);assert.equal(w.canEnter(2),false);});
