@@ -149,5 +149,37 @@ class FidelityTests(unittest.TestCase):
         self.assertRegex(str(too_complex('تجاوزت خطة المطابقة حد التعقيد',13_822,10_000,.2)),'0.3 مم')
         self.assertRegex(str(too_complex('تجاوزت خطة المطابقة حد التعقيد',30_000,10_000,.6)),'صغّر الصورة')
 
+    def test_indexed_loop_joining_matches_the_exhaustive_search(self):
+        import math
+        from faithful_paths import connect_fills,sample
+
+        def exhaustive(loops,distance,radius):
+            # The original search: every remaining loop is examined at every step.
+            remaining=loops[:];current=remaining.pop(0).tolist();merged=[]
+            while remaining:
+                end=np.asarray(current[-1]);best=None
+                for index,loop in enumerate(remaining):
+                    distances=np.sum((loop[:-1]-end)**2,axis=1)
+                    vertex=int(np.argmin(distances));length=float(math.sqrt(distances[vertex]))
+                    if length>max(4.,radius*6):continue
+                    bridge=np.linspace(end,loop[vertex],max(2,math.ceil(length*2)+1))
+                    if np.min(sample(distance,bridge))<radius+.25:continue
+                    if best is None or length<best[0]:best=(length,index,vertex)
+                if best is None:merged.append(np.asarray(current));current=remaining.pop(0).tolist();continue
+                _,index,vertex=best;loop=remaining.pop(index)
+                current.extend(np.vstack([loop[vertex:-1],loop[:vertex+1]]).tolist())
+            return merged+[np.asarray(current)]
+
+        rng=np.random.default_rng(3);radius=1.5
+        # One solid region: every pen centre is safe, so only distance and order decide the joins.
+        distance=np.full((240,240),50,np.float32);loops=[]
+        for _ in range(160):
+            cx,cy=rng.uniform(10,230,2);r=rng.uniform(1,5);angles=np.linspace(0,2*math.pi,int(rng.integers(4,14)))
+            loop=np.column_stack((cx+r*np.cos(angles),cy+r*np.sin(angles)));loop[-1]=loop[0];loops.append(loop)
+        loops+=[loops[0].copy(),loops[5]+[9,0]]  # exact ties and a far-side neighbour
+        expected=exhaustive(loops,distance,radius);actual=connect_fills(loops,distance,radius)
+        self.assertEqual(len(actual),len(expected));self.assertLess(len(actual),len(loops))
+        for a,b in zip(actual,expected):self.assertTrue(np.array_equal(a,b))
+
 
 if __name__=='__main__':unittest.main()
