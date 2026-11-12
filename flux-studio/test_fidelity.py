@@ -123,12 +123,31 @@ class FidelityTests(unittest.TestCase):
         from unittest.mock import patch
         image=np.full((40,40),255,np.uint8);cv2.line(image,(5,5),(30,30),0,3)
         data=settings(image)|{'paths':[[[5,5],[30,30]]]}
-        with patch('path_fidelity._cairosvg',return_value=object()),patch('path_fidelity.render_svg',return_value=(np.full((46*4,46*4),255,np.uint8),3,4)):
+        blank=(np.full((46*4,46*4),255,np.uint8),3,4)
+        with patch('path_fidelity._pycairo',return_value=None),patch('path_fidelity._cairosvg',return_value=object()),patch('path_fidelity.render_svg',return_value=blank):
             self.assertTrue(audit(data)['renderer'].startswith('CairoSVG'))
+        # pycairo is the default whenever it imports, even next to a working CairoSVG.
+        with patch('path_fidelity._pycairo',return_value=object()),patch('path_fidelity._cairosvg',return_value=object()),patch('path_fidelity.render_svg',return_value=blank):
+            self.assertTrue(audit(data)['renderer'].startswith('pycairo'))
+        with patch('path_fidelity._pycairo',return_value=None),patch('path_fidelity._cairosvg',return_value=None),self.assertRaisesRegex(ValueError,'Cairo'):audit(data)
         try:import cairo
         except ImportError:self.skipTest('pycairo is not installed')
-        with patch('path_fidelity._cairosvg',return_value=None):
+        with patch('path_fidelity._cairosvg',side_effect=AssertionError('CairoSVG must not be consulted')):
             self.assertTrue(audit(data)['renderer'].startswith('pycairo'))
+
+    def test_path_limit_follows_image_area_and_names_a_wider_pen(self):
+        from path_fidelity import path_limit,point_limit,wider_pen
+        self.assertEqual(path_limit(40,40),10_000);self.assertEqual(path_limit(768,768),10_000)
+        self.assertEqual(path_limit(1024,1024),17_778);self.assertEqual(path_limit(4096,4096),40_000)
+        self.assertEqual(point_limit(768,768),400_000)
+        # The measured A4 plan of a 1024 image (13,822 paths) is accepted; a 768 frame still stops at 10,000.
+        validate_paths([[[0,0],[1,1]]]*13_822,1024,1024)
+        with self.assertRaises(ValueError):validate_paths([[[0,0],[1,1]]]*13_822,768,768)
+        self.assertEqual(wider_pen(.2,13_822,10_000),.3);self.assertEqual(wider_pen(.2,10_001,10_000),.25)
+        self.assertIsNone(wider_pen(.6,30_000,10_000))
+        from faithful_paths import too_complex
+        self.assertRegex(str(too_complex('تجاوزت خطة المطابقة حد التعقيد',13_822,10_000,.2)),'0.3 مم')
+        self.assertRegex(str(too_complex('تجاوزت خطة المطابقة حد التعقيد',30_000,10_000,.6)),'صغّر الصورة')
 
 
 if __name__=='__main__':unittest.main()
