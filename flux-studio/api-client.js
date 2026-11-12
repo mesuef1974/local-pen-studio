@@ -13,6 +13,16 @@ export async function requestJson(path,body,{fetchImpl=globalThis.fetch,timeoutM
  try{return await Promise.race([work,timeout]);}finally{clearTimeout(timer);}
 }
 
+// What the local worker is doing right now, from the phase the server reports. No invented progress.
+export function phaseText(job){
+ if(!job)return 'توليد الصورة على جهازك';
+ if(job.cancelling)return 'جارٍ إلغاء التوليد…';
+ if(job.state==='running'&&job.total>0)return job.step>0?`الرسم · الخطوة ${job.step} من ${job.total}`:'بدء الرسم…';
+ if(job.phase==='model')return 'تحميل النموذج إلى الذاكرة · أول طلب يأخذ نحو نصف دقيقة';
+ if(job.phase==='prompt')return 'قراءة الوصف وتجهيز الصور…';
+ return job.state==='queued'?'إرسال الطلب إلى المعالجة المحلية…':'تجهيز التوليد على جهازك…';
+}
+
 export async function waitForJob(id,status,{onProgress=()=>{},onConnection=()=>{},clock=Date.now,sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms)),timeoutMs=1260000}={}){
  const started=clock();
  for(;;){
@@ -21,6 +31,7 @@ export async function waitForJob(id,status,{onProgress=()=>{},onConnection=()=>{
   onConnection(true);const job=state.job;
   if(!job||job.id!==id)throw Error('تعذر العثور على مهمة التوليد الحالية. أعد المحاولة.');
   onProgress(job);
+  if(job.state==='cancelled'){const stopped=Error('أُلغي التوليد.');stopped.cancelled=true;throw stopped;}
   if(job.state==='failed')throw Error(job.error||'تعذر توليد الصورة. جرّب دقة أقل.');
   if(job.state==='complete'){if(!job.result?.image)throw Error('اكتمل الطلب دون صورة صالحة.');return job.result;}
   await sleep(1000);

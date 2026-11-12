@@ -1,6 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {requestJson,waitForJob} from './api-client.js';
+import {requestJson,waitForJob,phaseText} from './api-client.js';
+test('a cancelled job ends the wait with a marked error, never a result',async()=>{
+ await assert.rejects(waitForJob('a',async()=>({job:{id:'a',state:'cancelled',result:{image:'late'}}})),error=>error.cancelled===true&&/أُلغي/.test(error.message));
+});
+test('phase text follows the reported phase and never invents steps',()=>{
+ assert.match(phaseText({state:'queued',step:0,total:0}),/إرسال/);
+ assert.match(phaseText({state:'loading',phase:'model'}),/تحميل النموذج/);
+ assert.match(phaseText({state:'loading',phase:'prompt'}),/الوصف/);
+ assert.match(phaseText({state:'running',phase:'draw',step:0,total:4}),/بدء الرسم/);
+ assert.match(phaseText({state:'running',phase:'draw',step:3,total:4}),/3 من 4/);
+ assert.match(phaseText({state:'running',step:3,total:4,cancelling:true}),/إلغاء/);
+ assert.doesNotMatch(phaseText({state:'loading'}),/\d/);
+ assert.ok(phaseText(null));
+});
 const response=(result,status=200)=>({status,ok:status===200,json:async()=>result});
 test('successful request retains payload and returns result',async()=>{
  let seen;const result=await requestJson('/api/background',{image:'test'},{fetchImpl:async(path,options)=>{seen={path,options};return response({image:'cutout'});}});

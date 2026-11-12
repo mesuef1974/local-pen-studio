@@ -74,6 +74,15 @@ class HandlerTests(unittest.TestCase):
             self.assertEqual(self.request('GET', '/api/generation?job=' + job['id'])[2]['job']['result']['effectivePrompt'], 'secret')
             self.assertNotIn('result', self.request('GET', '/api/generation?summary=1&job=' + job['id'])[2]['job'])
 
+    def test_cancel_needs_the_job_id_and_reports_whether_it_applied(self):
+        self.assertEqual(self.request('POST', '/api/generation/cancel', body='{}')[0], 400)
+        self.assertEqual(self.request('POST', '/api/generation/cancel', body='{"job": 5}')[0], 400)
+        self.assertEqual(self.request('POST', '/api/generation/cancel', body='{"job": "x"}', origin='http://evil.example')[0], 403)
+        with patch.object(server.GENERATION, 'cancel', return_value={'cancelled': True}) as cancel:
+            self.assertEqual(self.request('POST', '/api/generation/cancel', body=json.dumps({'job': 'a' * 32}))[2], {'cancelled': True})
+        cancel.assert_called_once_with('a' * 32)
+        self.assertEqual(self.request('POST', '/api/generation/cancel', body='{"job": "unknown"}')[2], {'cancelled': False})
+
 
 if __name__ == '__main__':
     unittest.main()

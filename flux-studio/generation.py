@@ -8,6 +8,7 @@ import math
 import os
 import subprocess
 import sys
+import tempfile
 import threading
 import uuid
 from collections import OrderedDict
@@ -144,6 +145,13 @@ def keep_warm_seconds():
     return value if math.isfinite(value) and 0 <= value <= 3600 else 300.0
 
 
+ACTIVE = ('queued', 'loading', 'running')
+
+
+class JobCancelled(Exception):
+    pass
+
+
 class Jobs:
     def __init__(self, gate, keep_warm=None):
         self.gate = gate
@@ -154,6 +162,8 @@ class Jobs:
         self.worker = None
         self.worker_log = None
         self.idle_token = 0
+        # The id of the job to stop; a warm worker reads it at its checkpoints.
+        self.cancel_file = Path(tempfile.gettempdir()) / f'flux-studio-cancel-{os.getpid()}.txt'
 
     def status(self, job_id=None, summary=False):
         available, reason = availability()
@@ -194,7 +204,40 @@ class Jobs:
             raise
         return {'job': job_id}
 
-    # The worker is touched only by the thread that holds the compute gate.
+    def cancel(self, job_id):
+        """Stop the running job. A warm worker past model loading stops at its next step and
+        keeps the model; otherwise the process ends, which is also the fallback after 20 s."""
+        with self.lock:
+            job = self.job
+            if not job or job['id'] != job_id or job['state'] not in ACTIVE:
+                return {'cancelled': False}
+            if job.get('cancelling'):
+                return {'cancelled': True}
+            job['cancelling'] = True
+            queued = job['state'] == 'queued'
+            cooperative = bool(self.keep_warm) and job.get('phase') in ('prompt', 'draw')
+        process = self.worker
+        if queued or not process:
+            return {'cancelled': True}  # _run sees the flag before it sends the job
+        if cooperative:
+            try:
+                self.cancel_file.write_text(job_id, encoding='utf-8')
+                timer = threading.Timer(20, self._force_cancel, args=(job_id, process))
+                timer.daemon = True
+                timer.start()
+                return {'cancelled': True}
+            except OSError:
+                pass  # no cancel file: end the process instead
+        terminate_tree(process)
+        return {'cancelled': True}
+
+    def _force_cancel(self, job_id, process):
+        with self.lock:
+            stuck = bool(self.job and self.job['id'] == job_id and self.job['state'] in ACTIVE)
+        if stuck:
+            terminate_tree(process)
+
+    # Apart from cancel(), the worker is touched only by the thread that holds the compute gate.
     def _spawn(self):
         # Stderr is diagnostic-only, kept outside HTTP responses and user images.
         self.worker_log = (ROOT / 'generation-runtime.log').open('w', encoding='utf-8')
@@ -202,6 +245,7 @@ class Jobs:
             self.worker = subprocess.Popen([str(PYTHON), str(ROOT / 'generation_service.py')],
                                            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.worker_log,
                                            text=True, encoding='utf-8',
+                                           env=os.environ | {'FLUX_CANCEL_FILE': str(self.cancel_file)},
                                            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         except BaseException:
             self.worker_log.close()
@@ -239,15 +283,19 @@ class Jobs:
 
     def unload(self):
         """Free the model now. The caller must hold the compute gate."""
+        self.cancel_file.unlink(missing_ok=True)
         self.idle_token += 1
         self._discard_worker()
 
     def _run(self, settings):
         watchdog = None
         keep = False
+        job = self.job
         try:
             with self.lock:
-                self.job['state'] = 'loading'
+                if job.get('cancelling'):
+                    raise JobCancelled()
+                job['state'] = 'loading'
             self.idle_token += 1  # invalidates any pending idle unload
             process = self.worker if self.worker and self.worker.poll() is None else None
             if not process:
@@ -256,7 +304,7 @@ class Jobs:
             watchdog = threading.Timer(1200, terminate_tree,args=(process,))
             watchdog.daemon = True
             watchdog.start()
-            process.stdin.write(json.dumps(settings) + '\n')
+            process.stdin.write(json.dumps(settings | {'jobId': job['id']}) + '\n')
             process.stdin.flush()
             if not self.keep_warm:
                 process.stdin.close()
@@ -272,18 +320,22 @@ class Jobs:
                     continue
                 with self.lock:
                     if event.get('state') in ('loading', 'running'):
-                        self.job.update({key: event[key] for key in ('state', 'step', 'total')})
+                        job.update({key: event[key] for key in ('state', 'step', 'total')})
+                        if 'phase' in event:
+                            job['phase'] = event['phase']
                 if 'result' in event:
                     result = event['result']
                 if 'error' in event:
                     failure = event['error']
                 if event.get('done'):
-                    done = True
+                    done = not event.get('exiting')  # a worker that announced its exit is not kept
                     break
             # A worker that answered and is still alive keeps the model for the next job.
             keep = bool(self.keep_warm) and done and process.poll() is None
             if not keep:
                 self._discard_worker()
+            if job.get('cancelling'):
+                raise JobCancelled()
             if not result:
                 raise ValueError(failure or 'انتهت عملية التوليد قبل إخراج صورة. جرّب دقة أقل.')
             if not isinstance(result, dict) or not isinstance(result.get('image'), str) or not result['image'].startswith('data:image/png;base64,'):
@@ -295,13 +347,21 @@ class Jobs:
             # Without keep-warm the process has exited and CUDA memory is released;
             # with it the model stays loaded until the idle timer or unload() ends the worker.
             with self.lock:
-                self.job.update(state='complete', result=result)
+                if job.get('cancelling'):
+                    raise JobCancelled()
+                job.update(state='complete', result=result)
+        except JobCancelled:
+            with self.lock:
+                job.update(state='cancelled')
         except Exception as error:
+            with self.lock:
+                cancelling = bool(job.get('cancelling'))
             if not isinstance(error, ValueError):
                 keep = False
-                LOG.exception('generation job failed')
+                if not cancelling:
+                    LOG.exception('generation job failed')
             with self.lock:
-                self.job.update(state='failed', error=str(error) if isinstance(error, ValueError) else 'تعذر تشغيل مهمة التوليد المحلية.')
+                job.update(state='cancelled') if cancelling else job.update(state='failed', error=str(error) if isinstance(error, ValueError) else 'تعذر تشغيل مهمة التوليد المحلية.')
         finally:
             if watchdog:
                 watchdog.cancel()
