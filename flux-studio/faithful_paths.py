@@ -7,7 +7,15 @@ from pathlib import Path
 import cv2
 import numpy as np
 from PIL import Image
-from path_fidelity import decode_image,ink_mask,validate_physics,measure,render_svg
+from path_fidelity import decode_image,ink_mask,validate_physics,measure,render_svg,path_limit,point_limit,wider_pen
+
+
+def too_complex(prefix,count,limit,pen):
+    """Refuse without dropping detail, and name the pen that would bring the plan under the limit."""
+    suggestion=wider_pen(pen,count,limit)
+    advice=(f'جرّب قلمًا بقطر {suggestion:g} مم أو أعرض، أو صغّر الصورة.' if suggestion
+        else 'لا يكفي تعريض القلم وحده؛ صغّر الصورة أو بسّطها.')
+    return ValueError(f'{prefix} (نحو {round(count):,} مسار والحد {limit:,}). {advice}')
 
 
 def sample(field,points):
@@ -94,7 +102,8 @@ def extract(data):
         if not len(xs):continue
         x=float(xs[len(xs)//2]);y=float(ys[len(ys)//2]);step=.001 if x<width-1 else -.001
         paths.append([[x,y],[x+step,y]]);dots+=1
-    if len(paths)>10_000 or sum(len(path) for path in paths)>400_000:
+    limit=path_limit(width,height);point_cap=point_limit(width,height)
+    if len(paths)>limit or sum(len(path) for path in paths)>point_cap:
         raise ValueError('تجاوزت العلامات والخطوط حد التعقيد؛ لم تُحذف أي تفاصيل تلقائيًا.')
     baseline=measure(rgb,gray,mask,paths,scale,pen,include_images=False)
     factor=min(8,max(1,int(math.sqrt(40_000_000/(width*height)))))
@@ -119,8 +128,10 @@ def extract(data):
             elif np.linalg.norm(points[0]-points[-1])>0:
                 points=np.vstack([points,points[0]])
             fills.append(points)
-        if len(fills)+len(paths)>12_000 or sum(len(p) for p in fills)>500_000:
-            raise ValueError('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف أي خطوط تلقائيًا.')
+        if len(fills)+len(paths)>1.2*limit or sum(len(p) for p in fills)>1.25*point_cap:
+            # Passes left to draw are estimated from how deep the fill has reached.
+            raise too_complex('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف أي خطوط تلقائيًا',
+                len(paths)+len(fills)*max(1,maximum/level),limit,pen)
         level+=step
     fills=connect_fills(fills,distance,radius)
     fill_paths=[]
@@ -135,7 +146,8 @@ def extract(data):
         fill_distance=cv2.distanceTransform(filled,cv2.DIST_L2,cv2.DIST_MASK_PRECISE)
         retained=[path for path in paths if not covered_seed(path,fill_distance,pad,audit_factor,pen/scale*audit_factor/2)]
     candidate=retained+fill_paths
-    if len(candidate)>10_000 or sum(len(p) for p in candidate)>400_000:raise ValueError('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف خطوط.')
+    if len(candidate)>limit or sum(len(p) for p in candidate)>point_cap:
+        raise too_complex('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف خطوط',max(len(candidate),limit+1),limit,pen)
     final=measure(rgb,gray,mask,candidate,scale,pen)
     contours_added=len(fill_paths)
     # Never silently choose a fill that worsens the measured mask agreement.

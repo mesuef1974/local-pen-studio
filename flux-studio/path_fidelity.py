@@ -33,13 +33,29 @@ def validate_physics(data):
     return float(scale),float(pen)
 
 
+def path_limit(width,height):
+    """10,000 paths up to 768x768, then in proportion to the image area, never above 40,000."""
+    return min(40_000,max(10_000,round(10_000*width*height/(768*768))))
+
+
+def point_limit(width,height):
+    return 40*path_limit(width,height)
+
+
+def wider_pen(pen_mm,count,limit):
+    """Fill passes shrink roughly in proportion to pen width; None when no allowed pen would fit."""
+    suggestion=math.ceil(pen_mm*count/limit*20-1e-9)/20
+    if suggestion<=pen_mm:suggestion=round(pen_mm+.05,2)
+    return suggestion if suggestion<=1.2 else None
+
+
 def validate_paths(paths,width,height):
-    if not isinstance(paths,list) or len(paths)>10_000:raise ValueError('عدد مسارات التدقيق أكبر من الحد.')
+    if not isinstance(paths,list) or len(paths)>path_limit(width,height):raise ValueError('عدد مسارات التدقيق أكبر من الحد.')
     count=0
     for path in paths:
         if not isinstance(path,list) or len(path)<2:raise ValueError('مسار غير صالح.')
         count+=len(path)
-        if count>400_000:raise ValueError('نقاط كثيرة للتدقيق؛ اختصر المسار دون حذف ملامحه.')
+        if count>point_limit(width,height):raise ValueError('نقاط كثيرة للتدقيق؛ اختصر المسار دون حذف ملامحه.')
         for point in path:
             if not isinstance(point,(list,tuple)) or len(point)!=2:raise ValueError('نقطة غير صالحة.')
             for value,limit in zip(point,(width,height)):
@@ -66,6 +82,14 @@ def _pycairo_raster(paths,width,height,pen_pixels,pad,scale):
     return np.ascontiguousarray(rows[:,:pixels_x,0])
 
 
+def _pycairo():
+    try:
+        import cairo
+    except (ImportError,OSError):
+        return None
+    return cairo
+
+
 def _cairosvg():
     try:
         import cairosvg
@@ -74,15 +98,23 @@ def _cairosvg():
     return cairosvg
 
 
+def renderer_name():
+    # pycairo draws straight to the surface; CairoSVG spends most of its time building and parsing SVG text.
+    if _pycairo() is not None:return 'pycairo'
+    if _cairosvg() is not None:return 'CairoSVG'
+    raise ValueError('لا يوجد مصيِّر Cairo للتدقيق؛ ثبّت pycairo أو CairoSVG.')
+
+
 def render_svg(paths,width,height,pen_pixels,upscale=4):
-    cairosvg=_cairosvg()
+    direct=renderer_name()=='pycairo'
     pad=max(3,math.ceil(pen_pixels)+2)
     if max(width+2*pad,height+2*pad)>8192 or (width+2*pad)*(height+2*pad)>40_000_000:
         raise ValueError('أثر القلم بالنسبة إلى الصورة أكبر من مساحة التدقيق الآمنة؛ كبّر حجم الرسم أو قلّل سماكة القلم.')
     scale=min(upscale,max(1,int(min(8192/max(width+2*pad,height+2*pad),
         math.sqrt(40_000_000/((width+2*pad)*(height+2*pad)))))))
-    if cairosvg is None:
+    if direct:
         return _pycairo_raster(paths,width,height,pen_pixels,pad,scale),pad,scale
+    cairosvg=_cairosvg()
     pieces=[]
     for path in paths:
         pieces.append('<path d="'+' '.join(f'{"M" if i==0 else "L"}{x:.6f},{y:.6f}' for i,(x,y) in enumerate(path))+'"/>')
@@ -124,7 +156,7 @@ def measure(rgb,gray,mask,paths,mm_per_pixel,pen_mm,include_images=True):
         'penMm':pen_mm,'mmPerPixel':mm_per_pixel,'auditUpscale':upscale,
         'auditIncludesOutsideImage':True,'scope':'thresholded ink mask; not identity or full-color equivalence',
         'grayMeasurement':'native source resolution; union of target ink and reconstructed pixels below 250',
-        'renderer':('CairoSVG' if _cairosvg() else 'pycairo')+' round-cap round-join physical pen footprint'}
+        'renderer':renderer_name()+' round-cap round-join physical pen footprint'}
     if include_images:
         result['reconstruction']=png_data(native)
         heat=np.full((*target.shape,3),255,np.uint8);heat[target&actual]=[35,49,61];heat[target&~actual]=[214,58,64];heat[~target&actual]=[50,107,213]
