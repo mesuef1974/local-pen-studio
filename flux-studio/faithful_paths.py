@@ -15,7 +15,7 @@ def too_complex(prefix,count,limit,pen):
     suggestion=wider_pen(pen,count,limit)
     advice=(f'جرّب قلمًا بقطر {suggestion:g} مم أو أعرض، أو صغّر الصورة.' if suggestion
         else 'لا يكفي تعريض القلم وحده؛ صغّر الصورة أو بسّطها.')
-    return ValueError(f'{prefix} (نحو {round(count):,} مسار والحد {limit:,}). {advice}')
+    return ValueError(f'{prefix} (تعقيد يعادل نحو {round(count):,} مسار والحد {limit:,}). {advice}')
 
 
 def sample(field,points):
@@ -35,6 +35,36 @@ def refine_contour(points,distance,gx,gy,level):
     return points
 
 
+class LoopIndex:
+    """Vertices of one region's loops in a grid of reach-sized cells, so a query reads nine cells."""
+
+    def __init__(self,loops,reach):
+        self.reach=reach
+        self.vertices=np.vstack([loop[:-1] for loop in loops])
+        self.owner=np.concatenate([np.full(len(loop)-1,index) for index,loop in enumerate(loops)])
+        self.vertex=np.concatenate([np.arange(len(loop)-1) for loop in loops])
+        self.alive=np.ones(len(loops),bool)
+        cells=np.floor(self.vertices/reach).astype(np.int64)
+        order=np.lexsort((cells[:,1],cells[:,0]));cells=cells[order]
+        starts=np.flatnonzero(np.r_[True,np.any(cells[1:]!=cells[:-1],axis=1)])
+        self.cells={(int(cells[a,0]),int(cells[a,1])):order[a:b] for a,b in zip(starts,np.r_[starts[1:],len(order)])}
+
+    def near(self,end):
+        """(length, loop, vertex) of each live loop's closest vertex within reach, nearest first."""
+        cx,cy=(int(math.floor(value/self.reach)) for value in end)
+        found=[self.cells[key] for key in ((cx+dx,cy+dy) for dx in (-1,0,1) for dy in (-1,0,1)) if key in self.cells]
+        if not found:return []
+        rows=np.concatenate(found);rows=rows[self.alive[self.owner[rows]]]
+        if not len(rows):return []
+        distances=np.sum((self.vertices[rows]-end)**2,axis=1)
+        # First row per loop after this sort is its closest vertex, lowest vertex index on ties.
+        order=np.lexsort((self.vertex[rows],distances,self.owner[rows]));rows=rows[order];distances=distances[order]
+        first=np.r_[True,self.owner[rows][1:]!=self.owner[rows][:-1]]
+        result=[(float(math.sqrt(value)),int(owner),int(vertex))
+            for value,owner,vertex in zip(distances[first],self.owner[rows][first],self.vertex[rows][first])]
+        return sorted(item for item in result if item[0]<=self.reach)
+
+
 def connect_fills(fills,distance,radius):
     """Join closed offset loops only through safe pen centers, never through a hole."""
     if not fills:return []
@@ -44,23 +74,29 @@ def connect_fills(fills,distance,radius):
         center=np.rint(points[0]).astype(int);x,y=center
         label=int(regions[min(max(y,0),regions.shape[0]-1),min(max(x,0),regions.shape[1]-1)])
         groups.setdefault(label,[]).append(points)
-    merged=[]
+    merged=[];reach=max(4.,radius*6)
     for label,loops in groups.items():
         if not label:merged.extend(loops);continue
-        remaining=loops[:];current=remaining.pop(0).tolist()
-        while remaining:
+        index=LoopIndex(loops,reach);waiting=0
+
+        def take_next():
+            # Loops leave in their original order whenever the pen has to lift.
+            nonlocal waiting
+            while not index.alive[waiting]:waiting+=1
+            index.alive[waiting]=False
+            return loops[waiting].tolist()
+
+        current=take_next()
+        for _ in range(len(loops)-1):
             end=np.asarray(current[-1]);best=None
             # Closed-loop rotation avoids forcing a pen lift at an arbitrary contour start.
-            for index,loop in enumerate(remaining):
-                distances=np.sum((loop[:-1]-end)**2,axis=1)
-                if not len(distances):continue
-                vertex=int(np.argmin(distances));length=float(math.sqrt(distances[vertex]))
-                if length>max(4.,radius*6):continue
-                bridge=np.linspace(end,loop[vertex],max(2,math.ceil(length*2)+1))
+            # Candidates come nearest first (earliest loop on ties), so the first safe bridge is the shortest.
+            for length,owner,vertex in index.near(end):
+                bridge=np.linspace(end,loops[owner][vertex],max(2,math.ceil(length*2)+1))
                 if np.min(sample(distance,bridge))<radius+.25:continue
-                if best is None or length<best[0]:best=(length,index,vertex)
-            if best is None:merged.append(np.asarray(current));current=remaining.pop(0).tolist();continue
-            _,index,vertex=best;loop=remaining.pop(index)
+                best=(owner,vertex);break
+            if best is None:merged.append(np.asarray(current));current=take_next();continue
+            owner,vertex=best;loop=loops[owner];index.alive[owner]=False
             rotated=np.vstack([loop[vertex:-1],loop[:vertex+1]])
             current.extend(rotated.tolist())
         merged.append(np.asarray(current))
@@ -130,8 +166,9 @@ def extract(data):
             fills.append(points)
         if len(fills)+len(paths)>1.2*limit or sum(len(p) for p in fills)>1.25*point_cap:
             # Passes left to draw are estimated from how deep the fill has reached.
+            reached=max((len(fills)+len(paths))/limit,sum(len(p) for p in fills)/point_cap)
             raise too_complex('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف أي خطوط تلقائيًا',
-                len(paths)+len(fills)*max(1,maximum/level),limit,pen)
+                reached*limit*max(1,maximum/level),limit,pen)
         level+=step
     fills=connect_fills(fills,distance,radius)
     fill_paths=[]
@@ -147,7 +184,9 @@ def extract(data):
         retained=[path for path in paths if not covered_seed(path,fill_distance,pad,audit_factor,pen/scale*audit_factor/2)]
     candidate=retained+fill_paths
     if len(candidate)>limit or sum(len(p) for p in candidate)>point_cap:
-        raise too_complex('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف خطوط',max(len(candidate),limit+1),limit,pen)
+        # Whichever cap was crossed, paths or points, sets how much wider the pen has to be.
+        reached=max(len(candidate)/limit,sum(len(p) for p in candidate)/point_cap)
+        raise too_complex('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف خطوط',reached*limit,limit,pen)
     final=measure(rgb,gray,mask,candidate,scale,pen)
     contours_added=len(fill_paths)
     # Never silently choose a fill that worsens the measured mask agreement.
