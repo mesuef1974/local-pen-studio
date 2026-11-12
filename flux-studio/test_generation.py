@@ -295,6 +295,110 @@ class FluxTests(unittest.TestCase):
         with patch('generation_service.emit', side_effect=events.append):
             self.assertEqual(generation_service.serve([], Engine()), 0)
 
+    def test_cancel_stops_a_warm_job_cooperatively_and_keeps_the_model(self):
+        done = json.dumps({'done': True}) + '\n'
+        events = [json.dumps({'state': 'running', 'step': 1, 'total': 4, 'phase': 'draw'}) + '\n']
+        worker = self.live_worker(events)
+        with tempfile.TemporaryDirectory() as folder, patch('generation.ROOT', Path(folder)), patch('generation.availability', return_value=(True, '')), \
+                patch('threading.Thread.start'), patch('threading.Timer.start'), patch('generation.subprocess.Popen', return_value=worker), \
+                patch('generation.terminate_tree') as kill:
+            gate = threading.Lock()
+            jobs = generation.Jobs(gate, keep_warm=60)
+            self.assertEqual(jobs.cancel('missing'), {'cancelled': False})
+            job_id = jobs.start({'image': image()})['job']
+            read = worker.stdout.readline
+
+            def readline():
+                line = read()
+                if not line and not worker.stdin.closed and len(worker.stdin.lines) == 1:
+                    # The job is drawing: the owner cancels, and the worker answers at its next step.
+                    self.assertEqual(jobs.status(job_id)['job']['phase'], 'draw')
+                    self.assertEqual(jobs.cancel(job_id), {'cancelled': True})
+                    self.assertEqual(jobs.cancel(job_id), {'cancelled': True})
+                    events.extend([json.dumps({'cancelled': True}) + '\n', done])
+                    return read()
+                return line
+            worker.stdout.readline = readline
+            jobs._run({'seed': 1})
+            self.assertEqual(json.loads(worker.stdin.lines[0])['jobId'], job_id)
+            self.assertEqual(len(worker.stdin.lines), 1)
+            self.assertEqual(jobs.cancel_file.read_text(encoding='utf-8'), job_id)
+            job = jobs.status(job_id)['job']
+            self.assertEqual(job['state'], 'cancelled')
+            self.assertNotIn('result', job)
+            self.assertTrue(jobs.status()['modelLoaded'])
+            self.assertFalse(gate.locked())
+            kill.assert_not_called()
+            self.assertEqual(jobs.cancel(job_id), {'cancelled': False})
+            jobs.unload()
+            self.assertFalse(jobs.cancel_file.exists())
+
+    def test_cancel_while_the_model_loads_or_before_the_job_is_sent_ends_without_a_result(self):
+        with tempfile.TemporaryDirectory() as folder, patch('generation.ROOT', Path(folder)), patch('generation.availability', return_value=(True, '')), \
+                patch('threading.Thread.start'), patch('threading.Timer.start'):
+            gate = threading.Lock()
+            jobs = generation.Jobs(gate, keep_warm=60)
+            events = [json.dumps({'state': 'loading', 'step': 0, 'total': 0, 'phase': 'model'}) + '\n']
+            worker = self.live_worker(events)
+            job_id = jobs.start({'image': image()})['job']
+            read = worker.stdout.readline
+
+            def readline():
+                line = read()
+                if not line and not worker.stdin.closed:
+                    with patch('generation.terminate_tree', side_effect=lambda process: process.stdin.close()) as kill:
+                        self.assertEqual(jobs.cancel(job_id), {'cancelled': True})
+                        kill.assert_called_once()
+                return line
+            worker.stdout.readline = readline
+            with patch('generation.subprocess.Popen', return_value=worker):
+                jobs._run({'seed': 1})
+            self.assertEqual(jobs.status(job_id)['job']['state'], 'cancelled')
+            self.assertEqual(len(worker.stdin.lines), 1)
+            self.assertFalse(jobs.status()['modelLoaded'])
+            self.assertFalse(gate.locked())
+            job_id = jobs.start({'image': image()})['job']
+            self.assertEqual(jobs.cancel(job_id), {'cancelled': True})
+            with patch('generation.subprocess.Popen') as popen:
+                jobs._run({'seed': 1})
+            popen.assert_not_called()
+            self.assertEqual(jobs.status(job_id)['job']['state'], 'cancelled')
+            self.assertFalse(gate.locked())
+
+    def test_worker_stops_a_cancelled_job_at_a_checkpoint_and_serves_the_next(self):
+        import generation_service
+
+        with tempfile.TemporaryDirectory() as folder:
+            flag = Path(folder) / 'cancel.txt'
+
+            class Engine(generation_service.Engine):
+                def generate(self, data):
+                    self.checkpoint()  # a stale or foreign id never stops this job
+                    if data.get('wait'):
+                        flag.write_text(self.job_id, encoding='utf-8')
+                    self.checkpoint()
+                    return {'seed': data['seed'], 'job': self.job_id}
+            events = []
+            flag.write_text('someone-else', encoding='utf-8')
+            lines = [json.dumps({'seed': 1, 'wait': True, 'jobId': 'a'}) + '\n', json.dumps({'seed': 2, 'jobId': 'b'}) + '\n',
+                     json.dumps({'seed': 3}) + '\n']
+            with patch.dict('os.environ', {'FLUX_CANCEL_FILE': str(flag)}), patch('generation_service.emit', side_effect=events.append):
+                self.assertEqual(generation_service.serve(lines, Engine()), 0)
+            self.assertEqual(events[:4], [{'cancelled': True}, {'done': True}, {'result': {'seed': 2, 'job': 'b'}}, {'done': True}])
+            self.assertEqual(events[4], {'result': {'seed': 3, 'job': None}})  # a job without an id is never cancelled
+
+    def test_worker_ends_when_it_cannot_see_the_card_but_reports_the_reason(self):
+        import generation_service
+
+        class Engine:
+            def generate(self, data):
+                raise generation_service.CudaUnavailable('كرت NVIDIA غير ظاهر للنظام الآن')
+        events = []
+        lines = [json.dumps({'seed': 1}) + '\n', json.dumps({'seed': 2}) + '\n']
+        with patch('generation_service.emit', side_effect=events.append):
+            self.assertEqual(generation_service.serve(lines, Engine()), 1)
+        self.assertEqual(events, [{'error': 'كرت NVIDIA غير ظاهر للنظام الآن'}, {'done': True, 'exiting': True}])
+
     def test_keep_warm_setting_is_bounded(self):
         for raw, expected in (('0', 0.0), ('45', 45.0), ('-1', 300.0), ('99999', 300.0), ('abc', 300.0), ('nan', 300.0)):
             with patch.dict('os.environ', {'FLUX_KEEP_WARM_S': raw}):

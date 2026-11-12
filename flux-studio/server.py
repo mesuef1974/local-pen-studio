@@ -95,7 +95,7 @@ class Handler(SimpleHTTPRequestHandler):
         port=self.server.server_port
         if not self.valid_host() or self.headers.get('Origin') not in {f'http://localhost:{port}',f'http://127.0.0.1:{port}'}:self.reply(403,{'error':'افتح مساحة العمل المحلية.'});return
         path=urlsplit(self.path).path
-        if path not in ['/api/import','/api/prepare','/api/paths','/api/path-audit','/api/path-audit-target','/api/editor','/api/background','/api/generate']:self.reply(404,{'error':'غير موجود.'});return
+        if path not in ['/api/import','/api/prepare','/api/paths','/api/path-audit','/api/path-audit-target','/api/editor','/api/background','/api/generate','/api/generation/cancel']:self.reply(404,{'error':'غير موجود.'});return
         try:
             size=int(self.headers.get('Content-Length','0'))
             if self.headers.get_content_type()!='application/json' or not 0<size<=(22_000_000 if path in ['/api/import','/api/generate','/api/path-audit','/api/path-audit-target'] else 9_000_000):raise ValueError()
@@ -103,6 +103,10 @@ class Handler(SimpleHTTPRequestHandler):
             if not isinstance(data,dict):raise ValueError()
         except (ValueError,UnicodeError,RecursionError):self.reply(400,{'error':'بيانات الطلب غير صالحة أو أكبر من الحد.'});return
         except OSError:self.close_connection=True;return  # body shorter than declared or client gone
+        if path=='/api/generation/cancel':
+            # Only the page that holds the job id can cancel it; the id is never exposed without it.
+            if not isinstance(data.get('job'),str):self.reply(400,{'error':'بيانات الطلب غير صالحة أو أكبر من الحد.'});return
+            self.reply(200,GENERATION.cancel(data['job']));return
         if path=='/api/generate':
             try:self.reply(202,GENERATION.start(data))
             except BlockingIOError as error:self.reply(429,{'error':str(error)})
