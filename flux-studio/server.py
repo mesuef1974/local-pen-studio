@@ -29,6 +29,9 @@ ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/webgpu-direct-fixed-heldout
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/benchmark_cuda_path.py']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'benchmark_cuda_path.py'
 GATE=threading.Lock()
 ASSETS['/api-client.js']=ROOT/'api-client.js'
+# Shared identity: index.html links ../typography.css, which imports the local font faces.
+ASSETS.update({'/typography.css':ROOT.parent/'typography.css','/assets/fonts/fonts.css':ROOT.parent/'assets/fonts/fonts.css'})
+ASSETS.update({f'/assets/fonts/{font.name}':font for font in (ROOT.parent/'assets/fonts').glob('*.woff2')})
 ASSETS['/audit']=ROOT/'pipeline-review-ar.html'
 for audit_asset in ['raw-flux.png','verified-paths.svg','verified-paths.json','review-results.json']:
     ASSETS['/pipeline-audit/'+audit_asset]=ROOT/'pipeline-audit'/audit_asset
@@ -87,7 +90,7 @@ class Handler(SimpleHTTPRequestHandler):
         if path=='/favicon.ico':self.send_response(204);self.end_headers();return
         file=ASSETS.get(path)
         if not file or not file.is_file():self.reply(404,{'error':'غير موجود.'});return
-        raw=file.read_bytes();self.send_response(200);self.send_header('Content-Type',self.guess_type(str(file)));self.send_header('Content-Length',str(len(raw)));self.end_headers()
+        raw=file.read_bytes();self.send_response(200);self.send_header('Content-Type','font/woff2' if file.suffix=='.woff2' else self.guess_type(str(file)));self.send_header('Content-Length',str(len(raw)));self.end_headers()
         if not head:self.wfile.write(raw)
     def do_GET(self):self.asset()
     def do_HEAD(self):self.asset(True)
