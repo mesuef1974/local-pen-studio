@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Workflow} from './workflow.js';
 import * as g from './geometry.js';
+import {defaults,recipes,ids,renderToolPanels} from './tool-settings.js';
+import {drawPlan} from './path-canvas.js';
 
 test('raw image enters review unchanged and cannot reach paths before approval',()=>{const w=new Workflow();w.import('original','photo');const stale=w.versions[1];w.reviewImage({image:'raw-flux',width:576,height:768});assert.equal(w.original,'original');assert.equal(w.outputs[0].image,'raw-flux');assert.equal(w.outputs[1].image,'raw-flux');assert.equal(w.outputs[1].reference,'original');assert.equal(w.outputs[1].direct,true);assert.equal(w.stage,1);assert.equal(w.canEnter(2),false);assert.equal(w.approve(1),true);assert.equal(w.canEnter(2),true);assert.equal(w.publish(1,stale,{image:'late'}),false);w.invalidate(0);assert.equal(w.canEnter(2),false);});
 test('pen footprint and outer pixel cells remain within physical paper margins',()=>{for(const [w,h]of [[576,768],[320,768],[768,256]])for(const pen of [.1,.2,1.2]){const m=g.inkLayout(w,h,210,297,15,pen);for(const [x,y]of [[-.5,-.5],[w-.5,h-.5]]){const px=x*m.scale+m.x,py=y*m.scale+m.y;assert.ok(px-pen/2>=15-1e-9&&px+pen/2<=195+1e-9);assert.ok(py-pen/2>=15-1e-9&&py+pen/2<=282+1e-9);}}});
@@ -31,6 +33,25 @@ test('grid nearest ordering matches the exhaustive scan, ties included',()=>{
  const hidden=new Set([0,3,4,99]),kept=cases.lattice.map((p,i)=>i).filter(i=>!hidden.has(i));
  assert.deepEqual(g.order(cases.lattice,hidden),exhaustive(kept.map(i=>cases.lattice[i])).map(v=>({i:kept[v.i],p:v.p})));
  const longest=g.order(cases.scattered,new Set(),'longest');for(let i=1;i<longest.length;i++)assert.ok(g.length(longest[i-1].p)>=g.length(longest[i].p));
+});
+test('tool panels render one control per setting with its default value',()=>{
+ const panels={tools0:{innerHTML:''},tools1:{innerHTML:''},tools2:{innerHTML:''}},previous=globalThis.document;
+ globalThis.document={getElementById:id=>panels[id]};try{renderToolPanels();}finally{globalThis.document=previous;}
+ assert.equal(defaults.length,3);assert.equal(recipes.length,3);assert.equal(ids[2].pen,'s2_pen');
+ for(const step of [0,2])for(const [key,value]of Object.entries(defaults[step])){const id=ids[step][key],html=panels['tools'+step].innerHTML;assert.equal(html.split(`id="${id}"`).length,2,id);if(typeof value==='number')assert.ok(html.includes(`id="${id}" type="range"`)||html.includes(`value="${value}"`),id);}
+ assert.ok(panels.tools1.innerHTML.includes('approval-guide'));assert.ok(panels.tools0.innerHTML.startsWith('<details'));
+});
+test('path canvas draws only its arguments: plan, selection, exclusions and playback',()=>{
+ function canvas(){const calls=[],ctx=new Proxy({},{get:(target,name)=>name in target?target[name]:(...args)=>calls.push([name,...args]),set:(target,name,value)=>{target[name]=value;calls.push(['set '+name,value]);return true;}});return {width:0,height:0,calls,getContext:()=>ctx};}
+ const output={width:40,height:30,paths:[[[1,1],[5,1]],[[2,8],[9,8]],[[3,20],[3,25]]]},plan={items:[{i:0,p:output.paths[0]},{i:1,p:output.paths[1]}],segments:[{a:[0,0],b:[1,1],start:0,end:1,draw:false},{a:[1,1],b:[5,1],start:1,end:3,draw:true}],seconds:3};
+ const settings={pen:.2,showTravel:true,showDeleted:true,starts:true},base={output,settings,mapping:{scale:.2},view:'compare',pathsReference:null,plan,elapsed:null,selected:new Set([1]),excluded:new Set([2]),box:null};
+ const full=canvas();drawPlan(full,base);assert.deepEqual([full.width,full.height],[40,30]);
+ const strokes=full.calls.filter(c=>c[0]==='stroke').length;assert.equal(strokes,2+2+1);// travel moves, plan strokes, one excluded stroke
+ assert.ok(full.calls.some(c=>c[0]==='set strokeStyle'&&c[1]==='#2859c5'));assert.equal(full.calls.filter(c=>c[0]==='arc').length,2);
+ const plain=canvas();drawPlan(plain,{...base,settings:{pen:.2,showTravel:false,showDeleted:false,starts:false}});assert.equal(plain.calls.filter(c=>c[0]==='stroke').length,2);assert.equal(plain.calls.filter(c=>c[0]==='arc').length,0);
+ const moment=canvas();drawPlan(moment,{...base,elapsed:2});assert.deepEqual(moment.calls.filter(c=>c[0]==='lineTo').at(-1),['lineTo',3,1]);assert.equal(moment.calls.filter(c=>c[0]==='arc').length,1);
+ const boxed=canvas();drawPlan(boxed,{...base,plan:null,box:[1,2,6,9]});assert.deepEqual(boxed.calls.find(c=>c[0]==='strokeRect'),['strokeRect',1,2,5,7]);
+ const overlay=canvas();drawPlan(overlay,{...base,view:'overlay',pathsReference:{}});assert.equal(overlay.calls.filter(c=>c[0]==='drawImage').length,1);
 });
 test('SVG has physical units and pure selected paths',()=>{const svg=g.svg([{p:[[0,0],[100,100]]}],g.layout(101,101),.3);assert.ok(svg.includes('width="210mm"'));assert.ok(svg.includes('stroke-width="0.3"'));assert.ok(!svg.includes('<image'));assert.equal((svg.match(/<path /g)||[]).length,1);});
 
