@@ -29,6 +29,7 @@ ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/webgpu-direct-fixed-heldout
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/benchmark_cuda_path.py']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'benchmark_cuda_path.py'
 GATE=threading.Lock()
 ASSETS['/api-client.js']=ROOT/'api-client.js'
+ASSETS.update({'/tool-settings.js':ROOT/'tool-settings.js','/path-canvas.js':ROOT/'path-canvas.js'})
 # Shared identity: index.html links ../typography.css, which imports the local font faces.
 ASSETS.update({'/typography.css':ROOT.parent/'typography.css','/assets/fonts/fonts.css':ROOT.parent/'assets/fonts/fonts.css'})
 ASSETS.update({f'/assets/fonts/{font.name}':font for font in (ROOT.parent/'assets/fonts').glob('*.woff2')})

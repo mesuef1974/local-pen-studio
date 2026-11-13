@@ -20,7 +20,8 @@ ROOT = Path(__file__).resolve().parent
 LOG = logging.getLogger('flux-studio')
 sys.path.insert(0,str(ROOT.parent))
 from process_guard import terminate_tree
-PYTHON = ROOT / '.venv-flux/Scripts/python.exe'
+# The environment lives beside the app; only the interpreter's place inside it depends on the system.
+PYTHON = ROOT / '.venv-flux' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
 CATALOG = json.loads((ROOT / 'flux-catalog.json').read_text(encoding='utf-8'))
 PRESETS = {item['id']: item for item in CATALOG['presets']}
 STYLES = {key: item['prompt'] for key, item in PRESETS.items()}

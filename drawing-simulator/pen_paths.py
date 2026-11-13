@@ -68,7 +68,8 @@ def _trace_skeleton(skeleton,spur=0):
     return segments,graph_ms,(time.perf_counter()-trace_started)*1000
 
 
-def extract_paths(data):
+def extract_paths(data,path_limit=10_000):
+    # path_limit is set by trusted callers only; request data never raises it.
     profile_enabled=data.get('profileTimings',False)
     if not isinstance(profile_enabled,bool):raise ValueError('خيار قياس الزمن غير صحيح.')
     total_started=time.perf_counter();stage_started=total_started;timings={}
@@ -157,7 +158,7 @@ def extract_paths(data):
         # Approximation preserves each connected segment instead of stopping at junctions.
         points=(cv2.approxPolyDP(np.asarray(segment,dtype=np.int32),tolerance,False) if tolerance else np.asarray(segment,dtype=np.int32)).reshape(-1,2)
         if len(points)>1:result.append(points.tolist())
-    if len(result)>10_000:raise ValueError('الصورة شديدة التعقيد؛ الحد 10,000 مسار.')
+    if len(result)>path_limit:raise ValueError(f'الصورة شديدة التعقيد؛ الحد {path_limit:,} مسار.')
     mark('path_simplification_and_limits')
     output={'paths':result,'width':gray.shape[1],'height':gray.shape[0],'method':'OpenCV '+('EdgeDrawing' if mode=='edges' else 'thinning + shared-junction routing'),'inputPoints':sum(len(p) for p in segments),'outputPoints':sum(len(p) for p in result),**routing_stats}
     if profile_enabled:

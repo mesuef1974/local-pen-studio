@@ -405,5 +405,25 @@ class FluxTests(unittest.TestCase):
                 self.assertEqual(generation.keep_warm_seconds(), expected)
 
 
+
+class DependencyLockTests(unittest.TestCase):
+    def test_lock_pins_every_direct_requirement_with_hashes(self):
+        import re
+        root = Path(__file__).resolve().parent
+        lock = (root / 'requirements-flux.lock').read_text(encoding='utf-8')
+        lines = lock.splitlines()
+        starts = [index for index, line in enumerate(lines) if re.match(r'[A-Za-z0-9_.-]+==', line)]
+        entries = ['\n'.join(lines[a:b]) for a, b in zip(starts, starts[1:] + [len(lines)])]
+        pins = {}
+        for entry in entries:
+            name, version = entry.split(' ', 1)[0].split('==')
+            self.assertIn('--hash=sha256:', entry, name)
+            pins[re.sub(r'[-_.]+', '-', name).lower()] = version
+        direct = [line.strip() for line in (root / 'requirements-flux.txt').read_text(encoding='utf-8').splitlines() if line.strip()]
+        for line in direct + ['torch==2.6.0+cu124']:
+            name, version = line.split('==')
+            self.assertEqual(pins.get(name.lower()), version, line)
+        self.assertIn('torch==2.6.0+cu124', (root / 'requirements-flux.in').read_text(encoding='utf-8'))
+
 if __name__ == '__main__':
     unittest.main()

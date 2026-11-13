@@ -145,9 +145,13 @@ class FidelityTests(unittest.TestCase):
         with self.assertRaises(ValueError):validate_paths([[[0,0],[1,1]]]*13_822,768,768)
         self.assertEqual(wider_pen(.2,13_822,10_000),.3);self.assertEqual(wider_pen(.2,10_001,10_000),.25)
         self.assertIsNone(wider_pen(.6,30_000,10_000))
+        # Centerlines do not shrink with the pen: only the fill passes above them can.
+        self.assertEqual(wider_pen(.2,13_000,10_000,fixed=4_000),.3);self.assertIsNone(wider_pen(.2,37_564,17_778,fixed=15_800))
+        self.assertIsNone(wider_pen(.2,12_000,10_000,fixed=10_000))
         from faithful_paths import too_complex
         self.assertRegex(str(too_complex('تجاوزت خطة المطابقة حد التعقيد',13_822,10_000,.2)),'0.3 مم')
         self.assertRegex(str(too_complex('تجاوزت خطة المطابقة حد التعقيد',30_000,10_000,.6)),'صغّر الصورة')
+        self.assertRegex(str(too_complex('تجاوزت خطة المطابقة حد التعقيد',37_564,17_778,.2,15_800)),'لا يقلّلها قلم أعرض')
 
     def test_indexed_loop_joining_matches_the_exhaustive_search(self):
         import math
