@@ -42,9 +42,13 @@ def point_limit(width,height):
     return 40*path_limit(width,height)
 
 
-def wider_pen(pen_mm,count,limit):
-    """Fill passes shrink roughly in proportion to pen width; None when no allowed pen would fit."""
-    suggestion=math.ceil(pen_mm*count/limit*20-1e-9)/20
+def wider_pen(pen_mm,count,limit,fixed=0):
+    """Fill passes shrink roughly in proportion to pen width; None when no allowed pen would fit.
+
+    fixed counts the centerlines: a wider pen does not remove them, so only the rest can shrink.
+    """
+    if fixed>=limit:return None
+    suggestion=math.ceil(pen_mm*(count-fixed)/(limit-fixed)*20-1e-9)/20
     if suggestion<=pen_mm:suggestion=round(pen_mm+.05,2)
     return suggestion if suggestion<=1.2 else None
 

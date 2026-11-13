@@ -10,10 +10,14 @@ from PIL import Image
 from path_fidelity import decode_image,ink_mask,validate_physics,measure,render_svg,path_limit,point_limit,wider_pen
 
 
-def too_complex(prefix,count,limit,pen):
-    """Refuse without dropping detail, and name the pen that would bring the plan under the limit."""
-    suggestion=wider_pen(pen,count,limit)
+def too_complex(prefix,count,limit,pen,lines=0):
+    """Refuse without dropping detail, and name the pen that would bring the plan under the limit.
+
+    lines is the number of centerlines in the count; they stay whatever the pen width.
+    """
+    suggestion=wider_pen(pen,count,limit,min(lines,count))
     advice=(f'جرّب قلمًا بقطر {suggestion:g} مم أو أعرض، أو صغّر الصورة.' if suggestion
+        else 'معظم التعقيد خطوط لا يقلّلها قلم أعرض؛ صغّر الصورة أو بسّطها.' if lines
         else 'لا يكفي تعريض القلم وحده؛ صغّر الصورة أو بسّطها.')
     return ValueError(f'{prefix} (تعقيد يعادل نحو {round(count):,} مسار والحد {limit:,}). {advice}')
 
@@ -123,7 +127,7 @@ def extract(data):
     buffer=io.BytesIO();Image.fromarray(255-mask).save(buffer,format='PNG')
     seed=extract_paths({'image':'data:image/png;base64,'+base64.b64encode(buffer.getvalue()).decode(),
         'lineMode':'centerline','lineDenoise':0,'inkThreshold':127,'tolerance':0,
-        'componentMin':0,'spurLength':0,'minLength':2,'junctionRouting':True})
+        'componentMin':0,'spurLength':0,'minLength':2,'junctionRouting':True},path_limit=path_limit(width,height))
     paths=seed['paths']
     # Preserve disconnected dots and compact components that thinning reduces to one pixel.
     count,labels,stats,centroids=cv2.connectedComponentsWithStats(mask,8)
@@ -166,9 +170,12 @@ def extract(data):
             fills.append(points)
         if len(fills)+len(paths)>1.2*limit or sum(len(p) for p in fills)>1.25*point_cap:
             # Passes left to draw are estimated from how deep the fill has reached.
-            reached=max((len(fills)+len(paths))/limit,sum(len(p) for p in fills)/point_cap)
-            raise too_complex('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف أي خطوط تلقائيًا',
-                reached*limit*max(1,maximum/level),limit,pen)
+            # Count the passes still to come instead of guessing: the advice depends on the real total.
+            loops=len(fills);deeper=level+step
+            while deeper<=maximum:
+                loops+=len(cv2.findContours((distance>=deeper).astype(np.uint8)*255,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)[0]);deeper+=step
+            reached=max((loops+len(paths))/limit,sum(len(p) for p in fills)/point_cap)
+            raise too_complex('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف أي خطوط تلقائيًا',reached*limit,limit,pen,len(paths))
         level+=step
     fills=connect_fills(fills,distance,radius)
     fill_paths=[]
@@ -186,7 +193,7 @@ def extract(data):
     if len(candidate)>limit or sum(len(p) for p in candidate)>point_cap:
         # Whichever cap was crossed, paths or points, sets how much wider the pen has to be.
         reached=max(len(candidate)/limit,sum(len(p) for p in candidate)/point_cap)
-        raise too_complex('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف خطوط',reached*limit,limit,pen)
+        raise too_complex('تجاوزت خطة المطابقة حد التعقيد؛ لم تُحذف خطوط',reached*limit,limit,pen,len(retained))
     final=measure(rgb,gray,mask,candidate,scale,pen)
     contours_added=len(fill_paths)
     # Never silently choose a fill that worsens the measured mask agreement.
