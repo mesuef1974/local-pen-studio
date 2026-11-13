@@ -154,6 +154,8 @@
 !/CONTRIBUTING.md
 !/SECURITY.md
 !/.gitleaksignore
+# Generated at runtime by the usage monitor dashboard; local state, not source.
+/scripts/usage_monitor/dashboard-data.json
 
 # Opt-in handoff configuration; runtime state belongs in Git metadata.
 !/.codex/
