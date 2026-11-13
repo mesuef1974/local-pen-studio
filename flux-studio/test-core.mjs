@@ -57,6 +57,14 @@ test('path canvas draws only its arguments: plan, selection, exclusions and play
  drawPlan(canvas(),{...base,plan:long,elapsed:6,trail});assert.equal(trail.done,4);assert.equal(lines(trail.canvas),4);assert.equal(trail.canvas.calls.filter(c=>c[0]==='clearRect').length,1);
  const hidden={...settings,showTravel:false};drawPlan(canvas(),{...base,settings:hidden,plan:long,elapsed:6,trail});assert.equal(trail.canvas.calls.filter(c=>c[0]==='clearRect').length,2);assert.equal(lines(trail.canvas),4+2);
  drawPlan(canvas(),{...base,settings:hidden,plan:long,elapsed:1.5,trail});assert.equal(trail.done,1);assert.equal(trail.canvas.calls.filter(c=>c[0]==='clearRect').length,3);assert.equal(lines(trail.canvas),6);
+ // With an ink layer, a new plan from the same paths repaints only around the strokes that entered or left it; selection is drawn over the layer.
+ const ink={canvas:canvas(),scratch:canvas()},strokesOn=c=>c.calls.filter(v=>v[0]==='stroke').length,clears=()=>ink.canvas.calls.filter(v=>v[0]==='clearRect'),far=[[30,2],[36,2]],wide={...output,paths:[...output.paths,far]},both={items:[{i:0,p:wide.paths[0]},{i:1,p:wide.paths[1]},{i:3,p:far}]},still={...base,output:wide,settings:{pen:.2,showTravel:false,showDeleted:false,starts:false},ink};
+ const inked=canvas();drawPlan(inked,{...still,plan:both});assert.equal(strokesOn(ink.canvas),3);assert.deepEqual(clears().at(-1),['clearRect',0,0,40,30]);assert.equal(inked.calls.filter(c=>c[0]==='drawImage').length,1);assert.equal(strokesOn(inked),1);// only the selected stroke, over the layer
+ drawPlan(canvas(),{...still,plan:both});assert.equal(strokesOn(ink.canvas),3);// the same plan repaints nothing
+ drawPlan(canvas(),{...still,plan:{items:both.items.slice(0,2)}});assert.equal(clears().length,2);assert.deepEqual(clears().at(-1),['clearRect',29,1,9,3]);assert.equal(strokesOn(ink.canvas),3);// the far stroke left; nothing else is near it
+ drawPlan(canvas(),{...still,plan:{items:both.items.slice(0,2)},selected:new Set([3])});assert.equal(ink.drawn.has(3),false);
+ drawPlan(canvas(),{...still,plan:both});assert.equal(clears().length,3);assert.equal(strokesOn(ink.canvas),3);assert.equal(strokesOn(ink.scratch),1);assert.equal(ink.canvas.calls.filter(c=>c[0]==='drawImage').length,2);// it returned alone, painted whole on the scratch and copied
+ drawPlan(canvas(),{...still,settings:{...still.settings,pen:.4},plan:both});assert.deepEqual(clears().at(-1),['clearRect',0,0,40,30]);assert.equal(strokesOn(ink.canvas),6);// another pen repaints everything
  const boxed=canvas();drawPlan(boxed,{...base,plan:null,box:[1,2,6,9]});assert.deepEqual(boxed.calls.find(c=>c[0]==='strokeRect'),['strokeRect',1,2,5,7]);
  const overlay=canvas();drawPlan(overlay,{...base,view:'overlay',pathsReference:{}});assert.equal(overlay.calls.filter(c=>c[0]==='drawImage').length,1);
 });
