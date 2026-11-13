@@ -50,6 +50,13 @@ test('path canvas draws only its arguments: plan, selection, exclusions and play
  assert.ok(full.calls.some(c=>c[0]==='set strokeStyle'&&c[1]==='#2859c5'));assert.equal(full.calls.filter(c=>c[0]==='arc').length,2);
  const plain=canvas();drawPlan(plain,{...base,settings:{pen:.2,showTravel:false,showDeleted:false,starts:false}});assert.equal(plain.calls.filter(c=>c[0]==='stroke').length,2);assert.equal(plain.calls.filter(c=>c[0]==='arc').length,0);
  const moment=canvas();drawPlan(moment,{...base,elapsed:2});assert.deepEqual(moment.calls.filter(c=>c[0]==='lineTo').at(-1),['lineTo',3,1]);assert.equal(moment.calls.filter(c=>c[0]==='arc').length,1);
+ // With a trail, a frame strokes only the segments finished since the previous frame, and the picture matches the direct drawing.
+ const long={...plan,segments:[...plan.segments,{a:[5,1],b:[2,8],start:3,end:4,draw:false},{a:[2,8],b:[9,8],start:4,end:6,draw:true}],seconds:6},trail={canvas:canvas(),done:0},lines=c=>c.calls.filter(v=>v[0]==='lineTo').length;
+ const first=canvas();drawPlan(first,{...base,plan:long,elapsed:2,trail});assert.equal(trail.done,1);assert.equal(lines(trail.canvas),1);assert.equal(first.calls.filter(c=>c[0]==='drawImage').length,1);assert.deepEqual(first.calls.filter(c=>c[0]==='lineTo').at(-1),['lineTo',3,1]);assert.deepEqual(first.calls.find(c=>c[0]==='arc').slice(1,3),[3,1]);
+ const later=canvas();drawPlan(later,{...base,plan:long,elapsed:5,trail});assert.equal(trail.done,3);assert.equal(lines(trail.canvas),3);assert.deepEqual(later.calls.find(c=>c[0]==='arc').slice(1,3),[5.5,8]);
+ drawPlan(canvas(),{...base,plan:long,elapsed:6,trail});assert.equal(trail.done,4);assert.equal(lines(trail.canvas),4);assert.equal(trail.canvas.calls.filter(c=>c[0]==='clearRect').length,1);
+ const hidden={...settings,showTravel:false};drawPlan(canvas(),{...base,settings:hidden,plan:long,elapsed:6,trail});assert.equal(trail.canvas.calls.filter(c=>c[0]==='clearRect').length,2);assert.equal(lines(trail.canvas),4+2);
+ drawPlan(canvas(),{...base,settings:hidden,plan:long,elapsed:1.5,trail});assert.equal(trail.done,1);assert.equal(trail.canvas.calls.filter(c=>c[0]==='clearRect').length,3);assert.equal(lines(trail.canvas),6);
  const boxed=canvas();drawPlan(boxed,{...base,plan:null,box:[1,2,6,9]});assert.deepEqual(boxed.calls.find(c=>c[0]==='strokeRect'),['strokeRect',1,2,5,7]);
  const overlay=canvas();drawPlan(overlay,{...base,view:'overlay',pathsReference:{}});assert.equal(overlay.calls.filter(c=>c[0]==='drawImage').length,1);
 });
