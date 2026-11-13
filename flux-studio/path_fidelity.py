@@ -34,8 +34,11 @@ def validate_physics(data):
 
 
 def path_limit(width,height):
-    """10,000 paths up to 768x768, then in proportion to the image area, never above 40,000."""
-    return min(40_000,max(10_000,round(10_000*width*height/(768*768))))
+    """10,000 paths up to 512x512, then in proportion to the image area, never above 40,000.
+
+    A dense 1024 FLUX portrait at 0.2 mm needs about 34,000 paths, so 1024x1024 reaches the 40,000 cap.
+    """
+    return min(40_000,max(10_000,round(10_000*width*height/(512*512))))
 
 
 def point_limit(width,height):

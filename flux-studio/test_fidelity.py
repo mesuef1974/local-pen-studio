@@ -137,12 +137,12 @@ class FidelityTests(unittest.TestCase):
 
     def test_path_limit_follows_image_area_and_names_a_wider_pen(self):
         from path_fidelity import path_limit,point_limit,wider_pen
-        self.assertEqual(path_limit(40,40),10_000);self.assertEqual(path_limit(768,768),10_000)
-        self.assertEqual(path_limit(1024,1024),17_778);self.assertEqual(path_limit(4096,4096),40_000)
-        self.assertEqual(point_limit(768,768),400_000)
-        # The measured A4 plan of a 1024 image (13,822 paths) is accepted; a 768 frame still stops at 10,000.
-        validate_paths([[[0,0],[1,1]]]*13_822,1024,1024)
-        with self.assertRaises(ValueError):validate_paths([[[0,0],[1,1]]]*13_822,768,768)
+        self.assertEqual(path_limit(40,40),10_000);self.assertEqual(path_limit(512,512),10_000);self.assertEqual(path_limit(768,768),22_500)
+        self.assertEqual(path_limit(1024,1024),40_000);self.assertEqual(path_limit(4096,4096),40_000)
+        self.assertEqual(point_limit(512,512),400_000);self.assertEqual(point_limit(1024,1024),1_600_000)
+        # A dense 1024 FLUX portrait (34,080 paths at 0.2 mm) is accepted; a 768 frame stops at 22,500.
+        validate_paths([[[0,0],[1,1]]]*34_080,1024,1024)
+        with self.assertRaises(ValueError):validate_paths([[[0,0],[1,1]]]*34_080,768,768)
         self.assertEqual(wider_pen(.2,13_822,10_000),.3);self.assertEqual(wider_pen(.2,10_001,10_000),.25)
         self.assertIsNone(wider_pen(.6,30_000,10_000))
         # Centerlines do not shrink with the pen: only the fill passes above them can.
