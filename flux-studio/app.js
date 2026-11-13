@@ -18,7 +18,7 @@ let generationBusy=false,generationJobId=null,generationCancelling=false,generat
 const fluxUI=await createFluxControls({api,onChange:()=>renderGeneration(),onUseHistory:useHistoryResult,download});
 for(const preset of fluxUI.catalog.presets)generationStyles[preset.id]={label:preset.title};
 let excluded=new Set(),selected=new Set(),past=[],future=[],plan=null,mapping=null,pathsReference=null,box=null;
-let playing=false,elapsed=null,lastFrame=0,frameHandle=0;
+let playing=false,elapsed=null,lastFrame=0,frameHandle=0;const playbackTrail={canvas:document.createElement('canvas'),done:0};
 let fidelityCache=null;
 let paperPreviewKey=null;
 const mm=value=>Number(value).toLocaleString('en-US',{maximumFractionDigits:1});
@@ -110,7 +110,7 @@ function paperLayout(){return physicalPaperLayout(flow.outputs[1]||{width:1,heig
 function replan(){stopPlayback();if(!flow.fresh[2]||!flow.outputs[2]||!settingsValid(2)){plan=null;return;}const s=read(2);mapping=paperLayout();const items=geo.order(flow.outputs[2].paths,excluded,s.order,s.minimum,mapping.scale);plan={items,...geo.timeline(items,mapping.scale,s.drawSpeed,s.travelSpeed,s.lift)};elapsed=null;$('playhead').value=100;drawPaths();}
 function loadPathReference(){const image=new Image();const input=flow.outputs[1]?.image;image.src=input||'';image.onload=()=>{if(flow.outputs[1]?.image===input){pathsReference=image;if(flow.stage===2)drawPaths();}};}
 function fmt(seconds){const n=Math.max(0,Math.round(seconds));return Math.floor(n/60)+':'+String(n%60).padStart(2,'0');}
-function drawPaths(){const output=flow.outputs[2];if(!output)return;const c=$('pathCanvas');drawPlan(c,{output,settings:read(2),mapping,view,pathsReference,plan,elapsed,selected,excluded,box});if(plan)$('playTime').textContent=fmt(elapsed??plan.seconds)+' / '+fmt(plan.seconds);}
+function drawPaths(){const output=flow.outputs[2];if(!output)return;const c=$('pathCanvas');drawPlan(c,{output,settings:read(2),mapping,view,pathsReference,plan,elapsed,selected,excluded,box,trail:playbackTrail});if(plan)$('playTime').textContent=fmt(elapsed??plan.seconds)+' / '+fmt(plan.seconds);}
 function stopPlayback(){playing=false;cancelAnimationFrame(frameHandle);frameHandle=0;lastFrame=0;$('play').textContent='تشغيل المحاكاة';}
 function playbackFrame(now){if(!playing||!plan||!flow.fresh[2])return;if(lastFrame)elapsed=Math.min(plan.seconds,elapsed+(now-lastFrame)/1000*Number($('playRate').value));lastFrame=now;$('playhead').value=plan.seconds?100*elapsed/plan.seconds:100;drawPaths();if(elapsed>=plan.seconds){stopPlayback();return;}frameHandle=requestAnimationFrame(playbackFrame);}
 $('play').onclick=()=>{if(busy||!plan||!flow.fresh[2]||!settingsValid(2))return;if(playing){stopPlayback();return;}if(elapsed===null||elapsed>=plan.seconds)elapsed=0;playing=true;lastFrame=0;$('play').textContent='إيقاف مؤقت';frameHandle=requestAnimationFrame(playbackFrame);};$('stop').onclick=()=>{stopPlayback();elapsed=null;$('playhead').value=100;drawPaths();};$('playhead').oninput=()=>{if(!plan)return;stopPlayback();elapsed=plan.seconds*Number($('playhead').value)/100;drawPaths();};
