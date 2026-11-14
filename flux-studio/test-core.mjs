@@ -16,6 +16,16 @@ test('nearest endpoint ordering preserves all geometry and never worsens initial
 test('excluded and short strokes never enter the export plan',()=>{const paths=[[[0,0],[10,0]],[[0,0],[1,0]],[[0,0],[20,0]]];assert.deepEqual(g.order(paths,new Set([2]),'original',2).map(v=>v.i),[0]);});
 test('paper centering and margin respect physical dimensions',()=>{const m=g.layout(101,101,210,297,15);assert.equal(m.scale,1.8);assert.equal(m.x,15);assert.equal(m.y,58.5);});
 test('time includes drawing, movement and lifting',()=>{const result=g.timeline([{p:[[10,0],[20,0]]},{p:[[20,10],[20,20]]}],1,10,20,.5);assert.equal(result.ink,20);assert.equal(result.movement,20);assert.equal(result.seconds,4);assert.ok(result.segments.every((v,i,a)=>!i||v.start===a[i-1].end));});
+test('timeline totals equal the playback segments, which are built once and only when asked',()=>{
+ const paths=[[[90,0],[100,3]],[[10,0],[20,0],[20,0],[23,4]],[[50,0],[40,0]],[[7,7],[7,7]]],items=g.order(paths),again=g.order(paths);assert.deepEqual(items.map(v=>v.i),[3,1,2,0]);
+ // A reversed stroke is the same copy on every plan, and the caller's paths stay untouched.
+ assert.deepEqual(items[2].p,[[40,0],[50,0]]);assert.equal(items[2].p,again[2].p);assert.deepEqual(paths[2],[[50,0],[40,0]]);
+ for(const [scale,draw,move,lift]of [[1,10,20,.5],[.175,30,80,.4],[2,200,200,0]]){const plan=g.timeline(items,scale,draw,move,lift),segments=plan.segments;assert.equal(plan.segments,segments);
+  // The reference sums every segment the way the timeline did before its totals and segments were separated.
+  let seconds=0,ink=0,movement=0,last=[0,0],count=0;const step=(a,b,duration,drawn)=>{if(duration>0){const s=segments[count++];assert.deepEqual([s.a,s.b,s.start,s.end,s.draw],[a,b,seconds,seconds+duration,drawn]);seconds+=duration;}};
+  for(const {p}of items){const t=Math.hypot(p[0][0]-last[0],p[0][1]-last[1])*scale;movement+=t;step(last,p[0],t/move,false);step(p[0],p[0],lift,false);for(let i=1;i<p.length;i++){const n=Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1])*scale;ink+=n;step(p[i-1],p[i],n/draw,true);}last=p.at(-1);}
+  assert.equal(count,segments.length);assert.deepEqual([plan.seconds,plan.ink,plan.movement,plan.count],[seconds,ink,movement,4]);assert.equal(segments.at(-1).end,plan.seconds);}
+});
 test('box selection includes crossing segments without vertices inside',()=>{assert.equal(g.intersectsBox([[-10,5],[20,5]],[0,0,10,10]),true);assert.equal(g.intersectsBox([[-10,-5],[20,-5]],[0,0,10,10]),false);});
 test('grid nearest ordering matches the exhaustive scan, ties included',()=>{
  // The scan this replaced: every remaining path is examined at every step.
