@@ -81,3 +81,32 @@ test('path canvas draws only its arguments: plan, selection, exclusions and play
 test('SVG has physical units and pure selected paths',()=>{const svg=g.svg([{p:[[0,0],[100,100]]}],g.layout(101,101),.3);assert.ok(svg.includes('width="210mm"'));assert.ok(svg.includes('stroke-width="0.3"'));assert.ok(!svg.includes('<image'));assert.equal((svg.match(/<path /g)||[]).length,1);});
 
 test('text-only review has no unrelated source reference and does not alter timing settings',()=>{const w=new Workflow();w.reviewImage({image:'generated',width:512,height:512},'');assert.equal(w.outputs[1].reference,'');assert.equal(w.original,'generated');assert.deepEqual(w.approved,[true,false]);assert.equal(w.canEnter(2),false);});
+
+import {planDocument} from './plan-export.js';
+import {fmt,stageSummary} from './stage-metrics.js';
+import {renderFidelity} from './fidelity-panel.js';
+import {renderPaperPreview,paperPair} from './paper-preview.js';
+// A page stand-in: every id resolves to one remembered plain object.
+function fakePage(){const nodes=new Map();return id=>{if(!nodes.has(id))nodes.set(id,{hidden:false,dataset:{},style:{},attributes:{},setAttribute(k,v){this.attributes[k]=v;},getAttribute(k){return this.attributes[k]??this[k]??null;}});return nodes.get(id);};}
+test('plan document places paths in paper millimetres and keeps only audit numbers',()=>{const mapping={scale:.5,x:10,y:20,paperWidth:210,paperHeight:297},plan={items:[{p:[[0,0],[2,4]],i:0}],seconds:12.5};
+ const doc=planDocument({plan,mapping,settings:{margin:15,paper:'A4',drawScale:100,pen:.3,drawSpeed:30,travelSpeed:80,lift:.4},output:{width:100,height:200,inputHash:'abc'},audit:{inkIoU:91.5,scope:'ink mask',renderer:'cairo',target:'data:image/png;base64,AAAA',webgpuAdapter:{vendor:'x'}}});
+ assert.deepEqual(doc.paths,[[[10,20],[11,22]]]);assert.deepEqual(doc.audit,{inkIoU:91.5,scope:'ink mask',renderer:'cairo'});assert.deepEqual(doc.imagePlacement,{origin:'first pixel center',x:10,y:20,frameLeftMm:9.75,frameTopMm:19.75,mmPerPixel:.5,sourceWidth:100,sourceHeight:200});
+ assert.deepEqual(Object.keys(doc),['version','simulationOnly','units','paper','coordinateSpace','imagePlacement','penWidth','speeds','homeMm','estimatedSeconds','audit','referenceHash','paths']);assert.equal(doc.referenceHash,'abc');
+ const bare=planDocument({plan,mapping,settings:{},output:{width:1,height:1},audit:null});assert.equal(bare.audit,null);assert.equal(bare.referenceHash,null);});
+test('stage summary reports each stage and never shows figures of a stale result',()=>{assert.equal(fmt(125.4),'2:05');assert.equal(fmt(-3),'0:00');
+ const stale=stageSummary({stage:0,ready:false,out:{width:5},plan:null,approved:false,excludedCount:0});assert.deepEqual(stale.values,['—','—','—','—']);assert.ok(stale.info.includes('تحديثًا'));
+ assert.deepEqual(stageSummary({stage:2,ready:true,out:{paths:[]},plan:null,approved:true,excludedCount:0}).values,['—','—','—','—']);
+ const first=stageSummary({stage:0,ready:true,out:{generated:true,seed:42,seconds:7,meta:{width:512,height:768}},plan:null,approved:false,excludedCount:0});assert.equal(first.values[0],'512 × 768');assert.equal(first.values[2],'FLUX.2 Klein 4B');assert.ok(first.info.includes('42'));
+ assert.equal(stageSummary({stage:1,ready:true,out:{width:4,height:6},plan:null,approved:true,excludedCount:0}).values[3],'معتمدة');
+ const paths=stageSummary({stage:2,ready:true,out:{paths:[1,2,3]},plan:{count:2,ink:1500,movement:2500,seconds:61,items:[{p:[[0,0],[1,1]]},{p:[[0,0],[1,1],[2,2]]}]},approved:true,excludedCount:1});assert.deepEqual(paths.values,['2','1.50 م','2.50 م','1:01']);assert.equal(paths.info,'3 مستخرج · 1 مستبعد يدويًا · 5 نقطة · دون تسارع أو تحقق حركي');});
+test('fidelity panel hides outside the paths stage and shows no stale measurement',()=>{const $=fakePage();renderFidelity($,{visible:false,data:null,gpu:false,locked:true,fresh:false});assert.equal($('fidelityPanel').hidden,true);assert.equal($('fidelityState').textContent,undefined);
+ renderFidelity($,{visible:true,data:null,gpu:false,locked:true,fresh:false});assert.equal($('fidelityPanel').hidden,false);assert.equal($('fidelityResults').hidden,true);assert.equal($('auditPaths').disabled,true);assert.ok($('fidelityState').textContent.startsWith('حدّث المسارات'));
+ renderFidelity($,{visible:true,data:{penMm:.3,missingInkPercent:1.234,extraInkPercent:.5,coloredPixelsPercent:0,inkIoU:90,inkRecall:95.555,inkPrecision:80,grayErrorInkRegion:null,target:'t',reconstruction:'r',difference:'d'},gpu:false,locked:false,fresh:true});
+ assert.equal($('fidelityResults').hidden,false);assert.equal($('fidelityRecall').textContent,'95.56%');assert.equal($('fidelityGray').textContent,'غير محسوب');assert.equal($('fidelityRender').src,'r');assert.ok($('fidelityState').textContent.includes('الحبر المفقود 1.23%'));assert.equal($('fidelityRenderCanvas').hidden,true);});
+test('paper preview builds the sheet once per plan and waits while paths are stale',()=>{const frames=[];globalThis.requestAnimationFrame=f=>frames.push(f);try{const $=fakePage(),state={key:null},mapping=g.inkLayout(100,100,210,297,15,.3);Object.assign(mapping,{paperWidth:210,paperHeight:297});
+  const plan={items:[{p:[[0,0],[99,99]],i:0}]};let keys=0;const options={stage:2,view:'paper',ready:true,busy:false,layout:()=>mapping,settings:()=>({paper:'A4',pen:.3,margin:15}),mapping,plan,planKey:()=>{keys++;return 'k';}};
+  renderPaperPreview($,state,{...options,view:'compare'});assert.equal($('paperPreview').hidden,true);assert.equal(keys,0);
+  renderPaperPreview($,state,{...options,ready:false,layout:()=>{throw Error('bad');}});assert.equal($('paperSheet').hidden,true);assert.equal($('paperDimensions').textContent,'راجع أبعاد الورقة');assert.equal(keys,0);
+  renderPaperPreview($,state,options);assert.equal($('paperSheet').hidden,false);assert.equal($('paperDimensions').textContent,`A4 · ${paperPair(210,297)} مم`);const first=$('paperImage').src;assert.ok(atob(first.split(',')[1]).includes('<path '));assert.equal($('paperSheet').style.aspectRatio,'210 / 297');
+  $('paperImage').src='kept';renderPaperPreview($,state,options);assert.equal($('paperImage').src,'kept');
+  $('paperGuides').checked=true;renderPaperPreview($,state,options);assert.ok(atob($('paperImage').src.split(',')[1]).includes('stroke-dasharray="1.5 1.5"'));assert.equal(frames.length,3);}finally{delete globalThis.requestAnimationFrame;}});

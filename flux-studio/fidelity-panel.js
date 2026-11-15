@@ -1,0 +1,11 @@
+// Shows the fidelity panel of the paths stage. $ looks an element up by id; everything else comes in as arguments.
+// data is the measurement of the current plan or null, gpu selects the experimental WebGPU mode,
+// locked disables the measure button, and fresh says the paths are up to date.
+export function renderFidelity($,{visible,data,gpu,locked,fresh}){$('fidelityPanel').hidden=!visible;if(!visible)return;$('fidelityPanel').dataset.auditMode=gpu?'webgpu':'cpu';$('fidelityResults').hidden=!data;$('auditPaths').disabled=locked;$('auditPaths').textContent=gpu?'قياس WebGPU التجريبي':'قياس المطابقة';
+ $('fidelityScope').textContent=gpu?'الوضع التجريبي يقيس قناع الحبر عبر WebGPU؛ المعالج يجهّز القناع المرجعي، والرسم النقطي ينفذه المتصفح.':'المرجع هو الصورة التي اعتمدتها في المرحلة الثانية، دون معالجة وسيطة. القياس لقناع الحبر بسماكة قلم ثابتة.';
+ $('fidelityGrayMetric').hidden=gpu;$('fidelityTargetFigure').hidden=gpu;$('fidelityDifferenceFigure').hidden=gpu;$('fidelityRender').hidden=gpu;$('fidelityRenderCanvas').hidden=!gpu;
+ $('fidelityState').textContent=data?`${data.webgpuAdapter?`WebGPU · ${[data.webgpuAdapter.vendor,data.webgpuAdapter.architecture,data.webgpuAdapter.device].filter(Boolean).join(' / ')||'المحول يحدده المتصفح'} · `:''}قلم ${data.penMm} مم · الحبر المفقود ${data.missingInkPercent.toFixed(2)}% · الحبر الزائد ${data.extraInkPercent.toFixed(2)}%${data.coloredPixelsPercent>.5?' · الصورة تحتوي ألوانًا لا يمثلها قلم أسود واحد.':''}`:fresh?'لم تُقَس هذه الخطة بعد، أو تغيّر القلم أو اختيار الخطوط. أعد القياس لمقارنة الخطة الحالية.':'حدّث المسارات أولًا. لا تُعرض نتيجة قياس قديمة.';
+ if(!data)return;for(const [id,key]of [['fidelityIoU','inkIoU'],['fidelityRecall','inkRecall'],['fidelityPrecision','inkPrecision']])$(id).textContent=Number(data[key]).toFixed(2)+'%';$('fidelityGray').textContent=data.grayErrorInkRegion===null?'غير محسوب':data.grayErrorInkRegion+'%';
+ if(gpu){$('fidelityRenderCanvas').setAttribute('aria-label',`رسم WebGPU، ${$('fidelityRenderCanvas').width} في ${$('fidelityRenderCanvas').height} بكسل`);return;}
+ for(const [id,key]of [['fidelityTarget','target'],['fidelityRender','reconstruction'],['fidelityDifference','difference']])if($(id).getAttribute('src')!==data[key])$(id).src=data[key];
+}
