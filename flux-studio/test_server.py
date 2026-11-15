@@ -1,6 +1,7 @@
 """HTTP handler contract: local-only access, bounded bodies, private job results, logged failures."""
 import http.client
 import importlib.util
+import io
 import json
 import threading
 import unittest
@@ -88,6 +89,19 @@ class HandlerTests(unittest.TestCase):
             self.assertEqual((response.status, response.getheader('Content-Type').split(';')[0]), (200, kind), path)
             self.assertTrue(body)
         self.assertEqual(self.request('GET', '/assets/fonts/../server.py')[0], 404)
+
+    def test_refusal_reads_a_small_body_first_and_closes_on_a_large_one(self):
+        # An unread body makes Windows reset the connection on close, which can beat the refusal to the client.
+        def refuse(length, body):
+            handler = server.Handler.__new__(server.Handler)
+            handler.headers = {'Content-Length': length}
+            handler.rfile, handler.close_connection = io.BytesIO(body), False
+            with patch.object(server.Handler, 'reply') as reply:
+                handler.refuse(403, 'x')
+            return handler.rfile.tell(), handler.close_connection, reply.call_args.args
+        self.assertEqual(refuse('12', b'{"job": "x"}'), (12, False, (403, {'error': 'x'})))
+        self.assertEqual(refuse('70000', b'a' * 70_000), (0, True, (403, {'error': 'x'})))
+        self.assertEqual(refuse('abc', b'{}'), (0, True, (403, {'error': 'x'})))
 
     def test_cancel_needs_the_job_id_and_reports_whether_it_applied(self):
         self.assertEqual(self.request('POST', '/api/generation/cancel', body='{}')[0], 400)
