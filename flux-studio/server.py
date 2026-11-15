@@ -96,17 +96,34 @@ class Handler(SimpleHTTPRequestHandler):
         if not head:self.wfile.write(raw)
     def do_GET(self):self.asset()
     def do_HEAD(self):self.asset(True)
+    def refuse(self,status,message):
+        # A reply sent before the body is read leaves it unread, and closing a socket with unread data makes Windows
+        # reset the connection, which can reach the client before the reply does. A small body is read and dropped
+        # first so the refusal arrives; a larger one is not read, and the connection closes after the reply.
+        try:size=int(self.headers.get('Content-Length','0'))
+        except ValueError:size=-1
+        if 0<=size<=65_536:
+            try:self.rfile.read(size)
+            except OSError:self.close_connection=True;return
+        else:self.close_connection=True
+        self.reply(status,{'error':message})
     def do_POST(self):
         port=self.server.server_port
-        if not self.valid_host() or self.headers.get('Origin') not in {f'http://localhost:{port}',f'http://127.0.0.1:{port}'}:self.reply(403,{'error':'افتح مساحة العمل المحلية.'});return
+        if not self.valid_host() or self.headers.get('Origin') not in {f'http://localhost:{port}',f'http://127.0.0.1:{port}'}:self.refuse(403,'افتح مساحة العمل المحلية.');return
         path=urlsplit(self.path).path
-        if path not in ['/api/import','/api/prepare','/api/paths','/api/path-audit','/api/path-audit-target','/api/editor','/api/background','/api/generate','/api/generation/cancel']:self.reply(404,{'error':'غير موجود.'});return
+        if path not in ['/api/import','/api/prepare','/api/paths','/api/path-audit','/api/path-audit-target','/api/editor','/api/background','/api/generate','/api/generation/cancel']:self.refuse(404,'غير موجود.');return
+        size=None
         try:
             size=int(self.headers.get('Content-Length','0'))
             if self.headers.get_content_type()!='application/json' or not 0<size<=(22_000_000 if path in ['/api/import','/api/generate','/api/path-audit','/api/path-audit-target'] else 9_000_000):raise ValueError()
-            data=json.loads(self.rfile.read(size))
+            raw=self.rfile.read(size);size=None
+            data=json.loads(raw)
             if not isinstance(data,dict):raise ValueError()
-        except (ValueError,UnicodeError,RecursionError):self.reply(400,{'error':'بيانات الطلب غير صالحة أو أكبر من الحد.'});return
+        except (ValueError,UnicodeError,RecursionError):
+            message='بيانات الطلب غير صالحة أو أكبر من الحد.'
+            if size is None:self.reply(400,{'error':message})  # the body was read
+            else:self.refuse(400,message)
+            return
         except OSError:self.close_connection=True;return  # body shorter than declared or client gone
         if path=='/api/generation/cancel':
             # Only the page that holds the job id can cancel it; the id is never exposed without it.
