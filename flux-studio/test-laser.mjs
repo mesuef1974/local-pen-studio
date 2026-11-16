@@ -13,7 +13,30 @@ test('laser SVG is millimetre-sized with one hairline score layer and no raster'
  assert.ok(svg.includes('<g id="score" fill="none" stroke="#000000" stroke-width="0.1"'));
  assert.ok(!svg.includes('<image'));
  assert.deepEqual(coords(svg),[[10,20],[40,20]]);
- assert.deepEqual(stats,{paths:1,dropped:0,nodesBefore:2,nodes:2,lengthMm:30,droppedLengthMm:0});
+ assert.deepEqual(stats,{paths:1,dropped:0,nodesBefore:2,nodes:2,lengthMm:30,droppedLengthMm:0,retracedLengthMm:0});
+});
+
+test('a segment drawn twice is burnt once, whichever stroke or direction repeats it',()=>{
+ // Out along a line, back over it, then on: the return trip is cut and the rest becomes its own path.
+ const back=laserSvg([{p:[[0,0],[10,0],[0,0],[0,10]]}],mapping);
+ assert.deepEqual(coords(back.svg),[[10,20],[20,20],[10,20],[10,30]]);
+ assert.equal((back.svg.match(/<path /g)||[]).length,2);
+ assert.equal(back.stats.retracedLengthMm,10);assert.equal(back.stats.lengthMm,20);assert.equal(back.stats.dropped,0);
+ // A later stroke repeating part of an earlier one, reversed, keeps only its new part.
+ const later=laserSvg([{p:[[0,0],[10,0],[20,0]]},{p:[[20,0],[10,0],[10,5]]}],mapping);
+ assert.deepEqual(coords(later.svg),[[10,20],[30,20],[20,20],[20,25]]);
+ assert.equal(later.stats.retracedLengthMm,10);assert.equal(later.stats.paths,2);
+ // A stroke that only repeats leaves nothing, and what remains between two cuts is dropped if it is a dot.
+ const whole=laserSvg([{p:[[0,0],[10,0]]},{p:[[10,0],[0,0]]}],mapping);
+ assert.equal(whole.stats.paths,1);assert.equal(whole.stats.retracedLengthMm,10);assert.equal(whole.stats.dropped,0);
+ const dot=laserSvg([{p:[[0,0],[10,0],[10,.3]]},{p:[[0,0],[10,0],[10,.3],[10,.6]]}],mapping);
+ assert.equal(dot.stats.paths,1);assert.equal(dot.stats.dropped,1);assert.ok(Math.abs(dot.stats.droppedLengthMm-.3)<1e-9);
+ // Two passes a hair apart share no vertex in the plan but become one segment once simplified.
+ const hair=laserSvg([{p:[[0,0],[5,.01],[10,0]]},{p:[[10,0],[5,-.01],[0,0],[0,8]]}],mapping);
+ assert.deepEqual(coords(hair.svg),[[10,20],[20,20],[10,20],[10,28]]);
+ assert.equal(hair.stats.retracedLengthMm,10);assert.equal(hair.stats.lengthMm,18);
+ // Lines that merely cross or touch are not repeats.
+ assert.equal(laserSvg([{p:[[0,0],[10,0]]},{p:[[5,-5],[5,5]]},{p:[[10,0],[10,9]]}],mapping).stats.retracedLengthMm,0);
 });
 
 test('dots and strokes shorter than the minimum are left out and counted',()=>{
