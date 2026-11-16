@@ -30,6 +30,19 @@
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
   .other-sessions-panel{margin-top:14px}.other-session-list{display:grid;gap:8px}.other-session-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}.other-session-row:last-child{border-bottom:0}.other-session-row span{color:var(--muted);font-size:12px;text-align:left}
   @media(max-width:640px){.other-session-row{align-items:flex-start;flex-direction:column;gap:3px}.other-session-row span{text-align:right}}
+    /* Wider chart canvas and compact, non-scrolling session cards. */
+    .shell{max-width:1600px;padding-inline:clamp(16px,3vw,42px)}
+    .layout{grid-template-columns:minmax(0,1.8fr) minmax(300px,.85fr);gap:20px}
+    .chart-wrap{height:350px}
+    .featured-grid{gap:20px}
+    .chart-card{padding:22px 24px}
+    .session-chart{height:280px;margin-top:10px}
+    .table-scroll{overflow:visible}
+    table{min-width:0;table-layout:fixed}
+    th,td{white-space:normal;overflow-wrap:anywhere}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}.chart-wrap{height:310px}}
+    @media(max-width:650px){.featured-grid{grid-template-columns:1fr}.chart-card{padding:18px}.session-chart{height:250px}.table-scroll{padding:0 12px 12px}table,tbody{display:block;width:100%}thead{display:none}#sessions-body tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:14px 4px;border-bottom:1px solid #e8eef1}#sessions-body td{display:grid;align-content:start;gap:5px;min-width:0;padding:5px 7px;border:0;font-size:12px}#sessions-body td::before{content:attr(data-label);color:var(--muted);font-size:10px;font-weight:750}#sessions-body td:first-child{grid-column:1/-1}#sessions-empty{display:block}#sessions-empty[hidden]{display:none}#sessions-empty tr{display:block}#sessions-empty td{display:block;white-space:normal}#sessions-empty td::before{display:none}}
+    @media(max-width:540px){.shell{padding:20px 13px 36px}.panel{padding:15px}.chart-wrap{height:270px}.session-chart{height:230px}.layout{gap:12px}.featured-grid{gap:13px}}
   </style>
   <link rel="stylesheet" href="/identity.css">
 </head>
