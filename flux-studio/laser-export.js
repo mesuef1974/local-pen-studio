@@ -2,7 +2,9 @@
 // A laser burns what a pen would merely touch, so strokes shorter than minLength (dots included) are dropped,
 // a segment the plan draws more than once is written once, and each polyline is simplified within `tolerance`
 // so the machine software is not fed sub-spot segments.
+// With a template (see laser-template.js) its cut outline and guides are written as their own layers after the score.
 // It reads nothing but its arguments.
+import {insideCut,sameSheet,templateLayers} from './laser-template.js';
 export const LASER_DEFAULTS=Object.freeze({minLength:.5,tolerance:.05,strokeWidth:.1,color:'#000000'});
 
 const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
@@ -42,13 +44,16 @@ function unburnt(points,keyOf,burnt){
  return {runs,retraced};
 }
 
-// Returns {svg,stats}. stats counts what the laser file kept and what it left out of the plan.
+// Returns {svg,stats}. stats counts what the laser file kept and what it left out of the plan;
+// outsideCut is how many written lines have a point outside the template's cut outline.
 export function laserSvg(items,mapping,options={}){
- const {minLength,tolerance,strokeWidth,color}={...LASER_DEFAULTS,...options};
+ const {minLength,tolerance,strokeWidth,color}={...LASER_DEFAULTS,...options},template=options.template??null;
  for(const value of [minLength,tolerance,strokeWidth])if(typeof value!=='number'||!Number.isFinite(value)||value<0)throw Error('أدخل قيمًا صحيحة غير سالبة لتصدير الليزر.');
  if(!(strokeWidth>0))throw Error('سماكة خط الليزر يجب أن تكون أكبر من صفر.');
  if(!/^#[0-9a-f]{6}$/i.test(color))throw Error('لون طبقة الليزر يُكتب بصيغة #rrggbb.');
- const stats={paths:0,dropped:0,nodesBefore:0,nodes:0,lengthMm:0,droppedLengthMm:0,retracedLengthMm:0},parts=[],burntRaw=new Set(),burntOut=new Set();
+ if(template&&!sameSheet(template,mapping))throw Error(`مقاس الورقة لا يطابق القالب (${template.width} × ${template.height} مم)؛ أعد تحميل القالب أو اضبط المقاس المخصص عليه.`);
+ const checkCut=!!template?.cut.length;
+ const stats={paths:0,dropped:0,nodesBefore:0,nodes:0,lengthMm:0,droppedLengthMm:0,retracedLengthMm:0,outsideCut:0},parts=[],burntRaw=new Set(),burntOut=new Set();
  for(const {p} of items){
   const points=[];
   for(const [x,y] of p){const point=[x*mapping.scale+mapping.x,y*mapping.scale+mapping.y],last=points.at(-1);if(!last||last[0]!==point[0]||last[1]!==point[1])points.push(point);}
@@ -68,11 +73,12 @@ export function laserSvg(items,mapping,options={}){
     if(keptLength<minLength){stats.dropped++;stats.droppedLengthMm+=keptLength;continue;}
     for(const key of kept.keys)burntOut.add(key);
     stats.paths++;stats.nodes+=kept.points.length;stats.lengthMm+=keptLength;
+    if(checkCut&&kept.points.some(point=>!insideCut(template,point)))stats.outsideCut++;// a burn on the offcut or across the outline
     parts.push(`<path d="${kept.points.map(([x,y],i)=>`${i?'L':'M'}${x.toFixed(3)},${y.toFixed(3)}`).join(' ')}"/>`);
    }
   }
  }
  const {paperWidth:w,paperHeight:h}=mapping;
- const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}"><title>laser score paths</title><g id="score" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">${parts.join('')}</g></svg>`;
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}"><title>laser score paths</title><g id="score" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">${parts.join('')}</g>${template?templateLayers(template):''}</svg>`;
  return {svg,stats};
 }
