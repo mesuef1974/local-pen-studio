@@ -24,13 +24,41 @@ function endpointGrid(items){const count=items.length,ex=new Float64Array(2*coun
    if(!ring){scan(cx,cy);continue;}
    for(let x=cx-ring;x<=cx+ring;x++){scan(x,cy-ring);scan(x,cy+ring);}
    for(let y=cy-ring+1;y<cy+ring;y++){scan(cx-ring,y);scan(cx+ring,y);}}
-  taken[best>>1]=1;return {index:best>>1,reverse:(best&1)===1};}};}
+  taken[best>>1]=1;return {index:best>>1,reverse:(best&1)===1,score};}};}
 // A path keeps one reversed copy and one list of its segment lengths, so replanning after an edit neither copies nor measures it again.
 const reversedCopies=new WeakMap(),segmentLengths=new WeakMap();
 function reversed(path){let copy=reversedCopies.get(path);if(!copy){copy=path.slice().reverse();reversedCopies.set(path,copy);reversedCopies.set(copy,path);}return copy;}
 function lengths(path){let list=segmentLengths.get(path);if(!list){list=new Float64Array(Math.max(0,path.length-1));for(let i=1;i<path.length;i++)list[i-1]=Math.hypot(path[i][0]-path[i-1][0],path[i][1]-path[i-1][1]);segmentLengths.set(path,list);}return list;}
 export function order(paths,excluded=new Set(),mode='nearest',minimum=0,scale=1){const items=[];for(let i=0;i<paths.length;i++){const p=paths[i];if(!excluded.has(i)&&(minimum<=0&&scale>=0||length(p)*scale>=minimum))items.push({p,i});}if(mode==='longest'){const sizes=new Map(items.map(v=>[v,length(v.p)]));return items.sort((a,b)=>sizes.get(b)-sizes.get(a));}if(mode!=='nearest'||items.length<2)return items;
- const grid=endpointGrid(items),ordered=[];let last=[0,0];for(let count=0;count<items.length;count++){const {index,reverse}=grid.take(last),v=items[index],p=reverse?reversed(v.p):v.p;ordered.push({i:v.i,p});last=p[p.length-1];}return travel(ordered)<=travel(items)?ordered:items;}
+ const ordered=nearest(paths,items);return travel(ordered)<=travel(items)?ordered:items;}
+// The last nearest run of each path list. Its step t picked path index[t] (reversed or not, as oriented[t]) at squared distance score[t]
+// from (lx[t],ly[t]); position[i] is the step that picked path i, source[i] the path object it planned for index i, and taken[t]
+// a hash of the paths picked up to step t. Hiding a path cannot change any pick made before that path's step, and showing one cannot
+// change any pick made before the first step it would win, so those steps are kept and only the rest is searched again.
+// The search also stops once it reaches the state of an old step: the same last pick, and exactly the same paths left (hash, then
+// every path checked). From the same state the old run's remaining steps are what the search would find, so they are copied.
+const nearestRuns=new WeakMap(),REUSE_BUDGET=4e6;
+function weight(i){let x=Math.imul(i^0x5bd1e995,0x85ebca6b);x^=x>>>13;x=Math.imul(x,0xc2b2ae35);return x^(x>>>16);}
+function nearest(paths,items){const count=items.length,run=nearestRuns.get(paths),planned=new Array(paths.length);let total=0,keep=0;for(const v of items){planned[v.i]=v.p;total=(total+weight(v.i))|0;}
+ if(run){while(keep<run.count&&planned[run.index[keep]]===run.source[run.index[keep]])keep++;
+  const added=items.filter(v=>run.source[v.i]!==v.p);
+  if(added.length*keep>REUSE_BUDGET)keep=0;
+  // A shown path wins step t when an endpoint is strictly nearer, or equally near with a lower index (the grid's tie rule).
+  else for(const v of added){const a=v.p[0],b=v.p[v.p.length-1];for(let t=0;t<keep;t++){const lx=run.lx[t],ly=run.ly[t];let dx=a[0]-lx,dy=a[1]-ly;const s=dx*dx+dy*dy;dx=b[0]-lx;dy=b[1]-ly;const distance=Math.min(s,dx*dx+dy*dy);
+   if(distance<run.score[t]||(distance===run.score[t]&&v.i<run.index[t])){keep=t;break;}}}}
+ const index=new Int32Array(count),reverse=new Uint8Array(count),score=new Float64Array(count),lx=new Float64Array(count),ly=new Float64Array(count),taken=new Int32Array(count),position=new Int32Array(paths.length).fill(-1),oriented=new Array(count),ordered=[];
+ let last=[0,0],sum=0,t=0,reused=keep;
+ function push(i,p,back,distance){index[t]=i;reverse[t]=back;score[t]=distance;lx[t]=last[0];ly[t]=last[1];oriented[t]=p;position[i]=t;sum=(sum+weight(i))|0;taken[t]=sum;ordered.push({i,p});last=p[p.length-1];t++;}
+ // The paths left after old step s are exactly the paths not yet picked here.
+ function joins(s){for(const v of items)if(position[v.i]<0&&!(run.position[v.i]>s&&run.source[v.i]===v.p))return false;return true;}
+ while(t<keep)push(run.index[t],run.oriented[t],run.reverse[t],run.score[t]);
+ const rest=keep?items.filter(v=>position[v.i]<0):items;
+ if(rest.length){const grid=endpointGrid(rest);while(t<count){const pick=grid.take(last),i=rest[pick.index].i,back=pick.reverse?1:0;push(i,back?reversed(paths[i]):paths[i],back,pick.score);
+  const s=run?run.position[i]:-1;
+  if(s>=0&&run.reverse[s]===back&&run.count-s-1===count-t&&((total-sum)|0)===((run.total-run.taken[s])|0)&&joins(s)){reused+=count-t;for(let u=s+1;u<run.count;u++)push(run.index[u],run.oriented[u],run.reverse[u],run.score[u]);break;}}}
+ nearestRuns.set(paths,{count,index,reverse,score,lx,ly,taken,total,position,oriented,source:planned,reused});return ordered;}
+// Exposed for tests and measurement: how many steps the last nearest run of these paths copied from the one before.
+export function reusedSteps(paths){return nearestRuns.get(paths)?.reused??0;}
 // The totals are summed in the same order as the playback segments, which are only built when playback first asks for them.
 export function timeline(items,scale,drawSpeed=30,travelSpeed=80,lift=.4){if(![scale,drawSpeed,travelSpeed,lift].every(Number.isFinite)||scale<=0||drawSpeed<=0||travelSpeed<=0||lift<0)throw Error('أدخل مقياسًا وسرعات موجبة وزمن رفع غير سالب.');let seconds=0,ink=0,movement=0,last=[0,0];
  for(const {p}of items){const t=Math.hypot(p[0][0]-last[0],p[0][1]-last[1])*scale,list=lengths(p);movement+=t;if(t/travelSpeed>0)seconds+=t/travelSpeed;if(lift>0)seconds+=lift;for(let i=0;i<list.length;i++){const n=list[i]*scale;ink+=n;if(n/drawSpeed>0)seconds+=n/drawSpeed;}last=p[p.length-1];}
