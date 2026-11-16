@@ -162,18 +162,4 @@
 /.codex/*
 !/.codex/handoff.json
 
-# Laser engraving project: the research is tracked; the generated letters and their generator name individuals and stay local.
-!/laser-cases/
-/laser-cases/*
-!/laser-cases/laser-cases-brief.html
-!/laser-cases/README.md
-/laser-cases/build/
-!/laser-cases/laser/
-/laser-cases/laser/*
-!/laser-cases/laser/*.md
-!/laser-cases/laser/*.html
-!/laser-cases/samples/
-/laser-cases/samples/*
-!/laser-cases/samples/*.svg
-!/laser-cases/samples/*.html
-!/laser-cases/samples/*.py
+# The laser business (Misk) moved to its own private repository, mesuef1974/misk, on 2026-11-16.
