@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {LASER_DEFAULTS,laserSvg,pathLength,simplify} from './laser-export.js';
+import {insideCut,readLaserTemplate,sameSheet,templateLayers} from './laser-template.js';
 import {paperLayout} from './paper.js';
 
 // One pixel is one millimetre here, so thresholds read directly.
@@ -13,7 +14,7 @@ test('laser SVG is millimetre-sized with one hairline score layer and no raster'
  assert.ok(svg.includes('<g id="score" fill="none" stroke="#000000" stroke-width="0.1"'));
  assert.ok(!svg.includes('<image'));
  assert.deepEqual(coords(svg),[[10,20],[40,20]]);
- assert.deepEqual(stats,{paths:1,dropped:0,nodesBefore:2,nodes:2,lengthMm:30,droppedLengthMm:0,retracedLengthMm:0});
+ assert.deepEqual(stats,{paths:1,dropped:0,nodesBefore:2,nodes:2,lengthMm:30,droppedLengthMm:0,retracedLengthMm:0,outsideCut:0});
 });
 
 test('a segment drawn twice is burnt once, whichever stroke or direction repeats it',()=>{
@@ -79,4 +80,55 @@ test('a product smaller than 50 mm is a valid custom sheet',()=>{
  const m=paperLayout({width:400,height:600},{paper:'custom',paperWidth:45,paperHeight:60,landscape:false,margin:3,pen:.1,drawScale:100});
  assert.equal(m.paperWidth,45);assert.equal(m.paperHeight,60);
  assert.throws(()=>paperLayout({width:400,height:600},{paper:'custom',paperWidth:19,paperHeight:60,landscape:false,margin:3,pen:.1,drawScale:100}));
+});
+
+// A Misk template as its generator writes it: millimetres, one path per layer, absolute M/L/Z.
+const sheet=(body,size='width="40.00mm" height="30.00mm" viewBox="0 0 40.00 30.00"')=>`<svg xmlns="http://www.w3.org/2000/svg" ${size}>\n  <title>ميدالية اختبار</title>\n${body}</svg>`;
+const cutLayer='  <g id="cut"><path fill="none" stroke="#ff0000" stroke-width="0.1" fill-rule="evenodd" d="M2.000,2.000 L38.000,2.000 L38.000,28.000 L2.000,28.000 Z M5.000,5.000 L9.000,5.000 L9.000,9.000 L5.000,9.000 Z"/></g>\n';
+const guideLayer='  <g id="guide"><path fill="none" stroke="#0000ff" stroke-width="0.2" stroke-dasharray="1 1" fill-rule="evenodd" d="M4.000,4.000 L36.000,4.000 L36.000,26.000 L4.000,26.000 Z"/></g>\n';
+const engraveLayer='  <g id="engrave"><path fill="#000000" stroke="none" fill-rule="evenodd" d="M10.000,10.000 L20.000,10.000 L20.000,20.000 Z"/></g>\n';
+const templateMapping={scale:1,x:0,y:0,paperWidth:40,paperHeight:30};
+
+test('a Misk template gives its sheet, cut outline and guides, and nothing of its engraving',()=>{
+ const template=readLaserTemplate(sheet(engraveLayer+cutLayer+guideLayer));
+ assert.equal(template.width,40);assert.equal(template.height,30);assert.equal(template.title,'ميدالية اختبار');
+ assert.equal(template.cut.length,2);assert.equal(template.guide.length,1);
+ assert.deepEqual(template.cut[1],{points:[[5,5],[9,5],[9,9],[5,9]],closed:true});
+ assert.ok(sameSheet(template,templateMapping));assert.ok(!sameSheet(template,{...templateMapping,paperWidth:40.2}));
+ const layers=templateLayers(template);
+ assert.ok(layers.startsWith('<g id="cut" fill="none" stroke="#ff0000" stroke-width="0.1"><path fill-rule="evenodd" d="M2.000,2.000 L38.000,2.000'));
+ assert.ok(layers.includes('<g id="guide" fill="none" stroke="#0000ff" stroke-width="0.2" stroke-dasharray="1 1">'));
+ assert.ok(!layers.includes('10.000,10.000'));
+ assert.equal(readLaserTemplate(sheet(guideLayer)).cut.length,0);
+});
+
+test('the laser file carries the template layers after the score and counts lines outside the cut',()=>{
+ const template=readLaserTemplate(sheet(cutLayer+guideLayer));
+ // One line inside the piece, one into the hole, one off the piece.
+ const {svg,stats}=laserSvg([{p:[[12,12],[30,12]]},{p:[[6,6],[6,20]]},{p:[[20,20],[39,20]]}],templateMapping,{template});
+ assert.equal(stats.paths,3);assert.equal(stats.outsideCut,2);
+ assert.ok(svg.indexOf('<g id="score"')<svg.indexOf('<g id="cut"')&&svg.indexOf('<g id="cut"')<svg.indexOf('<g id="guide"'));
+ assert.equal((svg.match(/<g /g)||[]).length,3);
+ assert.ok(insideCut(template,[20,15]));assert.ok(!insideCut(template,[7,7]));assert.ok(!insideCut(template,[1,1]));
+ assert.throws(()=>laserSvg([{p:[[0,0],[9,0]]}],{...templateMapping,paperWidth:210,paperHeight:297},{template}),/لا يطابق القالب/);
+ assert.equal(laserSvg([{p:[[0,0],[9,0]]}],templateMapping,{template:readLaserTemplate(sheet(guideLayer))}).stats.outsideCut,0);// no outline, nothing to be outside of
+});
+
+test('a template that is not millimetre M/L/Z geometry is refused whole',()=>{
+ for(const bad of [
+  '','<p>not svg</p>',
+  sheet(cutLayer,'width="40" height="30" viewBox="0 0 40 30"'),// no unit
+  sheet(cutLayer,'width="40mm" height="30mm" viewBox="0 0 400 300"'),// user units are not millimetres
+  sheet(engraveLayer),// neither cut nor guide
+  sheet('<g id="cut"><path d="M2,2 C3,3 4,4 5,5 Z"/></g>'),// curves
+  sheet('<g id="cut"><path d="m2,2 l5,5"/></g>'),// relative
+  sheet('<g id="cut"><path d="M2,2 L5"/></g>'),// odd coordinate
+  sheet('<g id="cut"><path d="L2,2 L5,5"/></g>'),// no start
+  sheet('<g id="cut"><path d="M2,2 L50,5 Z"/></g>'),// off the sheet
+  sheet('<g id="cut"><path d="M2,2 L5,5&quot;/><script>x</script>"/></g>'),
+ ])assert.throws(()=>readLaserTemplate(bad));
+ assert.throws(()=>readLaserTemplate(sheet(cutLayer)+' '.repeat(2_000_000)));
+ // Markup beside the paths never reaches the output.
+ const hostile=readLaserTemplate(sheet('<g id="cut" onload="x()"><path onclick="y()" d="M2,2 L5,5 Z"/></g>').replace('ميدالية اختبار','a</title><script>'));
+ assert.ok(!/onload|onclick|script/.test(templateLayers(hostile)));assert.ok(!hostile.title.includes('<'));
 });
