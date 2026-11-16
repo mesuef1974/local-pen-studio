@@ -8,7 +8,7 @@ export function paperLayout(image,settings){
  let [width,height]=named||[settings.paperWidth,settings.paperHeight];
  const {margin,pen}=settings,percent=settings.drawScale??100;
  for(const value of [width,height,margin,pen,percent,image.width,image.height])if(typeof value!=='number'||!Number.isFinite(value))throw Error('أدخل أبعادًا وأرقامًا صحيحة للورقة والرسم.');
- if(width<50||height<50||width>1200||height>1200)throw Error('أبعاد الورق المخصص من 50 إلى 1200 مم.');
+ if(width<20||height<20||width>1200||height>1200)throw Error('أبعاد الورق المخصص من 20 إلى 1200 مم.');
  if(margin<0||margin>100||pen<.1||pen>1.2||percent<10||percent>100||image.width<1||image.height<1)throw Error('راجع الهامش وقطر القلم وحجم الرسم.');
  [width,height]=settings.landscape?[Math.max(width,height),Math.min(width,height)]:[Math.min(width,height),Math.max(width,height)];
  if(Math.min(width,height)<=2*margin+pen)throw Error('الهامش وقطر القلم لا يتركان مساحة رسم؛ قلّل الهامش أو كبّر الورقة.');
