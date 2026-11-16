@@ -126,6 +126,12 @@
     return cell;
   }
 
+  // On narrow screens each table row becomes a card, and a cell shows its column name from data-label.
+  function labelled(cell, label) {
+    cell.dataset.label = label;
+    return cell;
+  }
+
   function renderBreakdown(sessions) {
     const samples = sessions.map(lastSample).filter(Boolean);
     const values = [
@@ -176,6 +182,7 @@
       shortId.className = 'session-meta';
       shortId.textContent = String(session.session_id || '').slice(0, 8);
       nameCell.append(name, shortId);
+      nameCell.dataset.label = 'الجلسة';
       row.append(nameCell);
 
       const model = createCell('td', sample.model || session.model || 'غير محدد');
@@ -185,10 +192,11 @@
         pill.textContent = model.textContent;
         model.replaceChildren(pill);
       }
+      model.dataset.label = 'النموذج';
       row.append(model);
-      row.append(createCell('td', formatTokens(sample.cumulative?.total_tokens), 'num'));
-      row.append(createCell('td', formatPercent(sample.context?.used_percent)));
-      row.append(createCell('td', formatDate(sample.timestamp)));
+      row.append(labelled(createCell('td', formatTokens(sample.cumulative?.total_tokens), 'num'), 'إجمالي التوكنز'));
+      row.append(labelled(createCell('td', formatPercent(sample.context?.used_percent)), 'ضغط السياق'));
+      row.append(labelled(createCell('td', formatDate(sample.timestamp)), 'آخر تحديث'));
       body.append(row);
     }
     empty.hidden = current.length > 0;
