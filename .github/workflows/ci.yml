@@ -135,7 +135,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install Pillow==13.0.0
-      - run: node --test flux-studio/test-api-client.mjs flux-studio/test-core.mjs flux-studio/test-paper.mjs flux-studio/test-prompts.mjs
+      - run: node --test flux-studio/test-api-client.mjs flux-studio/test-core.mjs flux-studio/test-paper.mjs flux-studio/test-prompts.mjs flux-studio/test-laser.mjs
       - run: node --test test-controller.mjs test-core.mjs
         working-directory: pipeline-studio
       - run: node --test test-editor-geometry.cjs test-lineart-workflow.cjs test-path-order.cjs test-path-refinement.cjs test-worker-ink.cjs test-approved-vectors.mjs
