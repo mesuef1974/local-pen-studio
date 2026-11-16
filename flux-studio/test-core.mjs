@@ -110,3 +110,22 @@ test('paper preview builds the sheet once per plan and waits while paths are sta
   renderPaperPreview($,state,options);assert.equal($('paperSheet').hidden,false);assert.equal($('paperDimensions').textContent,`A4 · ${paperPair(210,297)} مم`);const first=$('paperImage').src;assert.ok(atob(first.split(',')[1]).includes('<path '));assert.equal($('paperSheet').style.aspectRatio,'210 / 297');
   $('paperImage').src='kept';renderPaperPreview($,state,options);assert.equal($('paperImage').src,'kept');
   $('paperGuides').checked=true;renderPaperPreview($,state,options);assert.ok(atob($('paperImage').src.split(',')[1]).includes('stroke-dasharray="1.5 1.5"'));assert.equal(frames.length,3);}finally{delete globalThis.requestAnimationFrame;}});
+test('replanning after an edit keeps the unchanged start and matches a fresh plan',()=>{
+ let seed=29;const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+ const cases={scattered:Array.from({length:600},()=>{const x=random()*1000,y=random()*1000;return [[x,y],[x+random()*30-15,y+random()*30-15]];}),
+  lattice:Array.from({length:400},()=>{const x=Math.floor(random()*10),y=Math.floor(random()*10);return [[x,y],[x+Math.floor(random()*3),y+Math.floor(random()*3)]];})};
+ for(const [name,paths]of Object.entries(cases)){
+  // A fresh array has no previous run, so it is planned from scratch.
+  const fresh=(hidden,minimum=0)=>g.order(paths.slice(),hidden,'nearest',minimum);
+  const first=g.order(paths,new Set());assert.equal(g.reusedSteps(paths),0,name);
+  const late=first.at(-20).i,hidden=new Set([late]);
+  assert.deepEqual(g.order(paths,hidden),fresh(hidden),`${name} hide`);assert.ok(g.reusedSteps(paths)>=first.length-20,`${name} hide keeps the start`);
+  assert.deepEqual(g.order(paths,new Set()),first,`${name} show again`);assert.ok(g.reusedSteps(paths)>0,`${name} show keeps a start`);
+  for(let round=0;round<12;round++){const edit=new Set();for(let k=0;k<1+round%4;k++)edit.add(Math.floor(random()*paths.length));
+   assert.deepEqual(g.order(paths,edit),fresh(edit),`${name} round ${round}`);}
+  assert.deepEqual(g.order(paths,new Set([1]),'nearest',8),fresh(new Set([1]),8),`${name} minimum`);
+  // A path replaced in place is planned again, even when it is not hidden.
+  const before=paths[first[5].i];paths[first[5].i]=[[0,0],[0.5,0.5]];
+  assert.deepEqual(g.order(paths,new Set()),fresh(new Set()),`${name} replaced`);paths[first[5].i]=before;
+  assert.deepEqual(g.order(paths,new Set()),first,`${name} restored`);}
+});
