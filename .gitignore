@@ -172,3 +172,8 @@
 /laser-cases/laser/*
 !/laser-cases/laser/*.md
 !/laser-cases/laser/*.html
+!/laser-cases/samples/
+/laser-cases/samples/*
+!/laser-cases/samples/*.svg
+!/laser-cases/samples/index.html
+!/laser-cases/samples/build_samples.py
