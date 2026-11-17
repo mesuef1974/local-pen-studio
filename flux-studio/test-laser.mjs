@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {LASER_DEFAULTS,laserSvg,pathLength,simplify} from './laser-export.js';
-import {clipToCut,insideCut,readLaserTemplate,sameSheet,templateLayers} from './laser-template.js';
+import {clipToCut,cutPathData,insideCut,readLaserTemplate,sameSheet,templateLayers} from './laser-template.js';
 import {paperLayout} from './paper.js';
 
 // One pixel is one millimetre here, so thresholds read directly.
@@ -100,6 +100,8 @@ test('a Misk template gives its sheet, cut outline and guides, and nothing of it
  assert.ok(layers.includes('<g id="guide" fill="none" stroke="#0000ff" stroke-width="0.2" stroke-dasharray="1 1">'));
  assert.ok(!layers.includes('10.000,10.000'));
  assert.equal(readLaserTemplate(sheet(guideLayer)).cut.length,0);
+ assert.equal(cutPathData(template),'M2.000,2.000 L38.000,2.000 L38.000,28.000 L2.000,28.000 Z M5.000,5.000 L9.000,5.000 L9.000,9.000 L5.000,9.000 Z');
+ assert.equal(cutPathData(readLaserTemplate(sheet(guideLayer))),'');
 });
 
 test('the laser file carries the template layers after the score and clips the drawing to the cut',()=>{

@@ -60,6 +60,8 @@ export function readLaserTemplate(text){
 export function sameSheet(template,mapping){return Math.abs(template.width-mapping.paperWidth)<=TEMPLATE_LIMITS.sizeTolerance&&Math.abs(template.height-mapping.paperHeight)<=TEMPLATE_LIMITS.sizeTolerance;}
 
 const pathData=paths=>paths.map(({points,closed})=>points.map(([x,y],i)=>`${i?'L':'M'}${x.toFixed(3)},${y.toFixed(3)}`).join(' ')+(closed?' Z':'')).join(' ');
+// The cut outline as path data for an even-odd clip, or '' when the template has none.
+export function cutPathData(template){return pathData(template.cut);}
 // The template's layers as SVG groups, in the colours the machine software tells layers apart by.
 export function templateLayers(template){
  return (template.cut.length?`<g id="cut" ${CUT}><path fill-rule="evenodd" d="${pathData(template.cut)}"/></g>`:'')+(template.guide.length?`<g id="guide" ${GUIDE}><path fill-rule="evenodd" d="${pathData(template.guide)}"/></g>`:'');
