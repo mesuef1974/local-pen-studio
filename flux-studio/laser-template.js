@@ -68,38 +68,44 @@ export function templateLayers(template){
  return (template.engrave.length?`<g id="engrave" ${ENGRAVE}><path fill-rule="evenodd" d="${pathData(template.engrave)}"/></g>`:'')+(template.cut.length?`<g id="cut" ${CUT}><path fill-rule="evenodd" d="${pathData(template.cut)}"/></g>`:'')+(template.guide.length?`<g id="guide" ${GUIDE}><path fill-rule="evenodd" d="${pathData(template.guide)}"/></g>`:'');
 }
 
-// Even-odd test against every cut ring at once, so a hole in the piece (a keyring hole) counts as outside it.
-export function insideCut(template,[x,y]){
+// Even-odd test against every ring at once, so a hole in the piece (a keyring hole) counts as outside it.
+function insideRings(rings,[x,y]){
  let inside=false;
- for(const {points} of template.cut)for(let i=0,j=points.length-1;i<points.length;j=i++){
+ for(const {points} of rings)for(let i=0,j=points.length-1;i<points.length;j=i++){
   const [ax,ay]=points[i],[bx,by]=points[j];
   if((ay>y)!==(by>y)&&x<(bx-ax)*(y-ay)/(by-ay)+ax)inside=!inside;
  }
  return inside;
 }
+export function insideCut(template,point){return insideRings(template.cut,point);}
 
-// The cut edges in a coarse grid over the sheet, so a stroke is only tested against the outline near it. A cell no edge
-// passes through is wholly on the piece or wholly off it; which one is found once, at its centre, when first asked.
+// A layer's edges in a coarse grid over the sheet, so a stroke is only tested against the outline near it. A cell no
+// edge passes through is wholly inside the shape or wholly outside; which one is found once, at its centre, when first asked.
 const GRID=64,indexCache=new WeakMap();
-function cutIndex(template){
- let index=indexCache.get(template);
+function ringIndex(template,rings){
+ let index=indexCache.get(rings);
  if(index)return index;
  const edges=[],cellW=template.width/GRID,cellH=template.height/GRID,cells=Array.from({length:GRID*GRID},()=>[]);
  const column=x=>Math.max(0,Math.min(GRID-1,Math.floor(x/cellW))),row=y=>Math.max(0,Math.min(GRID-1,Math.floor(y/cellH)));
- for(const {points} of template.cut)for(let i=0,j=points.length-1;i<points.length;j=i++){
+ for(const {points} of rings)for(let i=0,j=points.length-1;i<points.length;j=i++){
   const c=points[j],d=points[i],id=edges.push([c,d])-1;
   for(let r=row(Math.min(c[1],d[1]));r<=row(Math.max(c[1],d[1]));r++)for(let q=column(Math.min(c[0],d[0]));q<=column(Math.max(c[0],d[0]));q++)cells[r*GRID+q].push(id);
  }
  index={edges,cells,column,row,cellW,cellH,state:new Int8Array(GRID*GRID),seen:new Uint32Array(edges.length),stamp:0};
- indexCache.set(template,index);return index;
+ indexCache.set(rings,index);return index;
 }
-// The parts of a polyline that lie on the piece: each segment is split where it crosses a cut ring and a part is kept
-// when its midpoint is inside (even-odd, so a hole is outside). Returns the kept polylines in drawing order.
-export function clipToCut(template,points){
- const index=cutIndex(template),{edges,cells,column,row,state}=index,runs=[];let run=null;
+// The range of t where lo < p + q·t < hi, or null when there is none.
+function between(p,q,lo,hi){if(!q)return p>lo&&p<hi?[-Infinity,Infinity]:null;const s=(lo-p)/q,e=(hi-p)/q;return s<e?[s,e]:[e,s];}
+
+// The parts of a polyline on one side of a shape: inside it (`inside` true) or outside it. With a margin, whatever
+// comes within that distance of the shape's outline is left out as well. Each segment is split where it crosses the
+// outline, or where it enters the margin, and a part is kept by where its midpoint lies. Returns the kept polylines in
+// drawing order.
+function clip(template,rings,points,inside,margin){
+ const index=ringIndex(template,rings),{edges,cells,column,row,state}=index,runs=[];let run=null;
  for(let i=1;i<points.length;i++){
-  const a=points[i-1],b=points[i],dx=b[0]-a[0],dy=b[1]-a[1],cuts=[0,1];
-  const minX=Math.min(a[0],b[0]),maxX=Math.max(a[0],b[0]),minY=Math.min(a[1],b[1]),maxY=Math.max(a[1],b[1]);
+  const a=points[i-1],b=points[i],dx=b[0]-a[0],dy=b[1]-a[1],span=dx*dx+dy*dy,cuts=[0,1],gone=[];
+  const minX=Math.min(a[0],b[0])-margin,maxX=Math.max(a[0],b[0])+margin,minY=Math.min(a[1],b[1])-margin,maxY=Math.max(a[1],b[1])+margin;
   const stamp=++index.stamp;let near=false;
   for(let r=row(minY);r<=row(maxY);r++)for(let q=column(minX);q<=column(maxX);q++)for(const id of cells[r*GRID+q]){
    near=true;
@@ -107,30 +113,54 @@ export function clipToCut(template,points){
    index.seen[id]=stamp;
    const [c,d]=edges[id];
    if(Math.max(c[0],d[0])<minX||Math.min(c[0],d[0])>maxX||Math.max(c[1],d[1])<minY||Math.min(c[1],d[1])>maxY)continue;
-   const ex=d[0]-c[0],ey=d[1]-c[1],den=dx*ey-dy*ex;
-   if(!den)continue;// parallel: a line along the outline is decided by its midpoint like any other
-   const t=((c[0]-a[0])*ey-(c[1]-a[1])*ex)/den,u=((c[0]-a[0])*dy-(c[1]-a[1])*dx)/den;
-   if(t>0&&t<1&&u>=0&&u<=1)cuts.push(t);
+   const ex=d[0]-c[0],ey=d[1]-c[1];
+   if(margin){// where the segment is within `margin` of this edge: a disc at each end and the band between them
+    for(const end of [c,d]){
+     const fx=a[0]-end[0],fy=a[1]-end[1],half=dx*fx+dy*fy,disc=half*half-span*(fx*fx+fy*fy-margin*margin);
+     if(disc>0&&span>0){const root=Math.sqrt(disc);gone.push([(-half-root)/span,(-half+root)/span]);}
+    }
+    const length=Math.hypot(ex,ey);
+    if(length){
+     const ux=ex/length,uy=ey/length,fx=a[0]-c[0],fy=a[1]-c[1];
+     const along=between(fx*ux+fy*uy,dx*ux+dy*uy,0,length),across=between(fy*ux-fx*uy,dy*ux-dx*uy,-margin,margin);
+     if(along&&across){const from=Math.max(along[0],across[0]),to=Math.min(along[1],across[1]);if(from<to)gone.push([from,to]);}
+    }
+   }else{
+    const den=dx*ey-dy*ex;
+    if(!den)continue;// parallel: a line along the outline is decided by its midpoint like any other
+    const t=((c[0]-a[0])*ey-(c[1]-a[1])*ex)/den,u=((c[0]-a[0])*dy-(c[1]-a[1])*dx)/den;
+    if(t>0&&t<1&&u>=0&&u<=1)cuts.push(t);
+   }
   }
-  if(!near){// no outline in any cell the segment touches: it is wholly on the piece or wholly off it
-   const x=a[0]+dx/2,y=a[1]+dy/2;let on=false;
+  if(!near){// no outline in any cell the segment and its margin touch: it is wholly on one side
+   const x=a[0]+dx/2,y=a[1]+dy/2;let within=false;
    if(x>=0&&y>=0&&x<=template.width&&y<=template.height){
     const cell=row(y)*GRID+column(x);
-    if(!state[cell])state[cell]=insideCut(template,[(column(x)+.5)*index.cellW,(row(y)+.5)*index.cellH])?1:2;
-    on=state[cell]===1;
+    if(!state[cell])state[cell]=insideRings(rings,[(column(x)+.5)*index.cellW,(row(y)+.5)*index.cellH])?1:2;
+    within=state[cell]===1;
    }
-   if(!on)run=null;else if(run)run.push(b);else{run=[a,b];runs.push(run);}
+   if(within!==inside)run=null;else if(run)run.push(b);else{run=[a,b];runs.push(run);}
    continue;
   }
-  cuts.sort((p,q)=>p-q);
-  const at=t=>t===0?a:t===1?b:[a[0]+dx*t,a[1]+dy*t];
-  for(let k=1;k<cuts.length;k++){
-   const from=cuts[k-1],to=cuts[k];
+  const parts=[];
+  if(margin){
+   gone.sort((p,q)=>p[0]-q[0]);let t=0;
+   for(const [from,to] of gone){if(to<=t||from>=1)continue;if(from>t)parts.push([t,from]);t=to;}
+   if(t<1)parts.push([t,1]);
+  }else{cuts.sort((p,q)=>p-q);for(let k=1;k<cuts.length;k++)parts.push([cuts[k-1],cuts[k]]);}
+  const at=t=>t===0?a:t===1?b:[a[0]+dx*t,a[1]+dy*t];let reached=0;// how far along this segment the current run goes
+  for(const [from,to] of parts){
    if(to-from<1e-12)continue;// the same crossing found on two edges that meet at a vertex
    const mid=(from+to)/2;
-   if(!insideCut(template,[a[0]+dx*mid,a[1]+dy*mid])){run=null;continue;}
-   if(run)run.push(at(to));else{run=[at(from),at(to)];runs.push(run);}
+   if(insideRings(rings,[a[0]+dx*mid,a[1]+dy*mid])!==inside){run=null;continue;}
+   if(run&&from-reached<1e-12)run.push(at(to));else{run=[at(from),at(to)];runs.push(run);}
+   reached=to;
   }
+  if(reached<1)run=null;
  }
  return runs;
 }
+// What of a polyline lies on the piece (inside the cut outline, a hole being outside), at least `margin` from the outline.
+export function clipToCut(template,points,margin=0){return clip(template,template.cut,points,true,margin);}
+// What of a polyline lies off the template's engraving, so a line is not burnt where an area will be.
+export function clipOffEngraving(template,points){return clip(template,template.engrave,points,false,0);}
