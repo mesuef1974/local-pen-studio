@@ -2,8 +2,8 @@
 // A laser burns what a pen would merely touch, so strokes shorter than minLength (dots included) are dropped,
 // a segment the plan draws more than once is written once, and each polyline is simplified within `tolerance`
 // so the machine software is not fed sub-spot segments.
-// With a template (see laser-template.js) the drawing is clipped to its cut outline, and the outline and guides are
-// written as their own layers after the score.
+// With a template (see laser-template.js) the drawing is clipped to its cut outline, and the template's engraving,
+// outline and guides are written as their own layers after the score.
 // It reads nothing but its arguments.
 import {clipToCut,sameSheet,templateLayers} from './laser-template.js';
 export const LASER_DEFAULTS=Object.freeze({minLength:.5,tolerance:.05,strokeWidth:.1,color:'#000000'});
