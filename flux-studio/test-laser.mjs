@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {LASER_DEFAULTS,laserSvg,pathLength,simplify} from './laser-export.js';
-import {insideCut,readLaserTemplate,sameSheet,templateLayers} from './laser-template.js';
+import {clipToCut,insideCut,readLaserTemplate,sameSheet,templateLayers} from './laser-template.js';
 import {paperLayout} from './paper.js';
 
 // One pixel is one millimetre here, so thresholds read directly.
@@ -14,7 +14,7 @@ test('laser SVG is millimetre-sized with one hairline score layer and no raster'
  assert.ok(svg.includes('<g id="score" fill="none" stroke="#000000" stroke-width="0.1"'));
  assert.ok(!svg.includes('<image'));
  assert.deepEqual(coords(svg),[[10,20],[40,20]]);
- assert.deepEqual(stats,{paths:1,dropped:0,nodesBefore:2,nodes:2,lengthMm:30,droppedLengthMm:0,retracedLengthMm:0,outsideCut:0});
+ assert.deepEqual(stats,{paths:1,dropped:0,nodesBefore:2,nodes:2,lengthMm:30,droppedLengthMm:0,retracedLengthMm:0,clippedLengthMm:0});
 });
 
 test('a segment drawn twice is burnt once, whichever stroke or direction repeats it',()=>{
@@ -102,16 +102,24 @@ test('a Misk template gives its sheet, cut outline and guides, and nothing of it
  assert.equal(readLaserTemplate(sheet(guideLayer)).cut.length,0);
 });
 
-test('the laser file carries the template layers after the score and counts lines outside the cut',()=>{
+test('the laser file carries the template layers after the score and clips the drawing to the cut',()=>{
  const template=readLaserTemplate(sheet(cutLayer+guideLayer));
  // One line inside the piece, one into the hole, one off the piece.
  const {svg,stats}=laserSvg([{p:[[12,12],[30,12]]},{p:[[6,6],[6,20]]},{p:[[20,20],[39,20]]}],templateMapping,{template});
- assert.equal(stats.paths,3);assert.equal(stats.outsideCut,2);
+ // The first is whole; the second keeps what is past the hole (y 9 to 20); the third stops at the outline (x 38).
+ assert.equal(stats.paths,3);assert.equal(stats.clippedLengthMm,4);assert.equal(stats.lengthMm,18+11+18);
+ assert.deepEqual(coords(svg).slice(0,6),[[12,12],[30,12],[6,9],[6,20],[20,20],[38,20]]);
+ // A line through the hole comes out as two, one fully off the piece as none, and a bend at the outline stays joined.
+ assert.deepEqual(clipToCut(template,[[3,7],[12,7]]),[[[3,7],[5,7]],[[9,7],[12,7]]]);
+ assert.deepEqual(clipToCut(template,[[0,0],[1,1]]),[]);
+ assert.deepEqual(clipToCut(template,[[10,12],[20,12],[20,25]]),[[[10,12],[20,12],[20,25]]]);
+ const off=laserSvg([{p:[[0,0],[1,0]]},{p:[[1.8,12],[2.3,12]]}],templateMapping,{template});
+ assert.equal(off.stats.paths,0);assert.equal(off.stats.dropped,1);// what is left on the piece is a dot
  assert.ok(svg.indexOf('<g id="score"')<svg.indexOf('<g id="cut"')&&svg.indexOf('<g id="cut"')<svg.indexOf('<g id="guide"'));
  assert.equal((svg.match(/<g /g)||[]).length,3);
  assert.ok(insideCut(template,[20,15]));assert.ok(!insideCut(template,[7,7]));assert.ok(!insideCut(template,[1,1]));
  assert.throws(()=>laserSvg([{p:[[0,0],[9,0]]}],{...templateMapping,paperWidth:210,paperHeight:297},{template}),/لا يطابق القالب/);
- assert.equal(laserSvg([{p:[[0,0],[9,0]]}],templateMapping,{template:readLaserTemplate(sheet(guideLayer))}).stats.outsideCut,0);// no outline, nothing to be outside of
+ assert.equal(laserSvg([{p:[[0,0],[9,0]]}],templateMapping,{template:readLaserTemplate(sheet(guideLayer))}).stats.clippedLengthMm,0);// no outline, nothing to clip to
 });
 
 test('a template that is not millimetre M/L/Z geometry is refused whole',()=>{
