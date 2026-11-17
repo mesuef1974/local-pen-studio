@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {LASER_DEFAULTS,laserSvg,pathLength,simplify} from './laser-export.js';
-import {clipOffEngraving,clipToCut,cutPathData,insideCut,readLaserTemplate,sameSheet,templateLayers} from './laser-template.js';
+import {clipToCut,cutPathData,insideCut,readLaserTemplate,sameSheet,templateLayers} from './laser-template.js';
 import {paperLayout} from './paper.js';
 
 // One pixel is one millimetre here, so thresholds read directly.
@@ -14,7 +14,7 @@ test('laser SVG is millimetre-sized with one hairline score layer and no raster'
  assert.ok(svg.includes('<g id="score" fill="none" stroke="#000000" stroke-width="0.1"'));
  assert.ok(!svg.includes('<image'));
  assert.deepEqual(coords(svg),[[10,20],[40,20]]);
- assert.deepEqual(stats,{paths:1,dropped:0,nodesBefore:2,nodes:2,lengthMm:30,droppedLengthMm:0,retracedLengthMm:0,clippedLengthMm:0,coveredLengthMm:0});
+ assert.deepEqual(stats,{paths:1,dropped:0,nodesBefore:2,nodes:2,lengthMm:30,droppedLengthMm:0,retracedLengthMm:0,clippedLengthMm:0});
 });
 
 test('a segment drawn twice is burnt once, whichever stroke or direction repeats it',()=>{
@@ -89,7 +89,7 @@ const guideLayer='  <g id="guide"><path fill="none" stroke="#0000ff" stroke-widt
 const engraveLayer='  <g id="engrave"><path fill="#000000" stroke="none" fill-rule="evenodd" d="M10.000,10.000 L20.000,10.000 L20.000,20.000 Z"/></g>\n';
 const templateMapping={scale:1,x:0,y:0,paperWidth:40,paperHeight:30};
 
-test('a Misk template gives its sheet, engraving, cut outline and guides',()=>{
+test('a Misk template gives its sheet, cut outline and guides, and its engraving is read but not written back',()=>{
  const template=readLaserTemplate(sheet(engraveLayer+cutLayer+guideLayer));
  assert.equal(template.width,40);assert.equal(template.height,30);assert.equal(template.title,'ميدالية اختبار');
  assert.equal(template.cut.length,2);assert.equal(template.guide.length,1);
@@ -97,9 +97,9 @@ test('a Misk template gives its sheet, engraving, cut outline and guides',()=>{
  assert.deepEqual(template.cut[1],{points:[[5,5],[9,5],[9,9],[5,9]],closed:true});
  assert.ok(sameSheet(template,templateMapping));assert.ok(!sameSheet(template,{...templateMapping,paperWidth:40.2}));
  const layers=templateLayers(template);
- assert.ok(layers.startsWith('<g id="engrave" fill="#000000" stroke="none"><path fill-rule="evenodd" d="M10.000,10.000 L20.000,10.000 L20.000,20.000 Z"/></g><g id="cut" fill="none" stroke="#ff0000" stroke-width="0.1"><path fill-rule="evenodd" d="M2.000,2.000 L38.000,2.000'));
+ assert.ok(layers.startsWith('<g id="cut" fill="none" stroke="#ff0000" stroke-width="0.1"><path fill-rule="evenodd" d="M2.000,2.000 L38.000,2.000'));
  assert.ok(layers.includes('<g id="guide" fill="none" stroke="#0000ff" stroke-width="0.2" stroke-dasharray="1 1">'));
- assert.ok(!templateLayers(readLaserTemplate(sheet(cutLayer))).includes('engrave'));
+ assert.ok(!layers.includes('engrave')&&!layers.includes('#000000'));// the drawing takes the engraving's place
  assert.equal(readLaserTemplate(sheet(engraveLayer)).engrave.length,1);// an engraving alone is a template
  assert.equal(readLaserTemplate(sheet(guideLayer)).cut.length,0);
  assert.equal(cutPathData(template),'M2.000,2.000 L38.000,2.000 L38.000,28.000 L2.000,28.000 Z M5.000,5.000 L9.000,5.000 L9.000,9.000 L5.000,9.000 Z');
@@ -122,13 +122,13 @@ test('the laser file carries the template layers after the score and clips the d
  assert.ok(svg.indexOf('<g id="score"')<svg.indexOf('<g id="cut"')&&svg.indexOf('<g id="cut"')<svg.indexOf('<g id="guide"'));
  assert.equal((svg.match(/<g /g)||[]).length,3);
  const full=laserSvg([{p:[[12,12],[30,12]]}],templateMapping,{template:readLaserTemplate(sheet(engraveLayer+cutLayer+guideLayer))}).svg;
- assert.deepEqual([...full.matchAll(/<g id="(\w+)"/g)].map(m=>m[1]),['score','engrave','cut','guide']);
+ assert.deepEqual([...full.matchAll(/<g id="(\w+)"/g)].map(m=>m[1]),['score','cut','guide']);
  assert.ok(insideCut(template,[20,15]));assert.ok(!insideCut(template,[7,7]));assert.ok(!insideCut(template,[1,1]));
  assert.throws(()=>laserSvg([{p:[[0,0],[9,0]]}],{...templateMapping,paperWidth:210,paperHeight:297},{template}),/لا يطابق القالب/);
  assert.equal(laserSvg([{p:[[0,0],[9,0]]}],templateMapping,{template:readLaserTemplate(sheet(guideLayer))}).stats.clippedLengthMm,0);// no outline, nothing to clip to
 });
 
-test('lines stay a clearance away from the cut outline and off the template engraving',()=>{
+test('lines stay a clearance away from the cut outline and run across the template engraving',()=>{
  const template=readLaserTemplate(sheet(cutLayer)),near=runs=>runs.map(run=>run.map(([x,y])=>[+x.toFixed(6),+y.toFixed(6)]));
  // The outline is the rectangle 2..38 by 2..28 with a hole 5..9 by 5..9.
  assert.deepEqual(near(clipToCut(template,[[2.5,15],[39,15]],1)),[[[3,15],[37,15]]]);// both ends pulled in
@@ -139,14 +139,12 @@ test('lines stay a clearance away from the cut outline and off the template engr
  const {svg,stats}=laserSvg([{p:[[20,20],[39,20]]}],templateMapping,{template});// one millimetre unless told otherwise
  assert.deepEqual(coords(svg).slice(0,2),[[20,20],[37,20]]);assert.equal(+stats.clippedLengthMm.toFixed(6),2);
  assert.equal(LASER_DEFAULTS.cutClearance,1);assert.throws(()=>laserSvg([],templateMapping,{template,cutClearance:-1}));
- // The engraving is the triangle (10,10) (20,10) (20,20): a line through it is written on either side only.
+ // The engraving is the triangle (10,10) (20,10) (20,20): it is not written, so a line through it stays whole.
  const engraved=readLaserTemplate(sheet(engraveLayer+cutLayer));
- assert.deepEqual(near(clipOffEngraving(engraved,[[12,14],[30,14]])),[[[12,14],[14,14]],[[20,14],[30,14]]]);
- assert.deepEqual(near(clipOffEngraving(engraved,[[16,12],[19,12]])),[]);
  const over=laserSvg([{p:[[12,14],[30,14]]}],templateMapping,{template:engraved});
- assert.deepEqual(coords(over.svg).slice(0,4),[[12,14],[14,14],[20,14],[30,14]]);
- assert.equal(+over.stats.coveredLengthMm.toFixed(6),6);assert.equal(over.stats.clippedLengthMm,0);assert.equal(over.stats.paths,2);
- assert.equal(laserSvg([{p:[[12,14],[30,14]]}],templateMapping,{template}).stats.coveredLengthMm,0);// no engraving, nothing to avoid
+ assert.deepEqual(coords(over.svg).slice(0,2),[[12,14],[30,14]]);
+ assert.equal(over.stats.lengthMm,18);assert.equal(over.stats.clippedLengthMm,0);assert.equal(over.stats.paths,1);
+ assert.ok(!over.svg.includes('engrave'));assert.ok(!('coveredLengthMm' in over.stats));
 });
 
 test('a template that is not millimetre M/L/Z geometry is refused whole',()=>{

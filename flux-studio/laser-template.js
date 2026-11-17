@@ -1,11 +1,11 @@
 // Reads the layers of a Misk laser template: an SVG in millimetres whose layers are <g id="engrave"> (black fill,
-// engraved as an area), <g id="cut"> (red hairline, cut through) and <g id="guide"> (blue, a reference the machine
+// engraved as an area; read but not written back, the drawing takes its place), <g id="cut"> (red hairline, cut through) and <g id="guide"> (blue, a reference the machine
 // does not output), each holding absolute M/L/Z paths. A layer's paths are read as one even-odd shape, which is how
 // Misk writes them: one path per layer. Nothing of the file's markup is kept: the paths are parsed to numbers and
 // written again, so a template cannot carry anything else into the laser file or the page.
 // It reads nothing but its arguments.
 export const TEMPLATE_LIMITS=Object.freeze({bytes:2_000_000,points:200_000,sizeTolerance:.05});
-const ENGRAVE='fill="#000000" stroke="none"',CUT='fill="none" stroke="#ff0000" stroke-width="0.1"',GUIDE='fill="none" stroke="#0000ff" stroke-width="0.2" stroke-dasharray="1 1"';
+const CUT='fill="none" stroke="#ff0000" stroke-width="0.1"',GUIDE='fill="none" stroke="#0000ff" stroke-width="0.2" stroke-dasharray="1 1"';
 
 const attribute=(tag,name)=>new RegExp(`\\s${name}="([^"]*)"`).exec(tag)?.[1];
 function millimetres(value){const match=/^(\d+(?:\.\d+)?)mm$/.exec(value??'');return match?Number(match[1]):NaN;}
@@ -63,9 +63,9 @@ export function sameSheet(template,mapping){return Math.abs(template.width-mappi
 const pathData=paths=>paths.map(({points,closed})=>points.map(([x,y],i)=>`${i?'L':'M'}${x.toFixed(3)},${y.toFixed(3)}`).join(' ')+(closed?' Z':'')).join(' ');
 // The cut outline as path data for an even-odd clip, or '' when the template has none.
 export function cutPathData(template){return pathData(template.cut);}
-// The template's layers as SVG groups, in the colours the machine software tells layers apart by.
+// The template's cut outline and guides as SVG groups, in the colours the machine software tells layers apart by.
 export function templateLayers(template){
- return (template.engrave.length?`<g id="engrave" ${ENGRAVE}><path fill-rule="evenodd" d="${pathData(template.engrave)}"/></g>`:'')+(template.cut.length?`<g id="cut" ${CUT}><path fill-rule="evenodd" d="${pathData(template.cut)}"/></g>`:'')+(template.guide.length?`<g id="guide" ${GUIDE}><path fill-rule="evenodd" d="${pathData(template.guide)}"/></g>`:'');
+ return (template.cut.length?`<g id="cut" ${CUT}><path fill-rule="evenodd" d="${pathData(template.cut)}"/></g>`:'')+(template.guide.length?`<g id="guide" ${GUIDE}><path fill-rule="evenodd" d="${pathData(template.guide)}"/></g>`:'');
 }
 
 // Even-odd test against every ring at once, so a hole in the piece (a keyring hole) counts as outside it.
@@ -162,5 +162,3 @@ function clip(template,rings,points,inside,margin){
 }
 // What of a polyline lies on the piece (inside the cut outline, a hole being outside), at least `margin` from the outline.
 export function clipToCut(template,points,margin=0){return clip(template,template.cut,points,true,margin);}
-// What of a polyline lies off the template's engraving, so a line is not burnt where an area will be.
-export function clipOffEngraving(template,points){return clip(template,template.engrave,points,false,0);}
