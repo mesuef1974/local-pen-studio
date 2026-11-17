@@ -1,10 +1,11 @@
-// Reads the cut outline and the guides out of a Misk laser template: an SVG in millimetres whose layers are
-// <g id="cut"> (red hairline, cut through) and <g id="guide"> (blue, a reference the machine does not output),
-// each holding absolute M/L/Z paths. Nothing of the file's markup is kept: the paths are parsed to numbers and
+// Reads the layers of a Misk laser template: an SVG in millimetres whose layers are <g id="engrave"> (black fill,
+// engraved as an area), <g id="cut"> (red hairline, cut through) and <g id="guide"> (blue, a reference the machine
+// does not output), each holding absolute M/L/Z paths. A layer's paths are read as one even-odd shape, which is how
+// Misk writes them: one path per layer. Nothing of the file's markup is kept: the paths are parsed to numbers and
 // written again, so a template cannot carry anything else into the laser file or the page.
 // It reads nothing but its arguments.
 export const TEMPLATE_LIMITS=Object.freeze({bytes:2_000_000,points:200_000,sizeTolerance:.05});
-const CUT='fill="none" stroke="#ff0000" stroke-width="0.1"',GUIDE='fill="none" stroke="#0000ff" stroke-width="0.2" stroke-dasharray="1 1"';
+const ENGRAVE='fill="#000000" stroke="none"',CUT='fill="none" stroke="#ff0000" stroke-width="0.1"',GUIDE='fill="none" stroke="#0000ff" stroke-width="0.2" stroke-dasharray="1 1"';
 
 const attribute=(tag,name)=>new RegExp(`\\s${name}="([^"]*)"`).exec(tag)?.[1];
 function millimetres(value){const match=/^(\d+(?:\.\d+)?)mm$/.exec(value??'');return match?Number(match[1]):NaN;}
@@ -30,7 +31,7 @@ function subpaths(d){
  return paths.filter(path=>path.points.length>1);
 }
 
-// Returns {width,height,title,cut,guide}; cut and guide are lists of {points,closed} in sheet millimetres.
+// Returns {width,height,title,engrave,cut,guide}; each layer is a list of {points,closed} in sheet millimetres.
 export function readLaserTemplate(text){
  if(typeof text!=='string'||!text.length)throw Error('ملف القالب فارغ.');
  if(text.length>TEMPLATE_LIMITS.bytes)throw Error('ملف القالب أكبر من 2 ميغابايت.');
@@ -51,10 +52,10 @@ export function readLaserTemplate(text){
   }
   return paths;
  };
- const cut=layer('cut'),guide=layer('guide');
- if(!cut.length&&!guide.length)throw Error('القالب لا يحوي طبقة قص (cut) ولا طبقة مرجع (guide).');
+ const engrave=layer('engrave'),cut=layer('cut'),guide=layer('guide');
+ if(!engrave.length&&!cut.length&&!guide.length)throw Error('القالب لا يحوي طبقة حفر (engrave) ولا قص (cut) ولا مرجع (guide).');
  const title=(/<title>([^<]*)<\/title>/.exec(text)?.[1]??'').trim().slice(0,120);
- return {width,height,title,cut,guide};
+ return {width,height,title,engrave,cut,guide};
 }
 
 export function sameSheet(template,mapping){return Math.abs(template.width-mapping.paperWidth)<=TEMPLATE_LIMITS.sizeTolerance&&Math.abs(template.height-mapping.paperHeight)<=TEMPLATE_LIMITS.sizeTolerance;}
@@ -64,7 +65,7 @@ const pathData=paths=>paths.map(({points,closed})=>points.map(([x,y],i)=>`${i?'L
 export function cutPathData(template){return pathData(template.cut);}
 // The template's layers as SVG groups, in the colours the machine software tells layers apart by.
 export function templateLayers(template){
- return (template.cut.length?`<g id="cut" ${CUT}><path fill-rule="evenodd" d="${pathData(template.cut)}"/></g>`:'')+(template.guide.length?`<g id="guide" ${GUIDE}><path fill-rule="evenodd" d="${pathData(template.guide)}"/></g>`:'');
+ return (template.engrave.length?`<g id="engrave" ${ENGRAVE}><path fill-rule="evenodd" d="${pathData(template.engrave)}"/></g>`:'')+(template.cut.length?`<g id="cut" ${CUT}><path fill-rule="evenodd" d="${pathData(template.cut)}"/></g>`:'')+(template.guide.length?`<g id="guide" ${GUIDE}><path fill-rule="evenodd" d="${pathData(template.guide)}"/></g>`:'');
 }
 
 // Even-odd test against every cut ring at once, so a hole in the piece (a keyring hole) counts as outside it.

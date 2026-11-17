@@ -89,16 +89,18 @@ const guideLayer='  <g id="guide"><path fill="none" stroke="#0000ff" stroke-widt
 const engraveLayer='  <g id="engrave"><path fill="#000000" stroke="none" fill-rule="evenodd" d="M10.000,10.000 L20.000,10.000 L20.000,20.000 Z"/></g>\n';
 const templateMapping={scale:1,x:0,y:0,paperWidth:40,paperHeight:30};
 
-test('a Misk template gives its sheet, cut outline and guides, and nothing of its engraving',()=>{
+test('a Misk template gives its sheet, engraving, cut outline and guides',()=>{
  const template=readLaserTemplate(sheet(engraveLayer+cutLayer+guideLayer));
  assert.equal(template.width,40);assert.equal(template.height,30);assert.equal(template.title,'ميدالية اختبار');
  assert.equal(template.cut.length,2);assert.equal(template.guide.length,1);
+ assert.deepEqual(template.engrave,[{points:[[10,10],[20,10],[20,20]],closed:true}]);
  assert.deepEqual(template.cut[1],{points:[[5,5],[9,5],[9,9],[5,9]],closed:true});
  assert.ok(sameSheet(template,templateMapping));assert.ok(!sameSheet(template,{...templateMapping,paperWidth:40.2}));
  const layers=templateLayers(template);
- assert.ok(layers.startsWith('<g id="cut" fill="none" stroke="#ff0000" stroke-width="0.1"><path fill-rule="evenodd" d="M2.000,2.000 L38.000,2.000'));
+ assert.ok(layers.startsWith('<g id="engrave" fill="#000000" stroke="none"><path fill-rule="evenodd" d="M10.000,10.000 L20.000,10.000 L20.000,20.000 Z"/></g><g id="cut" fill="none" stroke="#ff0000" stroke-width="0.1"><path fill-rule="evenodd" d="M2.000,2.000 L38.000,2.000'));
  assert.ok(layers.includes('<g id="guide" fill="none" stroke="#0000ff" stroke-width="0.2" stroke-dasharray="1 1">'));
- assert.ok(!layers.includes('10.000,10.000'));
+ assert.ok(!templateLayers(readLaserTemplate(sheet(cutLayer))).includes('engrave'));
+ assert.equal(readLaserTemplate(sheet(engraveLayer)).engrave.length,1);// an engraving alone is a template
  assert.equal(readLaserTemplate(sheet(guideLayer)).cut.length,0);
  assert.equal(cutPathData(template),'M2.000,2.000 L38.000,2.000 L38.000,28.000 L2.000,28.000 Z M5.000,5.000 L9.000,5.000 L9.000,9.000 L5.000,9.000 Z');
  assert.equal(cutPathData(readLaserTemplate(sheet(guideLayer))),'');
@@ -119,6 +121,8 @@ test('the laser file carries the template layers after the score and clips the d
  assert.equal(off.stats.paths,0);assert.equal(off.stats.dropped,1);// what is left on the piece is a dot
  assert.ok(svg.indexOf('<g id="score"')<svg.indexOf('<g id="cut"')&&svg.indexOf('<g id="cut"')<svg.indexOf('<g id="guide"'));
  assert.equal((svg.match(/<g /g)||[]).length,3);
+ const full=laserSvg([{p:[[12,12],[30,12]]}],templateMapping,{template:readLaserTemplate(sheet(engraveLayer+cutLayer+guideLayer))}).svg;
+ assert.deepEqual([...full.matchAll(/<g id="(\w+)"/g)].map(m=>m[1]),['score','engrave','cut','guide']);
  assert.ok(insideCut(template,[20,15]));assert.ok(!insideCut(template,[7,7]));assert.ok(!insideCut(template,[1,1]));
  assert.throws(()=>laserSvg([{p:[[0,0],[9,0]]}],{...templateMapping,paperWidth:210,paperHeight:297},{template}),/لا يطابق القالب/);
  assert.equal(laserSvg([{p:[[0,0],[9,0]]}],templateMapping,{template:readLaserTemplate(sheet(guideLayer))}).stats.clippedLengthMm,0);// no outline, nothing to clip to
@@ -129,7 +133,8 @@ test('a template that is not millimetre M/L/Z geometry is refused whole',()=>{
   '','<p>not svg</p>',
   sheet(cutLayer,'width="40" height="30" viewBox="0 0 40 30"'),// no unit
   sheet(cutLayer,'width="40mm" height="30mm" viewBox="0 0 400 300"'),// user units are not millimetres
-  sheet(engraveLayer),// neither cut nor guide
+  sheet('<g id="other"><path d="M2,2 L5,5 Z"/></g>'),// no layer it knows
+  sheet('<g id="engrave"><path d="M2,2 Q3,3 5,5 Z"/></g>'),// curves in the engraving
   sheet('<g id="cut"><path d="M2,2 C3,3 4,4 5,5 Z"/></g>'),// curves
   sheet('<g id="cut"><path d="m2,2 l5,5"/></g>'),// relative
   sheet('<g id="cut"><path d="M2,2 L5"/></g>'),// odd coordinate
