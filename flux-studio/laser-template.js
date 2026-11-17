@@ -74,3 +74,60 @@ export function insideCut(template,[x,y]){
  }
  return inside;
 }
+
+// The cut edges in a coarse grid over the sheet, so a stroke is only tested against the outline near it. A cell no edge
+// passes through is wholly on the piece or wholly off it; which one is found once, at its centre, when first asked.
+const GRID=64,indexCache=new WeakMap();
+function cutIndex(template){
+ let index=indexCache.get(template);
+ if(index)return index;
+ const edges=[],cellW=template.width/GRID,cellH=template.height/GRID,cells=Array.from({length:GRID*GRID},()=>[]);
+ const column=x=>Math.max(0,Math.min(GRID-1,Math.floor(x/cellW))),row=y=>Math.max(0,Math.min(GRID-1,Math.floor(y/cellH)));
+ for(const {points} of template.cut)for(let i=0,j=points.length-1;i<points.length;j=i++){
+  const c=points[j],d=points[i],id=edges.push([c,d])-1;
+  for(let r=row(Math.min(c[1],d[1]));r<=row(Math.max(c[1],d[1]));r++)for(let q=column(Math.min(c[0],d[0]));q<=column(Math.max(c[0],d[0]));q++)cells[r*GRID+q].push(id);
+ }
+ index={edges,cells,column,row,cellW,cellH,state:new Int8Array(GRID*GRID),seen:new Uint32Array(edges.length),stamp:0};
+ indexCache.set(template,index);return index;
+}
+// The parts of a polyline that lie on the piece: each segment is split where it crosses a cut ring and a part is kept
+// when its midpoint is inside (even-odd, so a hole is outside). Returns the kept polylines in drawing order.
+export function clipToCut(template,points){
+ const index=cutIndex(template),{edges,cells,column,row,state}=index,runs=[];let run=null;
+ for(let i=1;i<points.length;i++){
+  const a=points[i-1],b=points[i],dx=b[0]-a[0],dy=b[1]-a[1],cuts=[0,1];
+  const minX=Math.min(a[0],b[0]),maxX=Math.max(a[0],b[0]),minY=Math.min(a[1],b[1]),maxY=Math.max(a[1],b[1]);
+  const stamp=++index.stamp;let near=false;
+  for(let r=row(minY);r<=row(maxY);r++)for(let q=column(minX);q<=column(maxX);q++)for(const id of cells[r*GRID+q]){
+   near=true;
+   if(index.seen[id]===stamp)continue;
+   index.seen[id]=stamp;
+   const [c,d]=edges[id];
+   if(Math.max(c[0],d[0])<minX||Math.min(c[0],d[0])>maxX||Math.max(c[1],d[1])<minY||Math.min(c[1],d[1])>maxY)continue;
+   const ex=d[0]-c[0],ey=d[1]-c[1],den=dx*ey-dy*ex;
+   if(!den)continue;// parallel: a line along the outline is decided by its midpoint like any other
+   const t=((c[0]-a[0])*ey-(c[1]-a[1])*ex)/den,u=((c[0]-a[0])*dy-(c[1]-a[1])*dx)/den;
+   if(t>0&&t<1&&u>=0&&u<=1)cuts.push(t);
+  }
+  if(!near){// no outline in any cell the segment touches: it is wholly on the piece or wholly off it
+   const x=a[0]+dx/2,y=a[1]+dy/2;let on=false;
+   if(x>=0&&y>=0&&x<=template.width&&y<=template.height){
+    const cell=row(y)*GRID+column(x);
+    if(!state[cell])state[cell]=insideCut(template,[(column(x)+.5)*index.cellW,(row(y)+.5)*index.cellH])?1:2;
+    on=state[cell]===1;
+   }
+   if(!on)run=null;else if(run)run.push(b);else{run=[a,b];runs.push(run);}
+   continue;
+  }
+  cuts.sort((p,q)=>p-q);
+  const at=t=>t===0?a:t===1?b:[a[0]+dx*t,a[1]+dy*t];
+  for(let k=1;k<cuts.length;k++){
+   const from=cuts[k-1],to=cuts[k];
+   if(to-from<1e-12)continue;// the same crossing found on two edges that meet at a vertex
+   const mid=(from+to)/2;
+   if(!insideCut(template,[a[0]+dx*mid,a[1]+dy*mid])){run=null;continue;}
+   if(run)run.push(at(to));else{run=[at(from),at(to)];runs.push(run);}
+  }
+ }
+ return runs;
+}
