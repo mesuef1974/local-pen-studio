@@ -423,10 +423,13 @@ class DependencyLockTests(unittest.TestCase):
             text = (root / filename).read_text(encoding='utf-8')
             return [line.strip() for line in text.splitlines() if line.strip() and not line.lstrip().startswith(('#', '-r'))]
         direct = pinned('requirements-flux.txt') + pinned('requirements-flux.in')
-        self.assertTrue(any(line.startswith('torch==') for line in direct), 'requirements-flux.txt pins torch')
+        self.assertTrue(any(line.startswith('torch==') for line in pinned('requirements-flux.txt')), 'Dependabot reads torch here')
+        self.assertTrue(any(line.startswith('torch==') and '+' in line for line in pinned('requirements-flux.in')), 'CUDA build of torch')
         for line in direct:
             name, version = line.split('==')
-            self.assertEqual(pins.get(name.lower()), version, line)
+            locked = pins.get(name.lower())
+            # PEP 440: a pin without a local label (2.14.1) matches the locked local build (2.14.1+cu130).
+            self.assertEqual(locked if '+' in version else (locked or '').split('+')[0], version, line)
 
 if __name__ == '__main__':
     unittest.main()
