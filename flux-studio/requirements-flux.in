@@ -1,3 +1,2 @@
-# Direct dependencies of the FLUX worker; requirements-flux.lock pins their full closure with hashes.
+# Direct dependencies of the FLUX worker (torch included, so Dependabot sees it); requirements-flux.lock pins their full closure with hashes.
 -r requirements-flux.txt
-torch==2.14.1+cu130
