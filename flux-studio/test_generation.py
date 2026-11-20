@@ -423,7 +423,7 @@ class DependencyLockTests(unittest.TestCase):
             text = (root / filename).read_text(encoding='utf-8')
             return [line.strip() for line in text.splitlines() if line.strip() and not line.lstrip().startswith(('#', '-r'))]
         direct = pinned('requirements-flux.txt') + pinned('requirements-flux.in')
-        self.assertTrue(any(line.startswith('torch==') for line in direct), 'requirements-flux.in pins torch')
+        self.assertTrue(any(line.startswith('torch==') for line in direct), 'requirements-flux.txt pins torch')
         for line in direct:
             name, version = line.split('==')
             self.assertEqual(pins.get(name.lower()), version, line)
