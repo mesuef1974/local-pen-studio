@@ -1,2 +1,5 @@
-# Direct dependencies of the FLUX worker (torch included, so Dependabot sees it); requirements-flux.lock pins their full closure with hashes.
+# Direct dependencies of the FLUX worker; requirements-flux.lock pins their full closure with hashes.
+# requirements-flux.txt pins torch without the CUDA label so Dependabot can compare it with advisories;
+# the CUDA build itself is pinned here (PEP 440: ==2.14.1 also matches 2.14.1+cu130).
 -r requirements-flux.txt
+torch==2.14.1+cu130
