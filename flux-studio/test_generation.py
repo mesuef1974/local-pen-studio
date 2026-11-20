@@ -419,11 +419,14 @@ class DependencyLockTests(unittest.TestCase):
             name, version = entry.split(' ', 1)[0].split('==')
             self.assertIn('--hash=sha256:', entry, name)
             pins[re.sub(r'[-_.]+', '-', name).lower()] = version
-        direct = [line.strip() for line in (root / 'requirements-flux.txt').read_text(encoding='utf-8').splitlines() if line.strip()]
-        for line in direct + ['torch==2.6.0+cu124']:
+        def pinned(filename):
+            text = (root / filename).read_text(encoding='utf-8')
+            return [line.strip() for line in text.splitlines() if line.strip() and not line.lstrip().startswith(('#', '-r'))]
+        direct = pinned('requirements-flux.txt') + pinned('requirements-flux.in')
+        self.assertTrue(any(line.startswith('torch==') for line in direct), 'requirements-flux.in pins torch')
+        for line in direct:
             name, version = line.split('==')
             self.assertEqual(pins.get(name.lower()), version, line)
-        self.assertIn('torch==2.6.0+cu124', (root / 'requirements-flux.in').read_text(encoding='utf-8'))
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,35 +1,36 @@
-# Hash-locked closure of the FLUX worker (.venv-flux), Windows + Python 3.12 + CUDA 12.4.
-# Every version equals what is installed on the reference machine (pip freeze, 2026-11-13);
-# hashes are the ones published by PyPI and download.pytorch.org for those versions.
+# Hash-locked closure of the FLUX worker (.venv-flux), Windows + Python 3.12 + CUDA 13.0.
+# Versions equal the reference machine's pip freeze (2026-11-13), except torch 2.14.1+cu130
+# and sympy 1.14.0 (2026-11-20, Dependabot security alerts 72-80); hashes are the ones
+# published by PyPI and download.pytorch.org for those versions.
 # Regenerate after changing requirements-flux.txt:
-#   uv pip compile requirements-flux.in -c <pip freeze of .venv-flux> --generate-hashes --python-version 3.12
-#     --python-platform windows --extra-index-url https://download.pytorch.org/whl/cu124
+#   uv pip compile requirements-flux.in -c installed-constraints.txt --generate-hashes --python-version 3.12
+#     --python-platform windows --extra-index-url https://download.pytorch.org/whl/cu130
 #     --index-strategy unsafe-best-match -o requirements-flux.lock
 # Install into a fresh environment (no system site packages needed):
-#   python -m pip install --require-hashes -r requirements-flux.lock --extra-index-url https://download.pytorch.org/whl/cu124
+#   python -m pip install --require-hashes -r requirements-flux.lock --extra-index-url https://download.pytorch.org/whl/cu130
 accelerate==1.15.0 \
     --hash=sha256:5654f8c5eaa0d4fa68b33e287a97765da6849bf6d51dcac874e73fbbddfb6134 \
     --hash=sha256:97eacca0b73e45cb867dbf8c5d5d4dc32219544300e0c8992c7334dc2ef33cec
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
-    #   -r C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/flux.in
+    #   -c installed-constraints.txt
+    #   -r requirements-flux.txt
 annotated-doc==0.0.4 \
     --hash=sha256:571ac1dc6991c450b25a9c2d84a3705e2ae7a53467b5d111c24fa8baabbed320 \
     --hash=sha256:fbcda96e87e9c92ad167c2e53839e57503ecfda18804ea28102353485033faa4
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   typer
 anyio==4.13.0 \
     --hash=sha256:08b310f9e24a9594186fd75b4f73f4a4152069e3853f1ed8bfbf58369f4ad708 \
     --hash=sha256:334b70e641fd2221c1505b3890c69882fe4a2df910cba14d97019b90b24439dc
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   httpx2
 certifi==2026.2.25 \
     --hash=sha256:027692e4402ad994f1c42e52a4997a9763c646b73e4096e4d5d6db8af1d6f0fa \
     --hash=sha256:e887ab5cee78ea814d3472169153c2d12cd43b14bd03329a39a9c6e2e80bfba7
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   requests
 charset-normalizer==3.4.7 \
     --hash=sha256:007d05ec7321d12a40227aae9e2bc6dca73f3cb21058999a1df9e193555a9dcc \
@@ -162,31 +163,31 @@ charset-normalizer==3.4.7 \
     --hash=sha256:fbccdc05410c9ee21bbf16a35f4c1d16123dcdeb8a1d38f33654fa21d0234f79 \
     --hash=sha256:fea24543955a6a729c45a73fe90e08c743f0b3334bbf3201e6c4bc1b0c7fa464
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   requests
 click==8.5.1 \
     --hash=sha256:8bb5376d2006950386f8c6427613334a2acadc5f559cb80e638d00b4df957e37 \
     --hash=sha256:9bbfada76703fd1d784b83eea012e3e8c6a001a876543ef104fa56aaaeb072b4
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   huggingface-hub
     #   typer
 colorama==0.4.6 \
     --hash=sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   tqdm
 diffusers==0.42.0 \
     --hash=sha256:c409b893156c895dde5b7fe410a014f6b94bf7caa1b96360e43a335c762674f4 \
     --hash=sha256:e29c723d84251465743a515803a5bbd4e760ea9e9c1ebd4315f3b104d0c25bbe
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
-    #   -r C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/flux.in
+    #   -c installed-constraints.txt
+    #   -r requirements-flux.txt
 filelock==3.25.2 \
     --hash=sha256:b64ece2b38f4ca29dd3e810287aa8c48182bbecd1ae6e9ae126c9b35f1382694 \
     --hash=sha256:ca8afb0da15f229774c9ad1b455ed96e85a81373065fb10446672f64444ddf70
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   diffusers
     #   huggingface-hub
     #   torch
@@ -194,20 +195,20 @@ fsspec==2026.3.0 \
     --hash=sha256:1ee6a0e28677557f8c2f994e3eea77db6392b4de9cd1f5d7a9e87a0ae9d01b41 \
     --hash=sha256:d2ceafaad1b3457968ed14efa28798162f1638dbb5d2a6868a2db002a5ee39a4
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   huggingface-hub
     #   torch
 gguf==0.19.0 \
     --hash=sha256:70bcd10edfe697fb2dad6e40af2234b9d8ece9a41a99761405121ebda1c3c1cd \
     --hash=sha256:dbadcd6cc7ccd44256f2229fe7c2dff5e8aa5cf0612ab987fd2b1a57e428923f
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
-    #   -r C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/flux.in
+    #   -c installed-constraints.txt
+    #   -r requirements-flux.txt
 h11==0.16.0 \
     --hash=sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1 \
     --hash=sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   httpcore2
 hf-xet==1.8.0 \
     --hash=sha256:07a06d7481702616726c2d8578cfb00052a5b3f21beed6a674592bc837a10330 \
@@ -228,25 +229,25 @@ hf-xet==1.8.0 \
     --hash=sha256:e00d8f60170cd3dd55d98306e41dbaf28b27ff1bcfefbfa84279d197221be83e \
     --hash=sha256:f42940869572dc2b05dfe06f4cc398c6291503e086ddc4eddfb7a6ab9409ad01
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   huggingface-hub
 httpcore2==2.16.0 \
     --hash=sha256:5c4358319f2602d984ad93182c9fee5160f22e9da7babdda870a5e7c4e2dc34f \
     --hash=sha256:c72cd0413563b17e1cd8354677dff887466f8ec2551679759e93126534428643
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   httpx2
 httpx2==2.16.0 \
     --hash=sha256:0d54c98128e8f2ff7fbbde0fca8c359e5f032edeaaaac443cdb7f31f685bcd7f \
     --hash=sha256:fd2c5d7909e8d86fe92d53020c310ca0e4e431b838c207c5754b9bbf0308d49a
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   huggingface-hub
 huggingface-hub==2.4.0 \
     --hash=sha256:13a6158b9e3393d9d3f248ce99074d50c2a0a1449fb9d8e2f710751e2084c188 \
     --hash=sha256:42ecfd93ede47bdd333daebbf66a32d7bfe2e18752754fe4d2d4f98a0179d801
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   accelerate
     #   diffusers
     #   tokenizers
@@ -255,7 +256,7 @@ idna==3.20 \
     --hash=sha256:a7db850025b95ded1eae8a46181a1a6c56c92c96f0e2b005d9ff8dc0210cab44 \
     --hash=sha256:ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   anyio
     #   httpx2
     #   requests
@@ -263,47 +264,45 @@ importlib-metadata==10.2.0 \
     --hash=sha256:9413a2029fd9ca5669d27f1386071bbfe3c7ebca0545692ec975088241fe1d79 \
     --hash=sha256:c7a4bf1c7479601f6b8e437cfc14f4f77028ba62a8f34ae95cd93d9774dfba51
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   diffusers
 jinja2==3.1.6 \
     --hash=sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   torch
 lazy-importer==0.1.0 \
     --hash=sha256:b2e296716ce015c0cd80e57b940e52727c5b934b34b8656d5ce06bdd0ee5fbdd \
     --hash=sha256:bd93fab7bef18e842eea02b839410954d37889140dc64ca4d9680aec6880c739
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   importlib-metadata
 markdown-it-py==4.0.0 \
     --hash=sha256:87327c59b172c5011896038353a81343b6754500a08cd7a4973bb48c6d578147 \
     --hash=sha256:cb0a2b4aa34f932c007117b194e945bd74e0ec24133ceb5bac59009cda1cb9f3
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   rich
 markupsafe==3.0.3 \
     --hash=sha256:26a5784ded40c9e318cfc2bdb30fe164bdb8665ded9cd64d500a34fb42067b1c
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   jinja2
 mdurl==0.1.2 \
     --hash=sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8 \
     --hash=sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   markdown-it-py
 mpmath==1.3.0 \
     --hash=sha256:7a28eb2a9774d00c7bc92411c19a89209d5da7c4c9a9e227be8330a23a25b91f \
     --hash=sha256:a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c
-    # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
-    #   sympy
+    # via sympy
 networkx==3.6.1 \
     --hash=sha256:26b7c357accc0c8cde558ad486283728b65b6a95d85ee1cd66bafab4c8168509 \
     --hash=sha256:d47fbf302e7d9cbbb9e2555a0d267983d2aa476bac30e90dfbe5669bd57f3762
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   torch
 numpy==2.4.6 \
     --hash=sha256:001fbb8e08d942dd57599e781f2472269ee7f2755fae407b4f67b2f0b17da3f1 \
@@ -379,7 +378,7 @@ numpy==2.4.6 \
     --hash=sha256:f407cb6b8e9d6d8c626bc73c945db1706035af8fd632295547bf1c9e46d092d6 \
     --hash=sha256:f74a575920ab21fe304421a3fc28793d82e299cae9eccb37084e9fc7f3617c20
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   accelerate
     #   diffusers
     #   gguf
@@ -388,7 +387,7 @@ packaging==26.0 \
     --hash=sha256:00243ae351a257117b6a241061796684b084ed1c516a08c48a3f7e147a9d80b4 \
     --hash=sha256:b36f1fef9334a5588b4166f8bcd26a14e521f2b55e6b9de3aaa80d3ff7a37529
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   accelerate
     #   huggingface-hub
     #   transformers
@@ -485,7 +484,7 @@ pillow==12.1.1 \
     --hash=sha256:fc354a04072b765eccf2204f588a7a532c9511e8b9c7f900e1b64e3e33487090 \
     --hash=sha256:fc44ef1f3de4f45b50ccf9136999d71abb99dca7706bc75d222ed350b9fd2289
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   diffusers
 psutil==7.2.2 \
     --hash=sha256:0746f5f8d406af344fd547f1c8daa5f5c33dbc293bb8d6a16d80b4bb88f59372 \
@@ -510,13 +509,13 @@ psutil==7.2.2 \
     --hash=sha256:eed63d3b4d62449571547b60578c5b2c4bcccc5387148db46e0c2313dad0ee00 \
     --hash=sha256:fd04ef36b4a6d599bbdb225dd1d3f51e00105f6d48a28f006da7f9822f2606d8
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   accelerate
 pygments==2.20.0 \
     --hash=sha256:6757cd03768053ff99f3039c1a36d6c0aa0b263438fcab17520b30a303a82b5f \
     --hash=sha256:81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   rich
 pyyaml==6.0.2 \
     --hash=sha256:01179a4a8559ab5de078078f37e5c1a30d76bb88519906844fd7bdea1b7729ff \
@@ -573,7 +572,7 @@ pyyaml==6.0.2 \
     --hash=sha256:f753120cb8181e736c57ef7636e83f31b9c0d1722c516f7e86cf15b7aa57ff12 \
     --hash=sha256:ff3824dc5261f50c9b0dfb3be22b4567a6f938ccce4587b38952d85fd9e9afe4
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   accelerate
     #   gguf
     #   huggingface-hub
@@ -694,21 +693,21 @@ regex==2026.4.4 \
     --hash=sha256:fe896e07a5a2462308297e515c0054e9ec2dd18dfdc9427b19900b37dfe6f40b \
     --hash=sha256:ffa81f81b80047ba89a3c69ae6a0f78d06f4a42ce5126b0eb2a0a10ad44e0b2e
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   diffusers
     #   transformers
 requests==2.33.1 \
     --hash=sha256:18817f8c57c6263968bc123d237e3b8b08ac046f5456bd1e307ee8f4250d3517 \
     --hash=sha256:4e6d1ef462f3626a1f0a0a9c42dd93c63bad33f9f1c1937509b8c5c8718ab56a
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   diffusers
     #   gguf
 rich==15.0.0 \
     --hash=sha256:33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb \
     --hash=sha256:edd07a4824c6b40189fb7ac9bc4c52536e9780fbbfbddf6f1e2502c31b068c36
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   typer
 safetensors==0.8.0 \
     --hash=sha256:040070828e36dc8e122178bbbd5830ff9e97920affb84cbe0f46442497bed358 \
@@ -729,7 +728,7 @@ safetensors==0.8.0 \
     --hash=sha256:fcdd41ec4628fee5799f807c73c353629130fbd942aa23d83c623dd6c9d52d78 \
     --hash=sha256:fd6f3f93c9a0a7cc2788ee63fb763353d4bd2e89b0751bc78fcf7dda00bea774
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   accelerate
     #   diffusers
     #   transformers
@@ -737,20 +736,18 @@ setuptools==81.0.0 \
     --hash=sha256:487b53915f52501f0a79ccfd0c02c165ffe06631443a886740b91af4b7a5845a \
     --hash=sha256:fdd925d5c5d9f62e4b74b30d6dd7828ce236fd6ed998a08d81de62ce5a6310d6
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   torch
 shellingham==1.5.4 \
     --hash=sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686 \
     --hash=sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   typer
-sympy==1.13.1 \
-    --hash=sha256:9cebf7e04ff162015ce31c9c6c9144daa34a93bd082f54fd8f12deca4f47515f \
-    --hash=sha256:db36cdc64bf61b9b24578b6f7bab1ecdd2452cf008f34faa33776680c26d66f8
-    # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
-    #   torch
+sympy==1.14.0 \
+    --hash=sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517 \
+    --hash=sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5
+    # via torch
 tokenizers==0.23.3 \
     --hash=sha256:114e2b55ed177179d59f4ab98200a4471e11e78f9e4b5a922d146740f96fcf52 \
     --hash=sha256:1554a6eed34d9d6a78d23360f4e06df8dffab1ae08c7e8488e0b3e3b36cc266f \
@@ -777,29 +774,41 @@ tokenizers==0.23.3 \
     --hash=sha256:ec82e80e65a862275b97c3d90b7a523df8d9519ee48aeb4e9625b2cc909274e0 \
     --hash=sha256:efa3d7318406b4d115dce61ad5061953f1f44b128e79c020ce4615d763e23b6e
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   transformers
-torch==2.6.0+cu124 \
-    --hash=sha256:0f3bc53c988ce9568cd876a2a5316761e84a8704135ec8068f5f81b4417979cb \
-    --hash=sha256:3313061c1fec4c7310cf47944e84513dcd27b6173b72a349bb7ca68d0ee6e9c0 \
-    --hash=sha256:35cba404c0d742406cdcba1609085874bc60facdfbc50e910c47a92405fef44c \
-    --hash=sha256:519330eef09534acad8110b6f423d2fe58c1d8e9ada999ed077a637a0021f908 \
-    --hash=sha256:6a1fb2714e9323f11edb6e8abf7aad5f79e45ad25c081cde87681a18d99c29eb \
-    --hash=sha256:7cc45c5b39d74875cfafe908b7f55c544147cc16b01e795feb2fe766583efe78 \
-    --hash=sha256:7f2ba7f7c0459320a521696f6b5bccc187f59890b23c9dfb6c49b0b87c6bfc97 \
-    --hash=sha256:a393b506844035c0dac2f30ea8478c343b8e95a429f06f3b3cadfc7f53adb597 \
-    --hash=sha256:c2eb62b99161d87be486c88fd82441274cc892bce8c48dbc28c055cb147732ce \
-    --hash=sha256:d4c3e9a8d31a7c0fcbb9da17c31a1917e1fac26c566a4cfbd8c9568ad7cade79 \
-    --hash=sha256:e661267cd0242462ab100bdd67f651988aa9f67eb31609d6909afcac891df612
+torch==2.14.1+cu130 \
+    --hash=sha256:0a09031e93632d14ef49553acd6211ece3ae9cdc0969a369b8c24e3cc4d15be9 \
+    --hash=sha256:0a6ff5419345f79bb79a5fd7b33e01b846135ef63b901c8233289d07a88bd839 \
+    --hash=sha256:23277940165f355ecd1b936c750f4659ef2b48eaa2fdc596a10583f9485c3dc9 \
+    --hash=sha256:36d7d3065e072a8b190460327bc68afd0f91592af2433f65bd5dd7d86738f38d \
+    --hash=sha256:3798773468aa14f5a889cd1b5a8790e5d363ab51d5b5b8ba4803a099c9c0ab2d \
+    --hash=sha256:3a1ce3bce6cd9203825467300f539c5cf76f9b15399d92e7bc35e2a0aac59b9f \
+    --hash=sha256:3a78ea0a4d6605c1e351b33ab8aabe44ddb815239cec00cc6f85555d26c0a5a5 \
+    --hash=sha256:51d68598745b384e4c84d4731ed650f3bfd5e8368368d396ba457c64ce35df9e \
+    --hash=sha256:5206fa83163aa71dc0186637b2aa2ec3fb7114892039fdde3c91bf570bd23ba8 \
+    --hash=sha256:524039bee1fdb7e96f943768335ba964a8ad2a7d5e41525da6dc4897ae27ed16 \
+    --hash=sha256:5359b255ac68c0cabb8293952b38e00f0d1a570815cd87f19b61af702c071410 \
+    --hash=sha256:6afc5e5944fb0bd927e08d32a11f71d19154001f1c81fa00a6ed81a217451795 \
+    --hash=sha256:70b0704f5dad3d3680e4fdea49bf535ccc75d11f11bbb7c52c93d40ca02ed85d \
+    --hash=sha256:8d614da5333b9ea187589a53874c5bc687d893df86fb2a7b9ebdfeacd62b45f7 \
+    --hash=sha256:9023b6a538714e370fe9e027fc20c5c600bbe3759b79d9a1a6f07e73c40db8d0 \
+    --hash=sha256:9d8f7d2b1bad5c3da6dae63af6904c52996ccb9720a04b59a9d508c3fdc9d864 \
+    --hash=sha256:a2c434318e3c84b52a7ed72c868b0d4930f9ddffb9b1eb97b32137f2a61ab075 \
+    --hash=sha256:a4f38677af2606e23bc85b166a08224b207445895873cfe2dd0c50c1300ec2d2 \
+    --hash=sha256:af506e69a93c4769f00a3b1ab06f6e5c3a0c81d8dcea68663331a1b74a21f1fc \
+    --hash=sha256:d4079b327a96c256b0882ed421338be6f6dc39d6a974e47d4d4986d6f8f71966 \
+    --hash=sha256:e25757e423be3c107a36d7495fa5aeb021b9ab506457cd7c7e068505f0283ae0 \
+    --hash=sha256:e98711737150b5a6451cbbfdb425abd5d1bea77f4a1a5d29c48d5ec41cd54949 \
+    --hash=sha256:f064c797bb497daf2b2b5e32b6d794abef087e3f24e758e6c6f8010bd2698319 \
+    --hash=sha256:f143ff078be3bfd41579a4557a1ebcf01506f8223fad3ac68ce7bb6e88f96a12
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
-    #   -r C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/flux.in
+    #   -r requirements-flux.in
     #   accelerate
 tqdm==4.67.3 \
     --hash=sha256:7d825f03f89244ef73f1d4ce193cb1774a8179fd96f31d7e1dcde62092b960bb \
     --hash=sha256:ee1e4c0e59148062281c49d80b25b67771a127c85fc9676d3be5f243206826bf
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   gguf
     #   huggingface-hub
     #   transformers
@@ -807,26 +816,26 @@ transformers==5.21.0 \
     --hash=sha256:43c971a3eb9ab68dc9dfff430f8ab8a0fba09af2f68b608fd70c6245d2ddb8e7 \
     --hash=sha256:8803a8712932aa3441c1e8bb340e66d5e3eca079fe65d9b717ede2f3ead01c79
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
-    #   -r C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/flux.in
+    #   -c installed-constraints.txt
+    #   -r requirements-flux.txt
 truststore==0.10.5 \
     --hash=sha256:30d36967ccaded5cbb38d602c433f53600036c79d502f4533a49b60a03bbefcd \
     --hash=sha256:9aaaedaefaf06d8b206278cf8b5012bc897f485a874503501e12d776df78951c
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   httpcore2
     #   httpx2
 typer==0.24.2 \
     --hash=sha256:b618bc3d721f9a8d30f3e05565be26416d06e9bcc29d49bc491dc26aba674fa8 \
     --hash=sha256:ec070dcfca1408e85ee203c6365001e818c3b7fffe686fd07ff2d68095ca0480
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   transformers
 typing-extensions==4.15.0 \
     --hash=sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466 \
     --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   anyio
     #   httpx2
     #   huggingface-hub
@@ -835,11 +844,11 @@ urllib3==2.6.3 \
     --hash=sha256:1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed \
     --hash=sha256:bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   requests
 zipp==4.1.2 \
     --hash=sha256:b30cb6cd253122169c47de245ca24a86bac2a5d3802ba15bf7ba6414eb9e144d \
     --hash=sha256:cf474b90b07ea932637e17c6b9479de2b2882900b0d311bdaf4f5c000a15a97f
     # via
-    #   -c C:/Users/mesue/AppData/Local/Temp/claude/f4ee4b48f8296e5f/12a3b8f6-ed57-4d7b-95c8-503dccf76f73/scratchpad/installed-constraints.txt
+    #   -c installed-constraints.txt
     #   importlib-metadata
