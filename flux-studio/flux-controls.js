@@ -27,8 +27,7 @@ export async function createFluxControls({api,onChange,onUseHistory,download}){
   if(preset?.id==='coloring'&&['light','full'].includes(s.controls.shading))warnings.push('قالب صفحة التلوين يطلب مساحات بيضاء، وإعداد الظلال يطلب تظليلًا.');
   if(preset?.id==='caricature'&&s.preserve.identity)warnings.push('الكاريكاتير يبالغ فنيًا؛ خيار محاولة حفظ الهوية لا يضمن ثبات الملامح.');
   const selected=[s.style,$('compareStyleB').value,$('compareStyleC').value].filter(Boolean);
-  if(new Set(selected).size!==selected.length)warnings.push('يوجد قالب مكرر في المقارنة؛ اختر قوالب مختلفة لتكون المقارنة مفيدة.');
-  return warnings;
+  return {warnings,compare:new Set(selected).size!==selected.length?['يوجد قالب مكرر في المقارنة؛ اختر قوالب مختلفة لتكون المقارنة مفيدة.']:[]};
  }
  const changed=()=>{compareStatus='';refreshPrompt();onChange();};
  const categoryOrder=['رسم خطي للمراجعة قبل المسارات','الرسم الفني','قوالب متخصصة','تعديل الصور','مراجع متعددة','التوليد من النص','تعليمات حرة'];
@@ -59,14 +58,13 @@ export async function createFluxControls({api,onChange,onUseHistory,download}){
   preserve:Object.fromEntries(Object.keys(catalog.preserve).map(key=>[key,$('fluxPreserve_'+key).checked])),
   references:$('genMode').value==='multi'?references.map(({image,role})=>({image,role})):[],
  };}
- function refreshPrompt(){const s=settings(),preset=catalog.presets.find(item=>item.id===s.style),warnings=promptWarnings(s);$('effectivePrompt').value=composePrompt(catalog,s);$('promptCount').textContent=`${$('effectivePrompt').value.length} حرف · يُتحقق من حد 512 رمزًا قبل التوليد`;$('referencePanel').hidden=s.mode!=='multi';$('fluxPreserveSection').hidden=s.mode==='generate';$('textModeHint').hidden=s.mode!=='generate';
-  const summary=guidance(preset?.category);$('fluxNote').textContent=`${summary.purpose} ${summary.fit}`;$('promptConflict').textContent=warnings.filter(item=>!item.includes('المقارنة')).join(' ');
+ function refreshPrompt(){const s=settings(),preset=catalog.presets.find(item=>item.id===s.style),{warnings,compare:compareWarnings}=promptWarnings(s);$('effectivePrompt').value=composePrompt(catalog,s);$('promptCount').textContent=`${$('effectivePrompt').value.length} حرف · يُتحقق من حد 512 رمزًا قبل التوليد`;$('referencePanel').hidden=s.mode!=='multi';$('fluxPreserveSection').hidden=s.mode==='generate';$('textModeHint').hidden=s.mode!=='generate';
+  const summary=guidance(preset?.category);$('fluxNote').textContent=`${summary.purpose} ${summary.fit}`;$('promptConflict').textContent=warnings.join(' ');
   const a=$('comparePromptA');if(a)a.textContent=`A · ${preset?.title||'القالب الحالي'} · البذرة ${s.seed} · ${s.resolution}px`;
   const b=$('compareStyleB').value,c=$('compareStyleC').value,busyConflict=new Set([s.style,b,c].filter(Boolean)).size<[s.style,b,c].filter(Boolean).length;
   const bReady=!!b&&!!$('comparePromptB').value.trim(),cReady=!c||!!$('comparePromptC').value.trim();
   const canCompare=s.mode==='edit'&&!!sourceForCompare&&!!s.prompt&&bReady&&cReady&&!busyConflict;
   $('comparePromptB').disabled=!b;$('comparePromptC').disabled=!c;$('generateCompare').disabled=locked||!canCompare;
-  const compareWarnings=warnings.filter(item=>item.includes('المقارنة'));
   $('compareWarning').textContent=compareStatus||(s.mode!=='edit'?'المقارنة المتوازية متاحة في وضع تعديل الصورة فقط.':!sourceForCompare?'افتح صورة أولًا لتتم مقارنة النسخ على المصدر نفسه.':!s.prompt?'أدخل تعليمات النسخة A قبل المقارنة.':!b?'اختر قالبًا للنسخة B.':!bReady?'أكمل تعليمات النسخة B أو ألغِ اختيارها.':!cReady?'أكمل تعليمات النسخة C أو ألغِ اختيارها.':busyConflict?'اختر قالبًا مختلفًا لكل نسخة.':compareWarnings.join(' ')||'كل نسخة تُرسل بطلب مستقل مع ثبات المصدر والبذرة وبقية الإعدادات.');
   $('generateCompare').textContent=c?'توليد مقارنة A/B/C':'توليد مقارنة A/B';
  }

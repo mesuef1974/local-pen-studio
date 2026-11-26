@@ -49,7 +49,7 @@ test('tool panels render one control per setting with its default value',()=>{
  globalThis.document={getElementById:id=>panels[id]};try{renderToolPanels();}finally{globalThis.document=previous;}
  assert.equal(defaults.length,3);assert.equal(recipes.length,3);assert.equal(ids[2].pen,'s2_pen');
  for(const step of [0,2])for(const [key,value]of Object.entries(defaults[step])){const id=ids[step][key],html=panels['tools'+step].innerHTML;assert.equal(html.split(`id="${id}"`).length,2,id);if(typeof value==='number')assert.ok(html.includes(`id="${id}" type="range"`)||html.includes(`value="${value}"`),id);}
- assert.ok(panels.tools1.innerHTML.includes('approval-guide'));assert.ok(panels.tools0.innerHTML.startsWith('<details'));
+ assert.ok(panels.tools1.innerHTML.includes('approval-guide'));assert.ok(panels.tools0.innerHTML.includes('id="prepareDetails"'));assert.ok(panels.tools2.innerHTML.includes('id="paperDetails"'));
 });
 test('path canvas draws only its arguments: plan, selection, exclusions and playback',()=>{
  function canvas(){const calls=[],ctx=new Proxy({},{get:(target,name)=>name in target?target[name]:(...args)=>calls.push([name,...args]),set:(target,name,value)=>{target[name]=value;calls.push(['set '+name,value]);return true;}});return {width:0,height:0,calls,getContext:()=>ctx};}
