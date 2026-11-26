@@ -90,6 +90,21 @@ class HandlerTests(unittest.TestCase):
             self.assertTrue(body)
         self.assertEqual(self.request('GET', '/assets/fonts/../server.py')[0], 404)
 
+    def test_brand_icons_manifest_and_tokens_are_served_with_their_types(self):
+        manifest = json.loads((server.BRAND / 'site.webmanifest').read_text(encoding='utf-8'))
+        expected = {'/favicon.svg': 'image/svg+xml', '/favicon.ico': 'image/x-icon', '/apple-touch-icon.png': 'image/png', '/site.webmanifest': 'application/manifest+json', '/brand/masar/identity/tokens/tokens.css': 'text/css', '/brand/masar/identity/fonts/Almarai-Regular.ttf': 'font/ttf'}
+        expected.update({icon['src']: 'image/png' for icon in manifest['icons']})
+        for path, kind in expected.items():
+            connection = http.client.HTTPConnection('127.0.0.1', self.port, timeout=10)
+            try:
+                connection.request('GET', path, headers={'Host': f'127.0.0.1:{self.port}'})
+                response = connection.getresponse()
+                body = response.read()
+            finally:
+                connection.close()
+            self.assertEqual((response.status, response.getheader('Content-Type').split(';')[0]), (200, kind), path)
+            self.assertTrue(body)
+
     def test_refusal_reads_a_small_body_first_and_closes_on_a_large_one(self):
         # An unread body makes Windows reset the connection on close, which can beat the refusal to the client.
         def refuse(length, body):

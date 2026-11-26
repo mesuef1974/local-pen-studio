@@ -1,0 +1,11 @@
+/* سِمة: رموز هوية مسار (masar): مرجع ألوان العلامة. التسليم يكتب متغيرات الشعار في tokens.css المشروع نفسه. */
+:root {
+  --brand-paper: #F3F6F8;
+  --brand-ink: #1B2A33;
+  --brand-primary: #087C76;
+  --brand-accent: #06665F;
+  /* الشعار: حبره لون العلامة على الفاتح و--color-mark-on-dark على الداكن؛ الرمز بلون واحد فلا لون تمييز له */
+  --color-mark-ink: #087C76;
+  --color-mark-paper: #F3F6F8;
+  --color-mark-on-dark: #FFFFFF;
+}

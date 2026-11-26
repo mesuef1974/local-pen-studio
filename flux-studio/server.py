@@ -38,6 +38,12 @@ ASSETS['/audit']=ROOT/'pipeline-review-ar.html'
 for audit_asset in ['raw-flux.png','verified-paths.svg','verified-paths.json','review-results.json']:
     ASSETS['/pipeline-audit/'+audit_asset]=ROOT/'pipeline-audit'/audit_asset
 ASSETS.update({'/flux-controls.js':ROOT/'flux-controls.js','/flux-prompts.js':ROOT/'flux-prompts.js','/flux-catalog.json':ROOT/'flux-catalog.json','/flux.css':ROOT/'flux.css'})
+# Brand identity delivered by Sima; icons sit at the root because site.webmanifest names them there.
+BRAND=ROOT/'brand'/'masar'
+ASSETS.update({'/'+name:BRAND/name for name in ('favicon.svg','favicon.ico','favicon-32.png','apple-touch-icon.png','icon-192.png','icon-512.png','maskable-512.png','site.webmanifest')})
+ASSETS.update({'/brand/masar/identity/'+name:BRAND/'identity'/name for name in ('tokens/tokens.css','fonts/Almarai-Regular.ttf','fonts/Almarai-ExtraBold.ttf')})
+# The Windows registry does not reliably know these types.
+TYPES={'.woff2':'font/woff2','.ttf':'font/ttf','.svg':'image/svg+xml','.ico':'image/x-icon','.webmanifest':'application/manifest+json'}
 from generation import Jobs
 GENERATION=Jobs(GATE)
 
@@ -89,10 +95,9 @@ class Handler(SimpleHTTPRequestHandler):
         if path=='/api/generation':
             query=parse_qs(urlsplit(self.path).query)
             self.reply(200,GENERATION.status(job_id=query.get('job',[None])[0],summary=query.get('summary')==['1']));return
-        if path=='/favicon.ico':self.send_response(204);self.end_headers();return
         file=ASSETS.get(path)
         if not file or not file.is_file():self.reply(404,{'error':'غير موجود.'});return
-        raw=file.read_bytes();self.send_response(200);self.send_header('Content-Type','font/woff2' if file.suffix=='.woff2' else self.guess_type(str(file)));self.send_header('Content-Length',str(len(raw)));self.end_headers()
+        raw=file.read_bytes();self.send_response(200);self.send_header('Content-Type',TYPES.get(file.suffix) or self.guess_type(str(file)));self.send_header('Content-Length',str(len(raw)));self.end_headers()
         if not head:self.wfile.write(raw)
     def do_GET(self):self.asset()
     def do_HEAD(self):self.asset(True)
