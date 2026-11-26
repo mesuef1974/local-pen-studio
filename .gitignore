@@ -109,6 +109,7 @@
 !/flux-studio/gpu-cpu-measurement-2026-10-28/path-profile/visual-comparison/contact-sheet-2.png
 !/flux-studio/flux-catalog.json
 !/flux-studio/*.ps1
+!/flux-studio/brand/
 
 # Never publish credentials, dependencies, weights or local runtime state.
 **/.env
