@@ -80,7 +80,8 @@ $('tryInkCopy').onclick=()=>applyRecipe(2,3);
 function stageInput(step=flow.stage){if(step===0)return generationCandidate?.result.mode==='generate'?'':flow.source;if(step===1)return flow.outputs[1]?.reference||'';return flow.outputs[1]?.image;}
 function stageResult(step=flow.stage){return flow.outputs[step]?.image;}
 function closeTools(){document.body.classList.remove('tools-open');$('toggleTools').setAttribute('aria-expanded','false');}
-$('toggleTools').onclick=()=>{const open=document.body.classList.toggle('tools-open');$('toggleTools').setAttribute('aria-expanded',String(open));};
+$('toggleTools').onclick=()=>{const open=document.body.classList.toggle('tools-open');$('toggleTools').setAttribute('aria-expanded',String(open));if(open)$('tools').querySelector('button:not(:disabled),select:not(:disabled),textarea:not(:disabled),input:not(:disabled):not(.sr-only)')?.focus();};
+$('tools').addEventListener('keydown',event=>{if(event.key==='Escape'&&!event.defaultPrevented&&document.body.classList.contains('tools-open')){closeTools();$('toggleTools').focus();}});
 function changeStage(step,push=true){const output=step===3;if(generationBusy||generationCandidate||(output&&!outputReady())||!flow.navigate(output?2:step))return;exporting=output;if(output){view='result';shell.dataset.view=view;selected.clear();}clearTimeout(timer);stopPlayback();elapsed=null;$('playhead').value=100;if(push)history.pushState({stage:step},'',ROUTES[step]);closeTools();update();window.scrollTo({top:0,behavior:'auto'});}
 document.querySelectorAll('.flow-node').forEach(b=>b.onclick=()=>changeStage(Number(b.dataset.stage)));
 window.addEventListener('popstate',()=>{const s=ROUTES.indexOf(location.pathname);if(s>=0&&(s===3?outputReady():flow.canEnter(s)))changeStage(s,false);else{history.replaceState({stage:0},'','/prepare');changeStage(0,false);}});
@@ -101,6 +102,9 @@ async function runStage(step=flow.stage){clearTimeout(timer);if(!canRun(step))re
 flow.checks.forEach((_,i)=>{$('check'+i).onchange=()=>{flow.checks[i]=$('check'+i).checked;update();};});
 $('run').onclick=()=>runStage();$('auto').onchange=()=>{auto[flow.stage]=$('auto').checked;clearTimeout(timer);if(auto[flow.stage]&&!flow.fresh[flow.stage]&&canRun(flow.stage))runStage();};
 $('next').onclick=async()=>{const step=flow.stage;if(exporting){if(!busy&&outputReady())$(outputTool==='pen'?'downloadPen':'downloadLaser').click();return;}if(step===2){changeStage(3);return;}if(busy||editorActive||generationExternalBusy||generationCandidate)return;if(step===0){if(flow.fresh[0])await reviewReady(flow.outputs[0]);return;}if(step!==1||flow.checks.includes(false)||!flow.approve(1))return;changeStage(2);if(!flow.fresh[2])await runStage(2);};
+// A stage change can hide or disable the focused button; keep the keyboard inside the new stage.
+const advance=$('next').onclick;
+$('next').onclick=async()=>{const from=flow.stage;await advance();const active=document.activeElement;if(flow.stage===from||(active!==document.body&&active!==$('next'))||(active===$('next')&&!$('next').disabled))return;const control=[...$('tools').querySelectorAll('input:not(.sr-only),select,button,textarea')].find(el=>!el.disabled&&el.getClientRects().length);(control||$('toggleTools')).focus();};
 
 function paperLayout(){return physicalPaperLayout(flow.outputs[1]||{width:1,height:1},read(2));}
 function replan(){stopPlayback();if(!flow.fresh[2]||!flow.outputs[2]||!settingsValid(2)){plan=null;return;}const s=read(2);mapping=paperLayout();const items=geo.order(flow.outputs[2].paths,excluded,s.order,s.minimum,mapping.scale);plan=geo.timeline(items,mapping.scale,s.drawSpeed,s.travelSpeed,s.lift);plan.items=items;elapsed=null;$('playhead').value=100;drawPaths();}
