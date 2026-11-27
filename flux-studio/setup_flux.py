@@ -27,6 +27,16 @@ def verify(target, size, expected):
     return hasher.hexdigest()
 
 
+def write_atomic(target, text):
+    """The server reads this file while it exists, so it must never be seen half written."""
+    temporary = target.with_name(target.name + '.partial')
+    with temporary.open('w', encoding='utf-8') as stream:
+        stream.write(text)
+        stream.flush()
+        os.fsync(stream.fileno())
+    temporary.replace(target)
+
+
 def install():
     import requests
     # Reuse the project's bounded, journaled downloader; no old model is modified.
@@ -68,7 +78,7 @@ def install():
         manifest['files'][name] = {'bytes': entry['size'], 'sha256': digest, 'repo': repo, 'revision': revision}
         completed += entry['size']
         print(f'Verified {name}', flush=True)
-    (MODEL_DIR / 'verified.json').write_text(json.dumps(manifest, indent=2))
+    write_atomic(MODEL_DIR / 'verified.json', json.dumps(manifest, indent=2))
     progress.write_text(json.dumps({'state': 'complete', 'verifiedBytes': completed, 'totalBytes': total}))
     print('FLUX ready for offline inference.', flush=True)
 

@@ -398,6 +398,18 @@ class FluxTests(unittest.TestCase):
             self.assertFalse(target.exists())
             self.assertEqual(len(list(Path(folder).glob('weights.bin.corrupt-*'))), 1)
 
+    def test_interrupted_manifest_write_keeps_the_previous_one(self):
+        import setup_flux
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder) / 'verified.json'
+            setup_flux.write_atomic(target, 'old')
+            with patch.object(Path, 'replace', side_effect=OSError), self.assertRaises(OSError):
+                setup_flux.write_atomic(target, 'new')
+            self.assertEqual(target.read_text(encoding='utf-8'), 'old')
+            setup_flux.write_atomic(target, 'new')
+            self.assertEqual(target.read_text(encoding='utf-8'), 'new')
+            self.assertEqual([path.name for path in Path(folder).iterdir()], ['verified.json'])
+
     def test_worker_stops_a_cancelled_job_at_a_checkpoint_and_serves_the_next(self):
         import generation_service
 
