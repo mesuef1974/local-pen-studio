@@ -47,6 +47,10 @@ TYPES={'.woff2':'font/woff2','.ttf':'font/ttf','.svg':'image/svg+xml','.ico':'im
 from generation import Jobs
 GENERATION=Jobs(GATE)
 
+def content_type(kind):
+    textual=kind.startswith('text/') or kind.endswith(('javascript','json','+json','+xml'))
+    return kind+'; charset=utf-8' if textual else kind
+
 def digest(image):return hashlib.sha256(image.encode()).hexdigest()
 
 def process(path,data):
@@ -97,7 +101,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.reply(200,GENERATION.status(job_id=query.get('job',[None])[0],summary=query.get('summary')==['1']));return
         file=ASSETS.get(path)
         if not file or not file.is_file():self.reply(404,{'error':'غير موجود.'});return
-        raw=file.read_bytes();self.send_response(200);self.send_header('Content-Type',TYPES.get(file.suffix) or self.guess_type(str(file)));self.send_header('Content-Length',str(len(raw)));self.end_headers()
+        raw=file.read_bytes();self.send_response(200);self.send_header('Content-Type',content_type(TYPES.get(file.suffix) or self.guess_type(str(file))));self.send_header('Content-Length',str(len(raw)));self.end_headers()
         if not head:self.wfile.write(raw)
     def do_GET(self):self.asset()
     def do_HEAD(self):self.asset(True)
