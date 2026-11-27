@@ -12,7 +12,7 @@ if not LOG.handlers:
     _handler=logging.handlers.RotatingFileHandler(ROOT/'server-errors.log',maxBytes=512_000,backupCount=2,encoding='utf-8',delay=True)
     _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'));LOG.addHandler(_handler);LOG.setLevel(logging.INFO)
 sys.path[:0]=[str(TRACE),str(DRAW)]
-ASSETS={'/':ROOT/'index.html','/prepare':ROOT/'index.html','/review':ROOT/'index.html','/adoption':ROOT/'platform-adoption.html','/paths':ROOT/'index.html','/app.js':ROOT/'app.js','/webgpu-audit.js':ROOT/'webgpu-audit.js','/webgpu-path-raster.js':ROOT/'webgpu-path-raster.js','/workspace.css':ROOT/'workspace.css','/paper.js':ROOT/'paper.js','/styles.css':ROOT/'styles.css','/workflow.js':ROOT/'workflow.js','/geometry.js':ROOT/'geometry.js','/sample-ink.png':ROOT/'sample-ink.png','/sample.png':DRAW/'photo-lineart-comparison/original.png','/sample-art.png':TRACE/'sample.png','/image-editor.js':DRAW/'image-editor.js','/image-editor.css':DRAW/'image-editor.css'}
+ASSETS={'/':ROOT/'index.html','/prepare':ROOT/'index.html','/review':ROOT/'index.html','/adoption':ROOT/'platform-adoption.html','/paths':ROOT/'index.html','/output':ROOT/'index.html','/app.js':ROOT/'app.js','/webgpu-audit.js':ROOT/'webgpu-audit.js','/webgpu-path-raster.js':ROOT/'webgpu-path-raster.js','/workspace.css':ROOT/'workspace.css','/paper.js':ROOT/'paper.js','/styles.css':ROOT/'styles.css','/workflow.js':ROOT/'workflow.js','/geometry.js':ROOT/'geometry.js','/sample-ink.png':ROOT/'sample-ink.png','/sample.png':DRAW/'photo-lineart-comparison/original.png','/sample-art.png':TRACE/'sample.png','/image-editor.js':DRAW/'image-editor.js','/image-editor.css':DRAW/'image-editor.css'}
 ASSETS['/swot']=ROOT/'ui-swot-report-ar.html'
 ASSETS['/swot-samples/horse-style-transfer.png']=ROOT/'reference-style-samples'/'horse-style-transfer.png'
 ASSETS['/swot-samples/pen-style-transfer.png']=ROOT/'reference-style-samples'/'pen-style-transfer.png'
@@ -30,7 +30,7 @@ ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/benchmark_cuda_path.py']=RO
 GATE=threading.Lock()
 ASSETS['/api-client.js']=ROOT/'api-client.js'
 ASSETS.update({'/tool-settings.js':ROOT/'tool-settings.js','/path-canvas.js':ROOT/'path-canvas.js'})
-ASSETS.update({'/'+name:ROOT/name for name in ('plan-export.js','stage-metrics.js','fidelity-panel.js','paper-preview.js','laser-export.js','laser-template.js','theme.js','ui-text.js','lens.js','screens.css')})
+ASSETS.update({'/'+name:ROOT/name for name in ('plan-export.js','stage-metrics.js','fidelity-panel.js','paper-preview.js','laser-export.js','laser-template.js','theme.js','ui-text.js','lens.js','screens.css','output-stage.js')})
 # Shared identity: index.html links ../typography.css, which imports the local font faces.
 ASSETS.update({'/typography.css':ROOT.parent/'typography.css','/assets/fonts/fonts.css':ROOT.parent/'assets/fonts/fonts.css'})
 ASSETS.update({f'/assets/fonts/{font.name}':font for font in (ROOT.parent/'assets/fonts').glob('*.woff2')})
