@@ -75,17 +75,19 @@ export async function createFluxControls({api,onChange,onUseHistory,download}){
   for(const key of Object.keys(catalog.controls))$('fluxControl_'+key).value='auto';
   for(const key of Object.keys(catalog.preserve))$('fluxPreserve_'+key).checked=true;
   if(preset.mode==='multi')$('genResolution').value='512';
-  note(preset.description);changed();
+  note('');changed();
  }
  function setCompareTemplate(letter){const preset=catalog.presets.find(item=>item.id===$(`compareStyle${letter}`).value);$(`comparePrompt${letter}`).value=preset?.prompt||'';changed();}
  function compareVariants(){return ['B','C'].map(letter=>{const preset=catalog.presets.find(item=>item.id===$(`compareStyle${letter}`).value);return preset?{letter,style:preset.id,title:preset.title,prompt:$(`comparePrompt${letter}`).value.trim()}:null;}).filter(item=>item&&item.prompt);}
  function setCompareStatus(message){compareStatus=message;refreshPrompt();}
  function renderLibrary(){
   const query=$('librarySearch').value.trim().toLocaleLowerCase(),category=$('libraryCategory').value;
-  $('libraryCards').replaceChildren();let count=0;
+  $('libraryCards').replaceChildren();let count=0,shown=null;
   const ordered=[...catalog.presets].sort((a,b)=>categoryOrder.indexOf(a.category)-categoryOrder.indexOf(b.category));
   for(const preset of ordered){if(category&&category!==preset.category)continue;if(query&&!`${preset.title} ${preset.description} ${preset.prompt}`.toLocaleLowerCase().includes(query))continue;
-   const card=element('button',undefined,'prompt-card');card.type='button';const summary=guidance(preset.category);card.append(element('small',preset.category),element('strong',preset.title),element('span',preset.description),element('span',`الغرض: ${summary.purpose}`),element('span',`قد يغيّر: ${summary.change}`),element('span',`يحاول الحفاظ على: ${summary.preserve}`),element('span',`الملاءمة: ${summary.fit}`));card.onclick=()=>{applyPreset(preset.id);$('promptLibrary').close();};$('libraryCards').append(card);count++;
+   // The guidance is the same for every template of a category, so it is written once above its cards.
+   if(preset.category!==shown){shown=preset.category;const summary=guidance(shown),head=element('div',undefined,'library-category');head.append(element('h3',shown),element('p',`الغرض: ${summary.purpose} قد يغيّر: ${summary.change}`),element('p',`يحاول الحفاظ على: ${summary.preserve} الملاءمة: ${summary.fit}`));$('libraryCards').append(head);}
+   const card=element('button',undefined,'prompt-card');card.type='button';card.append(element('strong',preset.title),element('span',preset.description));card.onclick=()=>{applyPreset(preset.id);$('promptLibrary').close();};$('libraryCards').append(card);count++;
   }
   $('libraryCount').textContent=count?`${count} برومبت جاهز قابل للتعديل`:'لا توجد نتائج مطابقة.';
  }

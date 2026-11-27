@@ -1690,6 +1690,20 @@ body.preview-focus .paper-preview {
   grid-template-columns:repeat(3,minmax(0,1fr));
   gap:12px;
 }
+.library-category {
+  grid-column:1/-1;
+  margin-block-start:8px;
+}
+.library-category h3 {
+  font-size:15px;
+  color:var(--masar-brand-text);
+}
+.library-category p {
+  font-size:13px;
+  color:var(--masar-text-muted);
+  line-height:1.8;
+  margin:0;
+}
 .prompt-card {
   display:flex;
   flex-direction:column;
