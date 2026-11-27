@@ -26,9 +26,9 @@ test('pen SVG, laser SVG and plan JSON keep their exact bytes',()=>{
 });
 
 test('the page builds each file with the same call as before',()=>{
- const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const app=['./export-actions.js','./laser-worker.js'].map(name=>readFileSync(new URL(name,import.meta.url),'utf8')).join('');
  for(const call of ["blobDownload(geo.svg(plan.items,mapping,read(2).pen),'image/svg+xml','pen-paths.svg')",
-  "laserSvg(plan.items,mapping,{template:laserTemplate})","blobDownload(svg,'image/svg+xml','laser-score.svg')",
+  "laserInWorker(plan.items,mapping,{template:laserTemplate})","laserSvg(items,mapping,options)","blobDownload(svg,'image/svg+xml','laser-score.svg')",
   "blobDownload(JSON.stringify(planDocument({plan,mapping,settings:read(2),output:flow.outputs[2],audit:currentAudit()}),null,2),'application/json','pen-paths.json')"])
   assert.ok(app.includes(call),call);
 });

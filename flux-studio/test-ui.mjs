@@ -6,7 +6,7 @@ import {defaults,renderToolPanels} from './tool-settings.js';
 import {Workflow} from './workflow.js';
 
 const read=name=>readFileSync(new URL('./'+name,import.meta.url),'utf8');
-const scripts=['output-stage.js','lens.js','app.js','flux-controls.js','fidelity-panel.js','paper-preview.js','theme.js'];
+const scripts=['export-actions.js','output-stage.js','lens.js','app.js','flux-controls.js','fidelity-panel.js','paper-preview.js','theme.js'];
 // All markup that exists on the page: the static document and the tool panels.
 function markup(){const panels={tools0:{innerHTML:''},tools1:{innerHTML:''},tools2:{innerHTML:''}},previous=globalThis.document;
  globalThis.document={getElementById:id=>panels[id]};try{renderToolPanels();}finally{globalThis.document=previous;}
