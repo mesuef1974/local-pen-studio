@@ -460,6 +460,15 @@ class DependencyLockTests(unittest.TestCase):
         self.assertEqual(len(names), len(set(names)))
         self.assertLessEqual({'cairosvg', 'numpy', 'opencv-contrib-python', 'pillow', 'pycairo', 'requests'}, set(names))
 
+    def test_server_lock_matches_the_requirements_with_hashes(self):
+        root = Path(__file__).resolve().parent
+        def pins(filename):
+            lines = (root / filename).read_text(encoding='utf-8').splitlines()
+            return {line.split()[0] for line in lines if '==' in line and not line.startswith('#')}
+        self.assertEqual(pins('requirements-server.lock'), pins('requirements-server.txt'))
+        lock = (root / 'requirements-server.lock').read_text(encoding='utf-8')
+        self.assertEqual(lock.count('--hash=sha256:'), len(pins('requirements-server.txt')))
+
     def test_lock_pins_every_direct_requirement_with_hashes(self):
         import re
         root = Path(__file__).resolve().parent

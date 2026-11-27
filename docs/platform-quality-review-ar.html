@@ -25,20 +25,20 @@ del{text-decoration:line-through 2px #d11a1a}tr.done td,li.done{text-decoration:
 <table>
 <tr><th>الدفعة</th><th>الحالة</th><th>الطلبات</th></tr>
 <tr><td>الأولى: حماية العمل</td><td>نُفِّذت (البنود 1-9)</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/104">#104</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/106">#106</a></td></tr>
-<tr><td>الثانية: متانة الخادم</td><td>نُفِّذت عدا البيئة المعزولة</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/105">#105</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/111">#111</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/112">#112</a></td></tr>
+<tr><td>الثانية: متانة الخادم</td><td>نُفِّذت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/105">#105</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/111">#111</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/112">#112</a></td></tr>
 <tr><td>الثالثة: تجربة الاستخدام</td><td>نُفِّذت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/107">#107</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/114">#114</a></td></tr>
 <tr><td>الرابعة: الصيانة والأداء</td><td>نُفِّذت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/108">#108</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/109">#109</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/110">#110</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/115">#115</a></td></tr>
 <tr><td>بعد الدفعات: ثغرات التبعيات والتباين</td><td>نُفِّذ؛ لم يُجرَّب التوليد بالحزم المرقّاة</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/117">#117</a></td></tr>
-<tr><td>تدقيق ASVS المستوى الأول</td><td>نُفِّذ وأُصلح؛ بقيت 3 متطلبات جزئية (<a href="#asvs">النتائج</a>)</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/119">#119</a></td></tr>
+<tr><td>تدقيق ASVS المستوى الأول</td><td>نُفِّذ وأُصلح؛ بقي متطلبان جزئيان (<a href="#asvs">النتائج</a>)</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/119">#119</a></td></tr>
 </table>
 <p><strong>التالي، بالترتيب المقترح:</strong></p>
 <ol>
 <li>تجربة على الكرت بحزم <a href="https://github.com/mesuef1974/local-pen-studio/pull/117">#117</a>: توليد ناجح، ثم استئنافه بعد إعادة تحميل الصفحة، ومقارنة النسخ.</li>
-<li>تجربة ما لم يُجرَّب: السحب والإفلات، وإلغاء التوليد، وتحديد الخطوط بالفأرة، وتدقيق WebGPU، وتأكيد الوصفة وقالب الليزر.</li>
+<li>تجربة ما لم يُجرَّب: <del>السحب والإفلات</del>، وإلغاء التوليد، <del>وتحديد الخطوط بالفأرة</del>، وتدقيق WebGPU، <del>وتأكيد الوصفة وقالب الليزر</del>. (كشفت التجربة أن استيراد ملف تالف يبطل الاعتماد والمسارات، وأُصلح.)</li>
 <li>هاتف حقيقي، وقارئ الشاشة، <del>وقياس التباين</del> (قِيس تباين النص في الحالة الفارغة وأُصلح في <a href="https://github.com/mesuef1974/local-pen-studio/pull/117">#117</a>).</li>
-<li>بيئة Python معزولة للخادم مع تجزئات التبعيات (تحتاج تنزيلًا بموافقتك).</li>
-<li><del>تدقيق ثغرات التبعيات</del> (فحص OSV وnpm audit، ورُقّيت 7 حزم في <a href="https://github.com/mesuef1974/local-pen-studio/pull/117">#117</a>؛ لم يُجرَّب التوليد بها بعد)، وقياس تسريع لقطات المحرر.</li>
-<li>متطلبات ASVS الجزئية: توثيق قواعد التحقق (<bdi dir="ltr">2.1.1</bdi>)؛ و<bdi dir="ltr">2.3.1</bdi> و<bdi dir="ltr">14.2.1</bdi> أثرهما ضئيل لمستخدم واحد.</li>
+<li><del>بيئة Python معزولة للخادم مع تجزئات التبعيات</del> (<code>.venv-server</code> و<code>requirements-server.lock</code>؛ إزالة الخلفية والتوليد لم يُجرَّبا منها).</li>
+<li><del>تدقيق ثغرات التبعيات</del> (فحص OSV وnpm audit، ورُقّيت 7 حزم في <a href="https://github.com/mesuef1974/local-pen-studio/pull/117">#117</a>؛ لم يُجرَّب التوليد بها بعد)، <del>وقياس تسريع لقطات المحرر</del> (قِيس: ترميز PNG للقطة 10-16 م.ث حتى 1024، و51-107 م.ث عند 2048، و161 م.ث عند 4000 لرسم خطي؛ لا تغيير).</li>
+<li>متطلبات ASVS الجزئية: <del>توثيق قواعد التحقق (<bdi dir="ltr">2.1.1</bdi>)</del> (<a href="flux-input-validation-ar.html">وُثِّقت</a>)؛ و<bdi dir="ltr">2.3.1</bdi> و<bdi dir="ltr">14.2.1</bdi> أثرهما ضئيل لمستخدم واحد.</li>
 </ol>
 
 <h2>الخلاصة</h2>
@@ -111,14 +111,14 @@ del{text-decoration:line-through 2px #d11a1a}tr.done td,li.done{text-decoration:
 
 <h2 id="asvs">تدقيق OWASP ASVS 5.0.0 — المستوى الأول</h2>
 <p class="muted">2026-11-27 · خادم FLUX وواجهته، بقراءة الشيفرة وفحص حي محدود دون تعديل · مراجعة ذاتية وليست شهادة امتثال · محرر الصور وبيئة إزالة الخلفية لم يُفحصا بعمق.</p>
-<p>من 70 متطلبًا: <del>18 مستوفى، 5 جزئي، 2 غير مستوفى</del> <strong>22 مستوفى، 3 جزئي، 45 لا ينطبق</strong> (بعد الإصلاح). «لا ينطبق» على المصادقة لا يعني الحماية: أي برنامج على الجهاز يستطيع استدعاء الواجهة، لأن Origin يُزوَّر من خارج المتصفح.</p>
+<p>من 70 متطلبًا: <del>18 مستوفى، 5 جزئي، 2 غير مستوفى</del> <strong>23 مستوفى، 2 جزئي، 45 لا ينطبق</strong> (بعد الإصلاح). «لا ينطبق» على المصادقة لا يعني الحماية: أي برنامج على الجهاز يستطيع استدعاء الواجهة، لأن Origin يُزوَّر من خارج المتصفح.</p>
 <table>
 <tr><th>المتطلب</th><th>الحكم</th><th>الدليل أو الملاحظة</th></tr>
 <tr><td><bdi dir="ltr">5.2.2</bdi></td><td><del>جزئي</del> مستوفى</td><td>أُصلح: <code>/api/import</code> و<code>decode</code> يحدّدان <code>formats=</code> قبل فتح الصورة.</td></tr>
 <tr><td><bdi dir="ltr">4.1.1</bdi></td><td><del>غير مستوفى</del> مستوفى</td><td>أُصلح: الملفات النصية تُرسل بـ<code>charset=utf-8</code>.</td></tr>
 <tr><td><bdi dir="ltr">15.1.1</bdi></td><td><del>غير مستوفى</del> مستوفى</td><td>أُضيفت المهل في <code>SECURITY.md</code>: حرجة 7 أيام، عالية 30، الباقي 90.</td></tr>
 <tr><td><bdi dir="ltr">15.2.1</bdi></td><td><del>جزئي</del> مستوفى</td><td>فحص OSV كان نظيفًا بعد #117 (2026-11-27) مقابل المهل أعلاه.</td></tr>
-<tr><td><bdi dir="ltr">2.1.1</bdi></td><td>جزئي</td><td>قواعد التحقق موجودة في الشيفرة وغير موثقة.</td></tr>
+<tr><td><bdi dir="ltr">2.1.1</bdi></td><td><del>جزئي</del> مستوفى</td><td>وُثِّقت في <a href="flux-input-validation-ar.html">قواعد التحقق من المدخلات</a>.</td></tr>
 <tr><td><bdi dir="ltr">2.3.1</bdi></td><td>جزئي</td><td>ترتيب «الاعتماد ثم المسارات» تفرضه الواجهة وحدها؛ <code>/api/paths</code> يقبل أي PNG. أثره ضئيل لمستخدم واحد.</td></tr>
 <tr><td><bdi dir="ltr">14.2.1</bdi></td><td>جزئي</td><td>معرّف مهمة التوليد، وهو يخوّل قراءة النتيجة، يُرسل في رابط <code>?job=</code>. السجل معطّل و<code>Referrer-Policy: no-referrer</code>.</td></tr>
 <tr><td><bdi dir="ltr">1.2.1، 1.2.2، 1.2.3</bdi></td><td>مستوفى</td><td>مخرجات JSON عبر <code>json.dumps</code>؛ لم يُرصد إدخال مستخدم غير مرمَّز في <code>innerHTML</code>.</td></tr>

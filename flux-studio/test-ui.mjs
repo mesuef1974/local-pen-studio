@@ -61,3 +61,9 @@ test('every path export lives in the output stage and nowhere else',()=>{
  assert.match(read('app.js'),/\$\('downloadStage'\)\.hidden=s===2;/);
  assert.deepEqual([stageStateText({canEnter:false},3),stageStateText({canEnter:true},3)],['بانتظار المسارات','جاهز للتصدير']);
 });
+
+test('a failed import leaves the current work untouched',()=>{
+ const body=read('app.js').match(/^async function load\(.*$/m)[0];
+ const before=body.slice(0,body.indexOf("api('/api/import'"));
+ for(const destructive of ['invalidate(','generation.candidate=null','flow.stage=0'])assert.ok(!before.includes(destructive),destructive);
+});
