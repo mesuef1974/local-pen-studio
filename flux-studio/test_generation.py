@@ -234,7 +234,11 @@ class FluxTests(unittest.TestCase):
             jobs._unload_if_idle(jobs.idle_token - 1)
             self.assertTrue(jobs.status()['modelLoaded'])
             gate.acquire()
-            jobs._unload_if_idle(jobs.idle_token)
+            with patch.object(jobs, '_arm_idle') as arm:
+                jobs._unload_if_idle(jobs.idle_token - 1)
+                arm.assert_not_called()
+                jobs._unload_if_idle(jobs.idle_token)
+                arm.assert_called_once_with(jobs.idle_token, 30)
             self.assertTrue(jobs.status()['modelLoaded'])
             gate.release()
             jobs._unload_if_idle(jobs.idle_token)
@@ -364,6 +368,35 @@ class FluxTests(unittest.TestCase):
             popen.assert_not_called()
             self.assertEqual(jobs.status(job_id)['job']['state'], 'cancelled')
             self.assertFalse(gate.locked())
+
+    def test_cancel_during_process_start_never_sends_the_job(self):
+        with tempfile.TemporaryDirectory() as folder, patch('generation.ROOT', Path(folder)), patch('generation.availability', return_value=(True, '')),                 patch('threading.Thread.start'), patch('threading.Timer.start'):
+            gate = threading.Lock()
+            jobs = generation.Jobs(gate, keep_warm=60)
+            worker = self.live_worker([])
+            job_id = jobs.start({'image': image()})['job']
+
+            def spawn(*args, **kwargs):
+                self.assertEqual(jobs.cancel(job_id), {'cancelled': True})
+                return worker
+            with patch('generation.subprocess.Popen', side_effect=spawn):
+                jobs._run({'seed': 1})
+            self.assertEqual(worker.stdin.lines, [])
+            self.assertEqual(jobs.status(job_id)['job']['state'], 'cancelled')
+            self.assertFalse(gate.locked())
+
+    def test_corrupt_download_is_set_aside_for_the_next_run(self):
+        import hashlib
+        import setup_flux
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder) / 'weights.bin'
+            target.write_bytes(b'abc')
+            good = hashlib.sha256(b'abc').hexdigest()
+            self.assertEqual(setup_flux.verify(target, 3, good), good)
+            with self.assertRaises(RuntimeError):
+                setup_flux.verify(target, 3, '0' * 64)
+            self.assertFalse(target.exists())
+            self.assertEqual(len(list(Path(folder).glob('weights.bin.corrupt-*'))), 1)
 
     def test_worker_stops_a_cancelled_job_at_a_checkpoint_and_serves_the_next(self):
         import generation_service

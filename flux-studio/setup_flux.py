@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -11,6 +12,19 @@ REVISION = 'e7b7dc27f91deacad38e78976d1f2b499d76a294'
 QUANT_ID = 'unsloth/FLUX.2-klein-4B-GGUF'
 QUANT_REVISION = '0084d1df98e2e2137fe776d55170bc4792ec1d66'
 QUANT_FILE = 'flux-2-klein-4b-Q5_K_M.gguf'
+
+
+def verify(target, size, expected):
+    """Return the file's SHA-256. A bad file is set aside so that the next run downloads it again."""
+    hasher = hashlib.sha256()
+    with target.open('rb') as stream:
+        for block in iter(lambda: stream.read(8 * 1024 * 1024), b''):
+            hasher.update(block)
+    if target.stat().st_size != size or (expected and hasher.hexdigest() != expected):
+        quarantined = target.with_name(f'{target.name}.corrupt-{time.time_ns()}')
+        target.replace(quarantined)
+        raise RuntimeError(f'Integrity check failed; kept as {quarantined.name}. Rerun setup to download it again.')
+    return hasher.hexdigest()
 
 
 def install():
@@ -50,14 +64,8 @@ def install():
             temporary = target.with_suffix(target.suffix + '.partial')
             temporary.write_bytes(response.content)
             temporary.replace(target)
-        hasher = hashlib.sha256()
-        with target.open('rb') as stream:
-            for block in iter(lambda: stream.read(8 * 1024 * 1024), b''):
-                hasher.update(block)
-        expected = entry.get('lfs', {}).get('sha256')
-        if target.stat().st_size != entry['size'] or (expected and hasher.hexdigest() != expected):
-            raise RuntimeError(f'Integrity check failed: {name}')
-        manifest['files'][name] = {'bytes': entry['size'], 'sha256': hasher.hexdigest(), 'repo': repo, 'revision': revision}
+        digest = verify(target, entry['size'], entry.get('lfs', {}).get('sha256'))
+        manifest['files'][name] = {'bytes': entry['size'], 'sha256': digest, 'repo': repo, 'revision': revision}
         completed += entry['size']
         print(f'Verified {name}', flush=True)
     (MODEL_DIR / 'verified.json').write_text(json.dumps(manifest, indent=2))

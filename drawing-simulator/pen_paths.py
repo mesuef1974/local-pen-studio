@@ -88,7 +88,7 @@ def extract_paths(data,path_limit=10_000):
     if isinstance(level,bool) or not isinstance(level,(int,float)) or not math.isfinite(level) or not 0<=level<=100:
         raise ValueError('درجة التفاصيل غير صحيحة.')
     try:
-        with Image.open(io.BytesIO(raw)) as source:
+        with Image.open(io.BytesIO(raw),formats=('PNG',)) as source:
             if source.width*source.height>4_000_000:raise ValueError('مصدر المسارات أكبر من أربعة ملايين بكسل.')
             rgba=ImageOps.exif_transpose(source).convert('RGBA')
             background=Image.new('RGBA',rgba.size,'white');background.alpha_composite(rgba)

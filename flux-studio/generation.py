@@ -241,7 +241,12 @@ class Jobs:
     # Apart from cancel(), the worker is touched only by the thread that holds the compute gate.
     def _spawn(self):
         # Stderr is diagnostic-only, kept outside HTTP responses and user images.
-        self.worker_log = (ROOT / 'generation-runtime.log').open('w', encoding='utf-8')
+        log = ROOT / 'generation-runtime.log'
+        try:
+            log.replace(ROOT / 'generation-runtime.previous.log')  # keep the last crash trace
+        except OSError:
+            pass
+        self.worker_log = log.open('w', encoding='utf-8')
         try:
             self.worker = subprocess.Popen([str(PYTHON), str(ROOT / 'generation_service.py')],
                                            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.worker_log,
@@ -275,12 +280,20 @@ class Jobs:
 
     def _unload_if_idle(self, token):
         if not self.gate.acquire(blocking=False):
-            return  # a job or another local stage is running; that job re-arms the timer
+            # Another stage holds the card. Only a generation job re-arms the timer itself, so retry.
+            if token == self.idle_token and self.worker:
+                self._arm_idle(token, min(self.keep_warm, 30))
+            return
         try:
             if token == self.idle_token:
                 self._discard_worker()
         finally:
             self.gate.release()
+
+    def _arm_idle(self, token, delay):
+        timer = threading.Timer(delay, self._unload_if_idle, args=(token,))
+        timer.daemon = True
+        timer.start()
 
     def unload(self):
         """Free the model now. The caller must hold the compute gate."""
@@ -305,6 +318,9 @@ class Jobs:
             watchdog = threading.Timer(1200, terminate_tree,args=(process,))
             watchdog.daemon = True
             watchdog.start()
+            with self.lock:
+                if job.get('cancelling'):  # cancelled while the process was still starting
+                    raise JobCancelled()
             process.stdin.write(json.dumps(settings | {'jobId': job['id']}) + '\n')
             process.stdin.flush()
             if not self.keep_warm:
@@ -367,9 +383,7 @@ class Jobs:
             if watchdog:
                 watchdog.cancel()
             if keep:
-                timer = threading.Timer(self.keep_warm, self._unload_if_idle, args=(self.idle_token,))
-                timer.daemon = True
-                timer.start()
+                self._arm_idle(self.idle_token, self.keep_warm)
             else:
                 self._discard_worker()
             self.gate.release()
