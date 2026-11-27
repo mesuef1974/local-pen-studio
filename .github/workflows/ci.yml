@@ -100,7 +100,8 @@ jobs:
       - run: python scripts/test_prune_old_outputs.py
       - run: python -m unittest discover -p 'test_*.py'
         working-directory: drawing-simulator
-      - run: python -m unittest discover -p 'test_*.py'
+      # Listed on purpose: trace-studio/test_processing.py needs the locally installed trace skill.
+      - run: python -m unittest test_preparation
         working-directory: trace-studio
       - run: python -m unittest discover -p 'test_*.py'
         working-directory: pipeline-studio
