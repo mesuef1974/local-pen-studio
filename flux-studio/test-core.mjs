@@ -129,3 +129,12 @@ test('replanning after an edit keeps the unchanged start and matches a fresh pla
   assert.deepEqual(g.order(paths,new Set()),fresh(new Set()),`${name} replaced`);paths[first[5].i]=before;
   assert.deepEqual(g.order(paths,new Set()),first,`${name} restored`);}
 });
+
+test('lightening picks the smallest minimum that gets the drawing under the limit',async()=>{
+ const {lighterPlan}=await import('./stage-metrics.js');
+ const items=[0.2,0.2,1,1,3,6],timeline=kept=>({seconds:kept.length*100}),measure=item=>item;
+ assert.deepEqual(lighterPlan({items,current:0,limit:300,measure,timeline}),{minimum:1.1,dropped:4,kept:2,seconds:200,reaches:true});
+ assert.equal(lighterPlan({items,current:0,limit:50,measure,timeline}).reaches,false);
+ assert.equal(lighterPlan({items:[6,7],current:0,limit:50,measure,timeline}),null);
+ assert.equal(lighterPlan({items,current:5,limit:300,measure,timeline}),null);
+});

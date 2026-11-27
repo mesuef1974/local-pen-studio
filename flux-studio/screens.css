@@ -116,3 +116,10 @@ input[type=range],.paper-preview-meta .check,.tools-footer>label,.tool-tabs butt
 @media(min-width:801px){
  body[data-stage="0"] .preview-area:has(>#generationReview:not([hidden]),>#generationHistory:not([hidden]))>.viewer{flex:0 0 auto;height:max(480px,calc(100% - 96px))}
 }
+.long-plan:not([hidden]){display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px}.long-plan details[open]{flex-basis:100%}.long-plan small{flex-basis:100%}.long-plan summary{cursor:pointer}.long-plan p{margin:6px 0}.long-plan small{display:block;margin-top:4px}
+@media(max-width:800px){
+ .viewer:has(>#empty:not([hidden]))>.viewer-toolbar,body:has(#empty:not([hidden])) .decision .action-dock{display:none}
+ .empty{align-content:start}.empty>.empty-sheet{order:2;max-width:140px}
+ button,select,summary,.button,input:not(.sr-only):not([type=checkbox]):not([type=radio]){min-height:44px}
+ button{min-width:44px}summary{align-content:center}label.check{min-height:44px;align-items:center}
+}

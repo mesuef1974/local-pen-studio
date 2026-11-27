@@ -14,7 +14,7 @@ export function stageStateText({fresh,approved,outputs,source,canEnter},i){
  if(i===0&&source)return 'جاهز للتجهيز';
  return i>0&&canEnter?'جاهز للتشغيل':STAGES[i].waiting;
 }
-export const nextLabel=stage=>['راجِع الصورة','اعتمد الصورة','إلى الإخراج','صدّر'][stage];
+export const nextLabel=(stage,tool='pen')=>['راجِع الصورة','اعتمد الصورة','إلى الإخراج',tool==='laser'?'صدّر SVG لليزر':'صدّر SVG للقلم'][stage];
 export const editLabel=stage=>stage===1?'العودة إلى محرر الصورة':'محرر الصورة والأدوات';
 export const saveLabel='حفظ نتيجة المرحلة';
 // The server reports a plan that is too complex in words only; these openings match faithful_paths.py.

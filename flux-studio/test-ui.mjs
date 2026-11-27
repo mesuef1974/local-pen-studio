@@ -26,7 +26,7 @@ test('each stage has complete wording',()=>{
  const keys=Object.keys(stageText(0));assert.equal(defaults.length,3);
  for(let s=0;s<4;s++){assert.deepEqual(Object.keys(stageText(s)),keys);assert.ok(Object.values(stageText(s)).every(Boolean));}
  assert.deepEqual([0,1].map(nextLabel),['راجِع الصورة','اعتمد الصورة']);
- assert.deepEqual([2,3].map(nextLabel),['إلى الإخراج','صدّر']);assert.equal(saveLabel,'حفظ نتيجة المرحلة');assert.equal(editLabel(1),'العودة إلى محرر الصورة');
+ assert.deepEqual([nextLabel(2),nextLabel(3),nextLabel(3,'laser')],['إلى الإخراج','صدّر SVG للقلم','صدّر SVG لليزر']);assert.equal(saveLabel,'حفظ نتيجة المرحلة');assert.equal(editLabel(1),'العودة إلى محرر الصورة');
 });
 
 test('stage state text follows freshness, approval and availability',()=>{
