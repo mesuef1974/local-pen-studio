@@ -42,7 +42,7 @@ body.preview-focus .tools,body.preview-focus .flow{display:none}body.preview-foc
 .preview-area>*{flex-shrink:0}
 .decision{position:sticky;bottom:0;z-index:15;margin-top:auto;background:var(--masar-bg)}
 .status-area{max-height:30dvh;overflow:auto}
-.status-area .error,.status-area .plan-warning{margin:8px 0}
+.status-area .error,.status-area .plan-warning{margin:8px 0}#fluxMessage:empty{display:none}
 .decision .action-dock{margin-top:0;padding:10px 0;border-top:1px solid var(--masar-border);scroll-margin-block:0}
 .decision .action-dock>.primary{order:2;min-width:240px;min-height:44px}
 .decision .action-dock>#downloadStage.secondary{margin-inline-start:auto}

@@ -30,7 +30,7 @@ ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/benchmark_cuda_path.py']=RO
 GATE=threading.Lock()
 ASSETS['/api-client.js']=ROOT/'api-client.js'
 ASSETS.update({'/tool-settings.js':ROOT/'tool-settings.js','/path-canvas.js':ROOT/'path-canvas.js'})
-ASSETS.update({'/'+name:ROOT/name for name in ('plan-export.js','stage-metrics.js','fidelity-panel.js','paper-preview.js','laser-export.js','laser-template.js','theme.js','ui-text.js','lens.js','screens.css','output-stage.js')})
+ASSETS.update({'/'+name:ROOT/name for name in ('plan-export.js','stage-metrics.js','fidelity-panel.js','paper-preview.js','laser-export.js','laser-template.js','theme.js','ui-text.js','lens.js','screens.css','output-stage.js','work-store.js')})
 # Shared identity: index.html links ../typography.css, which imports the local font faces.
 ASSETS.update({'/typography.css':ROOT.parent/'typography.css','/assets/fonts/fonts.css':ROOT.parent/'assets/fonts/fonts.css'})
 ASSETS.update({f'/assets/fonts/{font.name}':font for font in (ROOT.parent/'assets/fonts').glob('*.woff2')})
