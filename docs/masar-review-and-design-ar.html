@@ -50,6 +50,7 @@ section{margin-block-start:2.5rem}section+section{border-block-start:6px double 
 <tr><td>المرحلة 0: الكرت</td><td>تم: 23 طلبًا متتاليًا ناجحًا (<a href="#phase0">القياس</a>)</td></tr>
 <tr><td>المرحلة 0: الشبكة</td><td>لم تكتمل: يلزم تشغيل <code>scripts/masar_phase0/reach_test.py</code> على شبكة المدرسة وفتح الرابط من جهاز معلم. شبكة البيت لا تُثبت شيئًا</td></tr>
 <tr><td>تدقيق الأمان لتعدد المستخدمين</td><td>لم يُجرَ. تدقيق ASVS الحالي يخص المستخدم الواحد، ويُعاد كله على الخادم الجديد قبل تشغيل عدة معلمين (<a href="#asvs">ما يتغيّر</a>)</td></tr>
+<tr><td>تحديثات التبعيات</td><td>ستة طلبات من Dependabot مفتوحة ولم تُراجَع (<a href="https://github.com/mesuef1974/local-pen-studio/pulls"><span class="ltr">#90–#95</span></a>)</td></tr>
 </table></div>
 <p><strong>المنتظر من المالك:</strong></p>
 <ul>
@@ -167,7 +168,7 @@ section{margin-block-start:2.5rem}section+section{border-block-start:6px double 
 <tr><td><bdi dir="ltr">15.2.1</bdi></td><td><del>جزئي</del> مستوفى</td><td>فحص OSV كان نظيفًا بعد #117 (2026-11-27) مقابل المهل أعلاه.</td></tr>
 <tr><td><bdi dir="ltr">2.1.1</bdi></td><td><del>جزئي</del> مستوفى</td><td>وُثِّقت في <a href="flux-input-validation-ar.html">قواعد التحقق من المدخلات</a>.</td></tr>
 <tr><td><bdi dir="ltr">2.3.1</bdi></td><td>جزئي</td><td>ترتيب «الاعتماد ثم المسارات» تفرضه الواجهة وحدها؛ <code>/api/paths</code> يقبل أي PNG. أثره ضئيل لمستخدم واحد.</td></tr>
-<tr><td><bdi dir="ltr">14.2.1</bdi></td><td>جزئي</td><td>معرّف مهمة التوليد، وهو يخوّل قراءة النتيجة، يُرسل في رابط <code>?job=</code>. السجل معطّل و<code>Referrer-Policy: no-referrer</code>.</td></tr>
+<tr><td><bdi dir="ltr">14.2.1</bdi></td><td>جزئي</td><td>معرّف مهمة التوليد، وهو يخوّل قراءة النتيجة، يُرسل في رابط <code style="white-space:nowrap">?job=</code>. السجل معطّل و<code>Referrer-Policy: no-referrer</code>.</td></tr>
 <tr><td><bdi dir="ltr">1.2.1، 1.2.2، 1.2.3</bdi></td><td>مستوفى</td><td>مخرجات JSON عبر <code>json.dumps</code>؛ لم يُرصد إدخال مستخدم غير مرمَّز في <code>innerHTML</code>.</td></tr>
 <tr><td><bdi dir="ltr">1.2.5</bdi></td><td>مستوفى</td><td>استدعاء العمليات بقوائم وسائط دون shell.</td></tr>
 <tr><td><bdi dir="ltr">1.3.2</bdi></td><td>مستوفى</td><td>لم يُرصد <code>eval</code> ولا تنفيذ ديناميكي.</td></tr>
