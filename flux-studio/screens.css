@@ -38,3 +38,43 @@ body[data-stage="0"] .workspace-title,body[data-stage="1"] .workspace-title,body
  body[data-stage="0"] .viewer>[hidden],body[data-stage="1"] .viewer>[hidden]{display:none}
 }
 @media print{.drawer,.lens-note,.lens{display:none!important}}
+/* Paths: the match measurement sits beside the drawing. Output: two equal tool cards. */
+.output-stage{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;min-height:0}
+.output-stage[hidden],.output-tools[hidden]{display:none}
+.output-card{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0;padding:12px;background:var(--masar-surface);border:1px solid var(--masar-border);border-radius:8px;cursor:pointer}
+.output-card[data-selected="true"]{border:2px solid var(--masar-brand);padding:11px}
+.output-card h3{margin:0;font-size:18px}
+.output-sheet{flex:1 1 0;min-height:260px;display:flex;align-items:center;justify-content:center;background:var(--sheet);border:1px solid var(--masar-border);overflow:hidden}
+.output-sheet>canvas,.output-sheet>img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
+.output-caption{margin:0;min-height:22px;text-align:center;font-size:13px;color:var(--masar-text-muted)}
+.output-card .button-row{display:flex;flex-wrap:wrap;gap:8px}
+.output-card .button{min-height:44px}
+.output-tools{padding:0 20px 16px}
+.tool-choice{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-block:8px 12px}
+.tool-choice button{min-height:44px;border:1px solid var(--masar-border-strong);border-radius:6px;background:var(--masar-surface);color:var(--masar-text);cursor:pointer}
+.tool-choice button[aria-pressed="true"]{background:var(--masar-brand-soft);color:var(--masar-brand-text);font-weight:800}
+.output-playback{flex-wrap:wrap}
+.output-playback[data-tool="laser"]{display:none}
+.output-playback #playhead{flex:1 1 100%}
+.tools-footer[data-output="true"]{display:none}
+body[data-stage="3"] .source-box,body[data-stage="3"] .viewer,body[data-stage="3"] .metrics,body[data-stage="3"] .method-notes,body[data-stage="3"] #fidelityPanel,body[data-stage="3"] .tools-heading>span{display:none}
+@media(min-width:801px){
+ body[data-stage="3"] .app-shell{height:calc(100dvh - var(--header));min-height:560px;padding-block:12px 0}
+ body[data-stage="3"] .workspace-grid{height:100%;grid-template-rows:minmax(0,1fr);align-items:stretch}
+ body[data-stage="3"] .tools{position:static;min-height:0;max-height:none;height:calc(100% - 12px)}
+ body[data-stage="3"] .tools-scroll{flex:1 1 0;min-height:0;overflow:auto}
+ body[data-stage="3"] .preview-area{min-height:0;height:100%;overflow:auto}
+ body[data-stage="3"] .output-stage{flex:1 1 0;min-height:360px}
+}
+@media(max-width:800px){.app-header .flow{gap:2px}.app-header .flow-node{min-width:0;flex:1 1 0;flex-direction:column;justify-content:center;gap:2px;padding:4px 2px;text-align:center}.output-stage{grid-template-columns:1fr}.output-sheet{flex-basis:auto;height:280px}}
+@media(min-width:1280px){
+ body[data-stage="2"] .preview-area{display:grid;grid-template-columns:minmax(0,1fr) 300px;column-gap:16px;align-content:start}
+ body[data-stage="2"] .preview-area>*{grid-column:1/-1}
+ body[data-stage="2"] .preview-area>.workspace-title{grid-row:1}
+ body[data-stage="2"] .preview-area>.recipe-block{grid-row:2}
+ body[data-stage="2"] .preview-area>.viewer{grid-row:3;grid-column:1}
+ body[data-stage="2"] .preview-area>#fidelityPanel{grid-row:3;grid-column:2;align-self:start;margin:0;max-height:100%;overflow:auto}
+ body[data-stage="2"] #fidelityPanel>header{flex-wrap:wrap}
+ body[data-stage="2"] #fidelityPanel .fidelity-metrics,body[data-stage="2"] #fidelityPanel .fidelity-images{grid-template-columns:1fr}
+}
+@media print{.output-stage,.output-tools{display:none!important}}

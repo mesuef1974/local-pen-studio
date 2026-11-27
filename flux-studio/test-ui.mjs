@@ -6,7 +6,7 @@ import {defaults,renderToolPanels} from './tool-settings.js';
 import {Workflow} from './workflow.js';
 
 const read=name=>readFileSync(new URL('./'+name,import.meta.url),'utf8');
-const scripts=['lens.js','app.js','flux-controls.js','fidelity-panel.js','paper-preview.js','theme.js'];
+const scripts=['output-stage.js','lens.js','app.js','flux-controls.js','fidelity-panel.js','paper-preview.js','theme.js'];
 // All markup that exists on the page: the static document and the tool panels.
 function markup(){const panels={tools0:{innerHTML:''},tools1:{innerHTML:''},tools2:{innerHTML:''}},previous=globalThis.document;
  globalThis.document={getElementById:id=>panels[id]};try{renderToolPanels();}finally{globalThis.document=previous;}
@@ -24,9 +24,9 @@ test('scripts reach elements by id, not by their place among other elements',()=
 
 test('each stage has complete wording',()=>{
  const keys=Object.keys(stageText(0));assert.equal(defaults.length,3);
- for(let s=0;s<3;s++){assert.deepEqual(Object.keys(stageText(s)),keys);assert.ok(Object.values(stageText(s)).every(Boolean));}
+ for(let s=0;s<4;s++){assert.deepEqual(Object.keys(stageText(s)),keys);assert.ok(Object.values(stageText(s)).every(Boolean));}
  assert.deepEqual([0,1].map(nextLabel),['راجِع الصورة','اعتمد الصورة']);
- assert.equal(saveLabel(2),'حفظ مسارات SVG');assert.equal(saveLabel(0),saveLabel(1));assert.equal(editLabel(1),'العودة إلى محرر الصورة');
+ assert.deepEqual([2,3].map(nextLabel),['إلى الإخراج','صدّر']);assert.equal(saveLabel,'حفظ نتيجة المرحلة');assert.equal(editLabel(1),'العودة إلى محرر الصورة');
 });
 
 test('stage state text follows freshness, approval and availability',()=>{
@@ -53,4 +53,11 @@ test('the review checklist starts empty and any change to the image clears it',(
  for(const change of [()=>flow.invalidate(0),()=>flow.invalidate(1),()=>flow.reviewImage(image),()=>flow.import('y','y')]){flow.checks=flow.checks.map(()=>true);change();assert.ok(flow.checks.every(done=>!done));}
  assert.deepEqual([4,2,1,0].map(remainingChecksText),['بقي 4 بنود قبل الاعتماد','بقي بندان قبل الاعتماد','بقي بند واحد قبل الاعتماد','اكتملت قائمة الفحص']);
  assert.match(read('app.js'),/flow\.checks\.includes\(false\)\|\|!flow\.approve\(1\)/);
+});
+
+test('every path export lives in the output stage and nowhere else',()=>{
+ const html=read('index.html'),cards=html.slice(html.indexOf(' id="outputStage"'),html.indexOf(' id="generationReview"'));
+ for(const id of ['downloadPen','downloadJson','downloadLaser','laserTemplateOpen'])assert.ok(cards.includes(` id="${id}"`),id);
+ assert.match(read('app.js'),/\$\('downloadStage'\)\.hidden=s===2;/);
+ assert.deepEqual([stageStateText({canEnter:false},3),stageStateText({canEnter:true},3)],['بانتظار المسارات','جاهز للتصدير']);
 });
