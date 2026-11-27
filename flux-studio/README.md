@@ -19,7 +19,15 @@ Start-Process http://127.0.0.1:8770/prepare
 
 ## تبعيات الخادم
 
-الخادم يعمل بـ Python النظام (3.12)، و`requirements-server.txt` يثبّت إصدارات حزمه كما هي مثبّتة على جهاز المالك، دون تجزئات. لا يُنشئ بيئة ولا يثبّت شيئًا من نفسه.
+`requirements-server.txt` يثبّت إصدارات حزم الخادم، و`requirements-server.lock` يقفلها ببصمات SHA-256 لويندوز x64 وPython 3.12. يستعمل `start-server.ps1` البيئة المعزولة `.venv-server` إن وُجدت، وإلا Python النظام. لا يُنشئ البيئة من نفسه؛ تُبنى مرة واحدة (تنزيل نحو 64 MB):
+
+```powershell
+python -m venv flux-studio/.venv-server
+```
+
+```powershell
+flux-studio/.venv-server/Scripts/python.exe -m pip install --require-hashes -r flux-studio/requirements-server.lock
+```
 
 ## بيئة النموذج
 

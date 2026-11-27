@@ -10,7 +10,9 @@ try {
 } catch {
     if(Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction SilentlyContinue){throw 'المنفذ مستخدم؛ لم يبدأ خادم إضافي.'}
 }
-$studioPython=(Get-Command python -CommandType Application | Select-Object -First 1).Source
+# The isolated server environment (requirements-server.lock) wins when it has been built.
+$studioPython=Join-Path $studioRoot '.venv-server/Scripts/python.exe'
+if(-not (Test-Path $studioPython)){$studioPython=(Get-Command python -CommandType Application | Select-Object -First 1).Source}
 $studioProcess=Start-Process -FilePath $studioPython -ArgumentList @('server.py','--port',"$Port") -WorkingDirectory $studioRoot -WindowStyle Hidden -RedirectStandardOutput "$studioRoot/server-stdout.log" -RedirectStandardError "$studioRoot/server-stderr.log" -PassThru
 for($studioAttempt=0;$studioAttempt -lt 40;$studioAttempt++){
     Start-Sleep -Milliseconds 200
