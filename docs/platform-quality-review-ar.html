@@ -106,13 +106,43 @@ del{text-decoration:line-through 2px #d11a1a}tr.done td,li.done{text-decoration:
 <li>أساس وصولية جيد: تنقل بلوحة المفاتيح ورابط تخطٍّ وتقليل الحركة، واتجاه منطقي RTL.</li>
 </ul>
 
+<h2 id="asvs">تدقيق OWASP ASVS 5.0.0 — المستوى الأول</h2>
+<p class="muted">2026-11-27 · خادم FLUX وواجهته، بقراءة الشيفرة وفحص حي محدود دون تعديل · مراجعة ذاتية وليست شهادة امتثال · محرر الصور وبيئة إزالة الخلفية لم يُفحصا بعمق.</p>
+<p>من 70 متطلبًا: <del>18 مستوفى، 5 جزئي، 2 غير مستوفى</del> <strong>22 مستوفى، 3 جزئي، 45 لا ينطبق</strong> (بعد الإصلاح). «لا ينطبق» على المصادقة لا يعني الحماية: أي برنامج على الجهاز يستطيع استدعاء الواجهة، لأن Origin يُزوَّر من خارج المتصفح.</p>
+<table>
+<tr><th>المتطلب</th><th>الحكم</th><th>الدليل أو الملاحظة</th></tr>
+<tr><td><bdi dir="ltr">5.2.2</bdi></td><td><del>جزئي</del> مستوفى</td><td>أُصلح: <code>/api/import</code> و<code>decode</code> يحدّدان <code>formats=</code> قبل فتح الصورة.</td></tr>
+<tr><td><bdi dir="ltr">4.1.1</bdi></td><td><del>غير مستوفى</del> مستوفى</td><td>أُصلح: الملفات النصية تُرسل بـ<code>charset=utf-8</code>.</td></tr>
+<tr><td><bdi dir="ltr">15.1.1</bdi></td><td><del>غير مستوفى</del> مستوفى</td><td>أُضيفت المهل في <code>SECURITY.md</code>: حرجة 7 أيام، عالية 30، الباقي 90.</td></tr>
+<tr><td><bdi dir="ltr">15.2.1</bdi></td><td><del>جزئي</del> مستوفى</td><td>فحص OSV كان نظيفًا بعد #117 (2026-11-27) مقابل المهل أعلاه.</td></tr>
+<tr><td><bdi dir="ltr">2.1.1</bdi></td><td>جزئي</td><td>قواعد التحقق موجودة في الشيفرة وغير موثقة.</td></tr>
+<tr><td><bdi dir="ltr">2.3.1</bdi></td><td>جزئي</td><td>ترتيب «الاعتماد ثم المسارات» تفرضه الواجهة وحدها؛ <code>/api/paths</code> يقبل أي PNG. أثره ضئيل لمستخدم واحد.</td></tr>
+<tr><td><bdi dir="ltr">14.2.1</bdi></td><td>جزئي</td><td>معرّف مهمة التوليد، وهو يخوّل قراءة النتيجة، يُرسل في رابط <code>?job=</code>. السجل معطّل و<code>Referrer-Policy: no-referrer</code>.</td></tr>
+<tr><td><bdi dir="ltr">1.2.1، 1.2.2، 1.2.3</bdi></td><td>مستوفى</td><td>مخرجات JSON عبر <code>json.dumps</code>؛ لم يُرصد إدخال مستخدم غير مرمَّز في <code>innerHTML</code>.</td></tr>
+<tr><td><bdi dir="ltr">1.2.5</bdi></td><td>مستوفى</td><td>استدعاء العمليات بقوائم وسائط دون shell.</td></tr>
+<tr><td><bdi dir="ltr">1.3.2</bdi></td><td>مستوفى</td><td>لم يُرصد <code>eval</code> ولا تنفيذ ديناميكي.</td></tr>
+<tr><td><bdi dir="ltr">2.2.1، 2.2.2</bdi></td><td>مستوفى</td><td>قوائم سماح وحدود للمدخلات على الخادم.</td></tr>
+<tr><td><bdi dir="ltr">3.2.1، 3.2.2</bdi></td><td>مستوفى</td><td><code>nosniff</code> وCSP صارمة.</td></tr>
+<tr><td><bdi dir="ltr">3.4.2</bdi></td><td>مستوفى</td><td>لا ترويسات CORS.</td></tr>
+<tr><td><bdi dir="ltr">3.5.1، 3.5.2، 3.5.3</bdi></td><td>مستوفى</td><td>POST يشترط Origin المحلي ونوع JSON؛ طلب من أصل أجنبي رُدّ بـ403.</td></tr>
+<tr><td><bdi dir="ltr">5.2.1</bdi></td><td>مستوفى</td><td>حدود للحجم وعدد البكسلات. <code>/api/import</code> و<code>/api/editor</code> خارج قفل المعالجة.</td></tr>
+<tr><td><bdi dir="ltr">5.3.2</bdi></td><td>مستوفى</td><td>قائمة ملفات ثابتة؛ لا مسار يأتي من المستخدم.</td></tr>
+<tr><td><bdi dir="ltr">11.4.1</bdi></td><td>مستوفى</td><td>SHA-256 فقط في المواضع المفحوصة.</td></tr>
+<tr><td><bdi dir="ltr">13.4.1</bdi></td><td>مستوفى</td><td><code>.git</code> غير مخدوم (404).</td></tr>
+<tr><td><bdi dir="ltr">15.3.1</bdi></td><td>مستوفى</td><td>حالة المهمة دون المعرّف تعرض التقدم فقط.</td></tr>
+<tr><td><bdi dir="ltr">1.2.4، 1.3.1، 1.5.1، 5.3.1</bdi></td><td>لا ينطبق</td><td>لا قاعدة بيانات خادمية، ولا محرر HTML، ولا XML من المستخدم، ولا حفظ للملفات المرفوعة في مجلد عام.</td></tr>
+<tr><td><bdi dir="ltr">3.3.1، 3.4.1، 4.4.1، 12.1.1، 12.2.1، 12.2.2</bdi></td><td>لا ينطبق</td><td>خدمة على 127.0.0.1 دون كعكات ولا TLS ولا WebSocket. تنطبق إن نُشرت.</td></tr>
+<tr><td><bdi dir="ltr">الفصول 6 و7 و8 و9 و10</bdi></td><td>لا ينطبق</td><td>لا حسابات ولا جلسات ولا صلاحيات ولا رموز ولا OAuth (32 متطلبًا).</td></tr>
+<tr><td><bdi dir="ltr">11.3.1، 11.3.2، 14.3.1</bdi></td><td>لا ينطبق</td><td>لا تشفير ولا بيانات مصادَقة.</td></tr>
+</table>
+
 <h2>حدود التقييم</h2>
 <p>لم يُفحص: توليد حقيقي على الكرت، وقارئ الشاشة، والتباين قياسًا، وثغرات التبعيات المعروفة، وسكربتات القياس والتحقق، و<code>background_service.py</code>، ومجلدا القياسات. التقييم لا يشمل منصة مسك.</p>
 
 <h2>المراجع</h2>
 <ul>
 <li><a href="https://www.w3.org/TR/WCAG22/">WCAG 2.2</a> (حجم الهدف: 2.5.8 و2.5.5)</li>
-<li><a href="https://owasp.org/www-project-application-security-verification-standard/">OWASP ASVS</a> — إطار مرجعي؛ لم يُجرَ تدقيق امتثال كامل.</li>
+<li><a href="https://owasp.org/www-project-application-security-verification-standard/">OWASP ASVS</a> — دُقِّق المستوى الأول من الإصدار <a href="https://github.com/OWASP/ASVS/tree/v5.0.0">5.0.0</a> (<a href="#asvs">النتائج</a>)؛ المستويان الثاني والثالث لم يُفحصا.</li>
 </ul>
 </body>
 </html>

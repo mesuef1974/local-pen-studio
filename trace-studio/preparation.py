@@ -18,6 +18,8 @@ DEFAULTS=dict(background='auto',style='tones',levels=12,denoise=45,contrast=110,
 def encoded(image):
     b=io.BytesIO();image.save(b,format='PNG');return 'data:image/png;base64,'+base64.b64encode(b.getvalue()).decode()
 
+IMPORT_FORMATS=('PNG','JPEG','WEBP','BMP','TIFF','GIF')
+
 def import_image(data):
     value=data.get('image','')
     if not isinstance(value,str) or not value.startswith('data:') or ';base64,' not in value:raise ValueError('اختر صورة مدعومة.')
@@ -25,8 +27,9 @@ def import_image(data):
     except (ValueError,binascii.Error):raise ValueError('بيانات الصورة غير صحيحة.')
     if not 0<len(raw)<=15_000_000:raise ValueError('الحد الأقصى للاستيراد 15 ميغابايت.')
     try:
-        with Image.open(io.BytesIO(raw)) as image:
-            if image.format not in ['PNG','JPEG','WEBP','BMP','TIFF','GIF']:raise ValueError('استخدم PNG أو JPG أو WebP أو BMP أو TIFF أو GIF.')
+        # Name the decoders up front so no other Pillow parser ever sees an untrusted file.
+        with Image.open(io.BytesIO(raw),formats=IMPORT_FORMATS) as image:
+            if image.format not in IMPORT_FORMATS:raise ValueError('استخدم PNG أو JPG أو WebP أو BMP أو TIFF أو GIF.')
             if image.width*image.height>40_000_000 or min(image.size)<3:raise ValueError('استخدم صورة حتى 40 مليون بكسل وبأبعاد 3 بكسل أو أكثر.')
             size=image.size;animated=getattr(image,'n_frames',1)>1
             image=ImageOps.exif_transpose(image).convert('RGBA');image.thumbnail((2000,2000),Image.Resampling.LANCZOS)

@@ -26,7 +26,7 @@ def decode(value):
     except (ValueError,binascii.Error):raise ValueError('بيانات الصورة غير صحيحة.')
     if not 0<len(raw)<=6_000_000:raise ValueError('الحد الأقصى لملف PNG هو 6 ميغابايت.')
     try:
-        with Image.open(io.BytesIO(raw)) as image:
+        with Image.open(io.BytesIO(raw),formats=('PNG',)) as image:
             if image.format!='PNG' or image.width*image.height>4_000_000 or min(image.size)<3:raise ValueError('استخدم PNG حتى أربعة ملايين بكسل وبأبعاد 3 بكسل أو أكثر.')
             rgba=ImageOps.exif_transpose(image).convert('RGBA')
     except (OSError,Image.DecompressionBombError):raise ValueError('تعذر قراءة الصورة.')
