@@ -8,7 +8,7 @@ import socket
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-PORT = 8790
+PORT = 8791
 MINUTES = 15
 PAGE = ('<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1"><title>اختبار الوصول</title>'
