@@ -17,7 +17,7 @@ assert.match(source,/\['circle','دائرة · O'/);assert.match(source,/\['circ
 console.log('PASS: circle tool stays round and participates in shape drawing');
 let compositeAtDraw='';
 const targetContext={globalCompositeOperation:'source-over',drawImage(){compositeAtDraw=this.globalCompositeOperation;}};
-const mergeContext=vm.createContext({hasSelection:false,tool:'erase',activeDocument:()=>({canvas:{getContext:()=>targetContext}}),localSelection:()=>null,renderComposite:()=>{},
+const mergeContext=vm.createContext({hasSelection:false,encoded:new WeakMap(),tool:'erase',activeDocument:()=>({canvas:{getContext:()=>targetContext}}),localSelection:()=>null,renderComposite:()=>{},
  layer:{width:10,height:10,getContext:()=>({globalCompositeOperation:'source-over',drawImage:()=>{},clearRect:()=>{}})}});
 const mergeSource=source.slice(source.indexOf(' function mergeLayer(){'),source.indexOf(' function choose('));
 vm.runInContext(mergeSource+';mergeLayer();',mergeContext);
