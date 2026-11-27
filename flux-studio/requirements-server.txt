@@ -3,16 +3,16 @@
 # The generation worker is separate: see requirements-flux.lock.
 
 # Imported directly
-CairoSVG==2.9.0
+CairoSVG==2.9.1
 numpy==2.4.6
 opencv-contrib-python==4.10.0.84
-pillow==12.1.1
+pillow==13.0.0
 pycairo==1.29.2
 requests==2.33.1
 
 # Pulled in by the above
 cairocffi==1.7.1
-certifi==2026.2.25
+certifi==2026.10.18
 cffi==2.1.1
 charset-normalizer==3.4.7
 cssselect2==0.9.0
@@ -20,5 +20,5 @@ defusedxml==0.7.1
 idna==3.20
 pycparser==3.0
 tinycss2==1.5.1
-urllib3==2.6.3
+urllib3==2.8.0
 webencodings==0.5.1
