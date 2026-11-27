@@ -9,7 +9,7 @@ export async function createFluxControls({api,onChange,onUseHistory,download}){
  let locked=false,uploading=false,sourceForCompare=null,compareStatus='';
  const savedKey='flux-professional-prompts-v1';
  let saved=[];try{const data=JSON.parse(localStorage.getItem(savedKey)||'[]');if(Array.isArray(data))saved=data.filter(v=>typeof v.title==='string'&&typeof v.prompt==='string').slice(0,20);}catch{}
- const note=text=>{$('fluxNote').textContent=text;};
+ const note=text=>{$('fluxMessage').textContent=text;};
  const descriptions={
   'رسم خطي للمراجعة قبل المسارات':{purpose:'تحويل فني إلى خطوط قليلة أو واضحة.',change:'قد يبسط الوجه والشعر والتفاصيل الداخلية.',preserve:'يحاول إبقاء التكوين والسمات الظاهرة.',fit:'للمراجعة الفنية فقط؛ لا يضمن تطابق المسارات.'},
   'الرسم الفني':{purpose:'إنتاج معالجة فنية بأسلوب محدد.',change:'قد يغير الملامح أو النسب أو الظلال بحسب الأسلوب.',preserve:'يحاول إبقاء موضوع الصورة وسماتها العامة.',fit:'غير موصى به للتتبّع المطابق.'},
