@@ -154,9 +154,13 @@ class Handler(SimpleHTTPRequestHandler):
         try:self.reply(status,result)
         except (BrokenPipeError,ConnectionResetError,TimeoutError):pass
 
+class StudioServer(ThreadingHTTPServer):
+    # On Windows SO_REUSEADDR lets a second studio bind a port that is already being served.
+    allow_reuse_address=sys.platform!='win32'
+
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8770);args=parser.parse_args()
-    server=ThreadingHTTPServer(('127.0.0.1',args.port),Handler);print(f'FLUX Studio: http://127.0.0.1:{args.port}',flush=True)
+    server=StudioServer(('127.0.0.1',args.port),Handler);print(f'FLUX Studio: http://127.0.0.1:{args.port}',flush=True)
     try:server.serve_forever()
     except KeyboardInterrupt:pass
     finally:

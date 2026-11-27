@@ -14,6 +14,23 @@ server = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(server)
 
 
+class StartupTests(unittest.TestCase):
+    def test_a_second_studio_cannot_share_a_served_port(self):
+        with server.StudioServer(('127.0.0.1', 0), server.Handler) as first:
+            with self.assertRaises(OSError):
+                server.StudioServer(('127.0.0.1', first.server_port), server.Handler).server_close()
+
+    def test_path_source_must_really_be_png(self):
+        import base64
+        import pen_paths
+        from PIL import Image
+        buffer = io.BytesIO()
+        Image.new('RGB', (8, 8), 'white').save(buffer, 'TIFF')
+        disguised = 'data:image/png;base64,' + base64.b64encode(buffer.getvalue()).decode()
+        with self.assertRaises(ValueError):
+            pen_paths.extract_paths({'image': disguised})
+
+
 class HandlerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
