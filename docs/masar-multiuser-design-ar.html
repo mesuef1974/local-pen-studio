@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مسار متعدد المستخدمين: وثيقة التصميم</title>
+<style>
+:root{--ink:#1c2430;--soft:#5a6577;--line:#d5dae3;--bg:#fff;--panel:#f4f6f9;--accent:#1f5f8b}
+@media (prefers-color-scheme:dark){:root{--ink:#e7ebf1;--soft:#a9b4c5;--line:#38414f;--bg:#151a21;--panel:#1d242e;--accent:#7cc0ee}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.85 "Segoe UI",Tahoma,sans-serif;text-align:right}
+main{max-inline-size:60rem;margin-inline:auto;padding:2rem 1.25rem 4rem}
+h1{font-size:1.75rem;margin-block:0 .25rem}
+h2{font-size:1.3rem;margin-block:2.5rem .75rem;padding-block-end:.3rem;border-block-end:2px solid var(--accent)}
+h3{font-size:1.05rem;margin-block:1.5rem .5rem}
+a{color:var(--accent)}
+.muted{color:var(--soft)}
+.box{background:var(--panel);border-inline-start:4px solid var(--accent);padding:.75rem 1rem;margin-block:1rem}
+.scroll{overflow-x:auto}
+table{inline-size:100%;border-collapse:collapse;margin-block:.75rem;text-align:right}
+th,td{border:1px solid var(--line);padding:.45rem .65rem;vertical-align:top;text-align:right}
+th{background:var(--panel)}
+code,.ltr{direction:ltr;unicode-bidi:isolate;font-family:Consolas,monospace;font-size:.92em}
+pre{direction:ltr;text-align:left;background:var(--panel);border:1px solid var(--line);padding:1rem;overflow-x:auto;line-height:1.5}
+li{margin-block:.25rem}
+@media print{:root{--ink:#000;--soft:#333;--line:#999;--bg:#fff;--panel:#f2f2f2;--accent:#000}main{max-inline-size:none;padding:0}h2,h3{break-after:avoid}tr,pre,.box{break-inside:avoid}}
+</style>
+</head>
+<body>
+<main>
+<h1>مسار متعدد المستخدمين: وثيقة التصميم</h1>
+<p class="muted">التاريخ: 2026-11-27. الحالة: مقترح للاعتماد. لم يُبنَ منه شيء ولم تُثبَّت أي حزمة.</p>
+
+<h2>القرارات المعتمدة من المالك</h2>
+<div class="scroll"><table>
+<tr><th>السؤال</th><th>القرار</th></tr>
+<tr><td>المستخدمون</td><td>معلمون فقط</td></tr>
+<tr><td>الدخول</td><td>من شبكة محلية واحدة، بلا وصول من الإنترنت</td></tr>
+<tr><td>التوليد</td><td>جهاز مكتبي دائم بكرت NVIDIA، لا اللابتوب ولا السحابة</td></tr>
+</table></div>
+<p>ما عدا هذه الثلاثة في الوثيقة مقترحات.</p>
+
+<h2>الوضع الحالي وما يمنع تعدد المستخدمين</h2>
+<div class="scroll"><table>
+<tr><th>في الشيفرة اليوم</th><th>أثره مع عدة معلمين</th></tr>
+<tr><td>خادم المكتبة القياسية في <code>flux-studio/server.py</code> يستمع على <code>127.0.0.1</code> ويقبل مضيفَي <code>localhost</code> و<code>127.0.0.1</code> فقط</td><td>لا يصل إليه جهاز آخر، ولا حسابات فيه</td></tr>
+<tr><td>العمل لقطة واحدة في IndexedDB (<code>work-store.js</code>)</td><td>لا مكتبة مشاريع، ولا انتقال بين الأجهزة</td></tr>
+<tr><td>قفل معالجة مشترك، والطلب الثاني يُرفض بالرمز 429</td><td>المعلم الثاني يرى «مشغول» بدل أن ينتظر دوره</td></tr>
+<tr><td>إلغاء التوليد يعتمد على معرفة معرّف المهمة وحده</td><td>يلزم فحص ملكية المهمة لكل مستخدم</td></tr>
+<tr><td>إزالة الخلفية تُفرغ نموذج FLUX من الكرت</td><td>الكرت مورد واحد، فيجب أن تمر العمليتان بطابور واحد</td></tr>
+</table></div>
+
+<h2>البنية المقترحة</h2>
+<pre>
+Teacher browser
+      |  HTTPS (school LAN only)
+      v
+Reverse proxy (TLS)
+      v
+Django + django-ninja  ----->  PostgreSQL   (data, sessions, job queue, audit)
+      |                             ^
+      v                             |  claims one job at a time
+File store (sha256)  <-----  Compute worker (FLUX, background removal, paths)
+</pre>
+<p>كل المكونات على الجهاز المكتبي نفسه. PostgreSQL والخادم الداخلي يستمعان على <code>127.0.0.1</code>، والوسيط العكسي وحده مفتوح على الشبكة المحلية.</p>
+<div class="scroll"><table>
+<tr><th>المكون</th><th>المقترح</th><th>السبب</th></tr>
+<tr><td>الخادم</td><td>Django وdjango-ninja</td><td>حسابات وجلسات وصلاحيات وترحيل قاعدة جاهزة، وهو المستعمل في سِمة</td></tr>
+<tr><td>القاعدة</td><td>PostgreSQL</td><td>كتابة متزامنة، وطابور بقفل الصفوف</td></tr>
+<tr><td>الطابور</td><td>جدول في القاعدة بـ <code>SELECT … FOR UPDATE SKIP LOCKED</code> عبر ORM</td><td>بلا Redis ولا Celery</td></tr>
+<tr><td>الملفات</td><td>مجلد خارج git، الاسم بصمة sha256</td><td>بلا تكرار، ونسخ احتياطي بسيط</td></tr>
+<tr><td>HTTPS</td><td>وسيط مثل Caddy بشهادة داخلية تُوزَّع على أجهزة المعلمين</td><td>كلمات المرور وملفات الجلسة لا تمر مكشوفة</td></tr>
+<tr><td>الواجهة</td><td>الحالية كما هي، مع صفحتَي دخول ومشاريع</td><td>الانتقال إلى Vue قرار منفصل</td></tr>
+<tr><td>موضع الشيفرة</td><td>مجلد جديد <code>masar-server/</code> يستعمل وحدات المعالجة الحالية</td><td>تبقى نسخة المستخدم الواحد على 8770 تعمل أثناء البناء</td></tr>
+</table></div>
+<p>طبقات الخادم: المجال (قواعد الاعتماد والإبطال والملكية)، ثم خدمات التطبيق، ثم البنية (ORM والملفات والعامل)، ثم الواجهة البرمجية. النماذج نحيفة والمنطق في الخدمات.</p>
+
+<h2>قاعدة البيانات</h2>
+<div class="scroll"><table>
+<tr><th>الكيان</th><th>أهم الحقول</th><th>قيود</th></tr>
+<tr><td><code>User</code></td><td>اسم الدخول، الاسم، الدور، مفعّل</td><td>دوران: معلم ومشرف</td></tr>
+<tr><td><code>Project</code></td><td>المالك، العنوان، المرحلة، تاريخ التحديث، تاريخ الحذف</td><td>مالك واحد</td></tr>
+<tr><td><code>ProjectShare</code></td><td>المشروع، المستخدم، قراءة أو تعديل</td><td>فريد لكل زوج؛ يؤجَّل إلى المرحلة الأخيرة</td></tr>
+<tr><td><code>Asset</code></td><td>sha256، النوع، الحجم، العرض، الارتفاع</td><td>sha256 فريد؛ القاعدة لا تحمل محتوى الملف</td></tr>
+<tr><td><code>ImageVersion</code></td><td>المشروع، الأصل، المصدر (رفع أو توليد أو تهيئة)، النسخة الأم</td><td>لا تُعدَّل؛ كل تغيير نسخة جديدة</td></tr>
+<tr><td><code>Job</code></td><td>المالك، المشروع، النوع، المدخلات JSON، الحالة، التقدم، مفتاح منع التكرار، الأوقات، الخطأ</td><td>المفتاح فريد لكل مالك</td></tr>
+<tr><td><code>Approval</code></td><td>نسخة الصورة، المعتمِد، الوقت</td><td>مربوط بنسخة بعينها، فأي تعديل يحتاج اعتمادًا جديدًا</td></tr>
+<tr><td><code>PathSet</code></td><td>الاعتماد، الإعدادات، الورق، الملف، مقاييس المطابقة</td><td>لا يُنشأ بلا اعتماد</td></tr>
+<tr><td><code>Export</code></td><td>مجموعة المسارات، قلم أو ليزر، الصيغة، الأصل</td><td>تُنزَّل مرفقًا لا صفحة</td></tr>
+<tr><td><code>Preset</code></td><td>المالك أو عام، النوع (وصف، ورق، خامة)، القيم</td><td>العام يحرره المشرف</td></tr>
+<tr><td><code>AuditEvent</code></td><td>المستخدم، الفعل، الهدف، الوقت، عنوان الجهاز</td><td>إضافة فقط؛ بلا صور ولا كلمات مرور</td></tr>
+</table></div>
+<pre>
+User 1--* Project 1--* ImageVersion 1--* Approval 1--* PathSet 1--* Export
+                  1--* Job
+ImageVersion *--1 Asset        PathSet *--1 Asset        Export *--1 Asset
+</pre>
+<p>حذف المشروع منطقي أولًا ثم نهائي بعد مهلة. الملف لا يُمحى من القرص إلا إذا لم يشر إليه أي سجل.</p>
+
+<h2>الطابور وعامل المعالجة</h2>
+<ul>
+<li>عامل واحد ينفذ مهمة واحدة على الكرت في كل مرة، ويبقي نموذج FLUX محمَّلًا بين المهام كما يفعل اليوم.</li>
+<li>التوليد وإزالة الخلفية واستخراج المسارات وتدقيقها مهام في الطابور، لأن كلًّا منها يتجاوز 300 مللي ثانية أو يشغل الكرت.</li>
+<li>الحالات: منتظرة، جارية، ناجحة، فاشلة، ملغاة. المعلم يرى ترتيبه، ويتابع بالاستعلام الدوري كما في الواجهة الحالية.</li>
+<li>سقف مهام منتظرة لكل معلم (المقترح: 3)، والترتيب بالدور بين المعلمين.</li>
+<li>مهمة جارية انقطع نبض عاملها تُعاد مرة واحدة ثم تُعلَّم فاشلة.</li>
+</ul>
+<h3>تقدير الانتظار</h3>
+<p>قياسات 11 نوفمبر 2026 على RTX 4060 Laptop (ذاكرة الكرت 8188 MiB) في <code>flux-studio/README.md</code>، بأربع خطوات:</p>
+<div class="scroll"><table>
+<tr><th>الطلب</th><th>الزمن</th></tr>
+<tr><td>512 بصورة واحدة</td><td>6.6 ثانية</td></tr>
+<tr><td>768 بثلاث صور، والنموذج محمَّل</td><td>17 إلى 18 ثانية</td></tr>
+<tr><td>768 بثلاث صور، الطلب الأول</td><td>42 ثانية</td></tr>
+<tr><td>1024 بثلاث صور</td><td>33 ثانية، بذروة 7328 MiB</td></tr>
+</table></div>
+<p>استنتاج حسابي لا قياس: إن أرسل عشرة معلمين معًا طلبًا واحدًا لكل منهم، انتظر آخرهم نحو 3 إلى 6 دقائق. الجهاز المكتبي الأسرع يقلّص ذلك، ولا يُعرف مقداره قبل قياسه.</p>
+
+<h2>الصلاحيات والأمن</h2>
+<div class="scroll"><table>
+<tr><th>الفعل</th><th>المعلم</th><th>المشرف</th></tr>
+<tr><td>إنشاء مشروع وتوليد وتصدير</td><td>نعم</td><td>نعم</td></tr>
+<tr><td>فتح مشروع غيره</td><td>إن شورك معه فقط</td><td>لا، إلا بإجراء صريح مسجَّل</td></tr>
+<tr><td>إنشاء الحسابات وتعطيلها</td><td>لا</td><td>نعم</td></tr>
+<tr><td>إلغاء مهمة</td><td>مهمته فقط</td><td>أي مهمة</td></tr>
+<tr><td>سجل التدقيق والإعدادات العامة</td><td>لا</td><td>نعم</td></tr>
+</table></div>
+<ul>
+<li>لا تسجيل ذاتي. كلمة المرور الأولى تُغيَّر عند أول دخول، وتُخزَّن بتجزئة Argon2.</li>
+<li>جلسات HttpOnly وSecure وSameSite مع حماية CSRF، وانتهاء بالخمول، وحد لمحاولات الدخول.</li>
+<li>فحص الملكية في كل مسار، ومعرّفات غير متسلسلة، ويُختبر صراحةً أن معلمًا لا يقرأ بيانات آخر.</li>
+<li>الحفاظ على القيود الحالية: فحص المضيف والأصل، وسياسة CSP، وحدود الحجم، وحصر صيغ الصور.</li>
+<li>ملفات SVG الآتية من المتصفح تُفحص قبل الحفظ وتُقدَّم مرفقًا للتنزيل.</li>
+<li>لا وصول للإنترنت مطلوب أثناء التشغيل، والنماذج تعمل محليًا.</li>
+</ul>
+
+<h2>الخصوصية</h2>
+<div class="box">قصر المستخدمين على المعلمين لا يمنع رفع صور طلاب. البيانات المتعلقة بالأطفال تحتاج حماية خاصة في قانون حماية خصوصية البيانات الشخصية القطري (القانون رقم 13 لسنة 2016)، ويلزم عرض الاستعمال على الجهة المختصة في المؤسسة قبل التشغيل. هذه الوثيقة ليست رأيًا قانونيًا.</div>
+<ul>
+<li>المقترح: منع صور الأشخاص الحقيقيين في سياسة استعمال يوافق عليها المعلم عند أول دخول، ما لم تأذن الجهة المختصة بغير ذلك.</li>
+<li>مدة احتفاظ محددة للمشاريع المحذوفة (المقترح: 30 يومًا)، وحذف كامل عند الطلب يشمل النسخ الاحتياطية بانقضاء دورتها.</li>
+<li>السجلات لا تحمل أوصاف التوليد ولا الصور.</li>
+</ul>
+
+<h2>الجهاز والتشغيل</h2>
+<div class="scroll"><table>
+<tr><th>العنصر</th><th>الحد الأدنى المقترح</th><th>الأفضل</th></tr>
+<tr><td>الكرت</td><td>NVIDIA بذاكرة 8 جيجابايت</td><td>12 إلى 16 جيجابايت</td></tr>
+<tr><td>الذاكرة الرئيسية</td><td>32 جيجابايت</td><td>64 جيجابايت</td></tr>
+<tr><td>التخزين</td><td>SSD بسعة 500 جيجابايت، وقرص ثانٍ للنسخ</td><td>1 تيرابايت أو أكثر</td></tr>
+<tr><td>الشبكة</td><td>سلكية، بعنوان واسم ثابتين</td><td>—</td></tr>
+<tr><td>الطاقة</td><td>إيقاف السكون على هذا الجهاز</td><td>مع مزود طاقة احتياطي</td></tr>
+</table></div>
+<p>حد 8 جيجابايت مبني على الذروة المقيسة (7328 MiB)، وهامشه ضيق. الأرقام الأخرى تقدير هندسي لا قياس. النماذج وحدها نحو 11.3 جيجابايت.</p>
+<ul>
+<li>الخادم والعامل وPostgreSQL خدمات تبدأ مع ويندوز دون تسجيل دخول أحد.</li>
+<li>نسخ يومي للقاعدة والملفات إلى القرص الثاني، مع تجربة استرجاع قبل الإطلاق ثم دوريًا.</li>
+<li>جدار الحماية يفتح منفذ HTTPS وحده على الشبكة المحلية.</li>
+</ul>
+
+<h2>مراحل التنفيذ</h2>
+<p>كل مرحلة طلب دمج مستقل.</p>
+<div class="scroll"><table>
+<tr><th>#</th><th>العمل</th><th>معيار القبول</th></tr>
+<tr><td>0</td><td>تأكيد الجهاز والشبكة، وقياس FLUX على الجهاز المكتبي</td><td>أزمنة مقيسة، وجهازا معلمين يصلان إلى صفحة تجريبية</td></tr>
+<tr><td>1</td><td>هيكل الخادم، الحسابات، الأدوار، التدقيق</td><td>دخول وخروج وإنشاء حساب بالاختبارات</td></tr>
+<tr><td>2</td><td>المشاريع والملفات، وربط الواجهة بدل IndexedDB، واستيراد العمل الحالي مرة واحدة</td><td>مشروع يُفتح من جهاز آخر، ومعلم لا يرى مشروع غيره</td></tr>
+<tr><td>3</td><td>الطابور والعامل لكل العمليات الثقيلة</td><td>طلبان متزامنان ينجحان بالترتيب، وإعادة الإرسال لا تكرر المهمة</td></tr>
+<tr><td>4</td><td>الاعتماد والمسارات والتصدير على الخادم</td><td>مخرجات SVG مطابقة بايتًا للنسخة الحالية للمدخلات نفسها</td></tr>
+<tr><td>5</td><td>HTTPS والخدمات والنسخ الاحتياطي والإشراف</td><td>استرجاع ناجح بعد حذف تجريبي، وتشغيل بعد إعادة الإقلاع</td></tr>
+<tr><td>6</td><td>المشاركة، وتجربة مع معلمين اثنين أو ثلاثة</td><td>رحلة كاملة من الصورة إلى الإخراج دون مساعدة</td></tr>
+</table></div>
+
+<h2>حزم تحتاج موافقة قبل التثبيت</h2>
+<p>Django، وdjango-ninja، ومشغّل اتصال PostgreSQL (<code>psycopg</code>)، و<code>argon2-cffi</code>، وخادم WSGI يعمل على ويندوز (مثل <code>waitress</code>)، وPostgreSQL، والوسيط العكسي. تُحدَّد الإصدارات وتُقفل ببصماتها عند المرحلة 1.</p>
+
+<h2>المخاطر</h2>
+<div class="scroll"><table>
+<tr><th>الخطر</th><th>المعالجة</th></tr>
+<tr><td>شبكة المدرسة تعزل الأجهزة أو تمنع الخوادم</td><td>يُحسم في المرحلة 0 مع تقنية المعلومات قبل أي بناء</td></tr>
+<tr><td>تعذر توزيع الشهادة الداخلية على أجهزة المعلمين</td><td>اسم نطاق من تقنية المعلومات بشهادة موثوقة لديها</td></tr>
+<tr><td>جهاز واحد هو نقطة تعطل وحيدة</td><td>نسخ احتياطي وخطوات استرجاع مكتوبة</td></tr>
+<tr><td>من يدير النظام بعد الإطلاق</td><td>تسمية مشرف قبل المرحلة 5</td></tr>
+<tr><td>رخص النماذج للاستعمال المؤسسي</td><td>مراجعة بطاقة كل نموذج قبل التشغيل</td></tr>
+</table></div>
+
+<h2>أسئلة مفتوحة</h2>
+<ol>
+<li>هل الجهاز المكتبي موجود؟ وما كرته وذاكرته ونظامه؟</li>
+<li>كم معلمًا، وكم منهم في وقت واحد؟</li>
+<li>هل تسمح تقنية المعلومات بخادم على الشبكة، وهل تتواصل أجهزة الواي فاي فيما بينها؟</li>
+<li>هل يُمنع رفع صور الأشخاص؟</li>
+</ol>
+
+<h2>خارج النطاق</h2>
+<p>الوصول من الإنترنت، وحسابات الطلاب أو العامة، وتدريب النماذج، ودمج القاعدة مع منصة مسك، والتحكم المباشر بآلة القلم أو الليزر.</p>
+
+<h2>المصادر</h2>
+<ul>
+<li>من المستودع: <code>flux-studio/server.py</code> و<code>generation.py</code> و<code>generation_service.py</code> و<code>work-store.js</code> و<code>README.md</code>، وخطة مسار <code>D:\sima\docs\masar-redesign-plan.md</code>.</li>
+<li>مراجع خارجية للقراءة (لم تُفحص أثناء كتابة الوثيقة): <a href="https://docs.djangoproject.com/en/stable/">Django</a>، <a href="https://django-ninja.dev/">django-ninja</a>، <a href="https://www.postgresql.org/docs/current/sql-select.html">PostgreSQL SELECT و SKIP LOCKED</a>، <a href="https://huggingface.co/black-forest-labs/FLUX.2-klein-4B">بطاقة نموذج FLUX.2 Klein 4B</a>.</li>
+</ul>
+</main>
+</body>
+</html>
