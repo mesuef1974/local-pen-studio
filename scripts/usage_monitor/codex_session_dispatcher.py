@@ -90,11 +90,11 @@ def _message(row: sqlite3.Row, criteria: list[sqlite3.Row]) -> str:
             f'Invoke-RestMethod -Uri "{lifecycle}" -Method Post -Headers $headers -ContentType "application/json" -Body $body',
             "عند الإنجاز: احفظ التزامًا محدود النطاق على فرع البطاقة، وادفعه إلى origin. لا تدمج main ولا تغلق البطاقة بنفسك.",
             "سجّل التسليم الموثق في قاعدة المصنع؛ يجب أن يكون commit_sha هو HEAD على origin وأن تطابق المسارات التغيير المقصود:",
-            f'$branch = (git branch --show-current).Trim(); $sha = (git rev-parse HEAD).Trim(); $paths = @(git diff --name-only origin/main...HEAD)',
+            '$branch = (git branch --show-current).Trim(); $sha = (git rev-parse HEAD).Trim(); $paths = @(git diff --name-only origin/main...HEAD)',
             f'$delivery = @{{ actor_id = "{actor_id}"; branch_name = $branch; remote_name = "origin"; commit_sha = $sha; summary = "اكتب خلاصة التسليم بالعربية"; changed_paths = $paths }} | ConvertTo-Json -Depth 5 -Compress',
             f'$deliveryResult = Invoke-RestMethod -Uri "{base_url}/api/workflow/cards/{row["card_id"]}/delivery" -Method Post -Headers $headers -ContentType "application/json" -Body $delivery',
             "بعد التحقق من الدفع شغّل فحوص البطاقة المطلوبة. أرسل كل معيار مطلوب كفحص ناجح مع دليل محلي أو رابط CI؛ استخدم criterion_code نفسه من القائمة أعلاه:",
-            f'$checks = @(' + ", ".join(
+            '$checks = @(' + ", ".join(
                 f'@{{ check_code = "{c["criterion_code"]}"; outcome = "pass"; evidence_ref = "اكتب مسار الدليل أو رابط CI" }}'
                 for c in criteria if c["required"]
             ) + ')',

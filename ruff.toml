@@ -1,0 +1,3 @@
+# Correctness rules only: syntax errors and pyflakes. No style rules.
+[lint]
+select = ["E9", "F"]

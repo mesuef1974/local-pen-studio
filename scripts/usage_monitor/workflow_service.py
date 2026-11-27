@@ -8,9 +8,8 @@ import subprocess
 from datetime import datetime
 import uuid
 from statistics import median
-from typing import Any
 
-from coordination_repository import create_card, transition_card, record_issue, record_delivery_attempt
+from coordination_repository import transition_card, record_issue, record_delivery_attempt
 from usage_database import utc_now
 
 REPO_ROOT = __import__("pathlib").Path(__file__).resolve().parents[2]
@@ -159,7 +158,7 @@ def create_command(db: sqlite3.Connection, body: dict) -> tuple[dict, bool]:
     with db:
         for cid, parent, actor, status, role in [(root,None,None,"queued","root"), *[(str(uuid.uuid4()),root,a,"assigned","session") for a in targets]]:
             db.execute("INSERT INTO coordination_cards(card_id,title,owner_request,scope,status,assigned_actor_id,created_at,updated_at,current_status_code,current_status_version,parent_card_id,card_type_code,priority_code) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",(cid,body["title"],body["owner_request"],body["scope"],"in_progress" if status in {"queued","assigned"} else status,actor,now,now,status,1,parent,body.get("card_type_code","general"),body.get("priority_code","normal")))
-            ev=_event(db,cid,"card_created",stage_code="intake",next_status=status,recorded_at=now)
+            _event(db,cid,"card_created",stage_code="intake",next_status=status,recorded_at=now)
             if cid == root: db.execute("INSERT INTO coordination_command_receipts VALUES(?,?,?)", (key,root,now))
             db.execute("INSERT INTO coordination_command_cards VALUES(?,?,?)", (key,cid,role))
             if actor:
@@ -199,7 +198,6 @@ def resolve_issue(db: sqlite3.Connection, card_id: str, issue_id: int, body: dic
 
 def add_delivery(db: sqlite3.Connection, card_id: str, body: dict) -> int:
     attempt=record_delivery_attempt(db,card_id,submitted_by_actor_id=body.get("submitted_by_actor_id"),summary=body.get("summary",""))
-    now=utc_now()
     db.execute("UPDATE coordination_delivery_attempts SET branch_name=?,remote_name=?,commit_sha=? WHERE attempt_id=?", (body.get("branch_name"),body.get("remote_name"),body.get("commit_sha"),attempt))
     for path in body.get("changed_paths",[]): db.execute("INSERT OR IGNORE INTO coordination_delivery_paths(attempt_id,path) VALUES(?,?)",(attempt,path))
     return attempt

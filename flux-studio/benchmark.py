@@ -1,11 +1,9 @@
 """Resumable local comparison: five subjects, three prompts, two pen-path pipelines."""
-import argparse
 import base64
 import hashlib
 import io
 import json
 import subprocess
-import sys
 import time
 from pathlib import Path
 import requests

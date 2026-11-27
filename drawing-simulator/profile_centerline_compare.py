@@ -1,6 +1,5 @@
 """Paired baseline/current centerline timing and output-fidelity comparison."""
 import argparse
-import base64
 import hashlib
 import io
 import json

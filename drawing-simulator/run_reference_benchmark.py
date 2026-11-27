@@ -1,6 +1,6 @@
 """Reproducible geometry fixture benchmark, not a portrait-quality evaluation."""
 from pathlib import Path
-import sys,io,json,base64,math,subprocess,tempfile,hashlib
+import io,json,base64,math,subprocess,tempfile,hashlib
 import cv2,numpy as np
 from PIL import Image
 from pen_paths import extract_paths

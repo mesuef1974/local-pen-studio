@@ -1,5 +1,4 @@
 import base64,io,unittest
-import cv2
 import numpy as np
 from PIL import Image
 from editor_ops import operate

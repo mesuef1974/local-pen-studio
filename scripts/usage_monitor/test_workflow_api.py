@@ -282,7 +282,7 @@ class WorkflowCommandRoutingTests(unittest.TestCase):
             create_command(self.path, payload)
 
     def test_dispatch_prompt_loads_assigned_session_duties_from_database(self):
-        card = create_command(self.path, self.payload())
+        create_command(self.path, self.payload())
         captured = {}
 
         def fake_runner(args, **kwargs):

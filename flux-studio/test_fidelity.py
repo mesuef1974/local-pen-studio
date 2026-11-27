@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from PIL import Image
 from faithful_paths import extract
-from path_fidelity import audit,webgpu_target,validate_paths,decode_image,ink_mask,measure
+from path_fidelity import audit,webgpu_target,validate_paths
 
 
 def encoded(array):
@@ -130,7 +130,7 @@ class FidelityTests(unittest.TestCase):
         with patch('path_fidelity._pycairo',return_value=object()),patch('path_fidelity._cairosvg',return_value=object()),patch('path_fidelity.render_svg',return_value=blank):
             self.assertTrue(audit(data)['renderer'].startswith('pycairo'))
         with patch('path_fidelity._pycairo',return_value=None),patch('path_fidelity._cairosvg',return_value=None),self.assertRaisesRegex(ValueError,'Cairo'):audit(data)
-        try:import cairo
+        try:import cairo  # noqa: F401  (availability check)
         except ImportError:self.skipTest('pycairo is not installed')
         with patch('path_fidelity._cairosvg',side_effect=AssertionError('CairoSVG must not be consulted')):
             self.assertTrue(audit(data)['renderer'].startswith('pycairo'))

@@ -1,5 +1,5 @@
 """Isolated, offline lineart inference entry point. JSON stdin/stdout only."""
-import base64, io, json, sys, time, types, importlib.util, threading
+import base64, io, json, sys, time, types, importlib.util
 from pathlib import Path
 import cv2
 import numpy as np
