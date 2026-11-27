@@ -58,7 +58,9 @@ export async function createFluxControls({api,onChange,onUseHistory,download}){
   preserve:Object.fromEntries(Object.keys(catalog.preserve).map(key=>[key,$('fluxPreserve_'+key).checked])),
   references:$('genMode').value==='multi'?references.map(({image,role})=>({image,role})):[],
  };}
- function refreshPrompt(){const s=settings(),preset=catalog.presets.find(item=>item.id===s.style),{warnings,compare:compareWarnings}=promptWarnings(s);$('effectivePrompt').value=composePrompt(catalog,s);$('promptCount').textContent=`${$('effectivePrompt').value.length} حرف · يُتحقق من حد 512 رمزًا قبل التوليد`;$('referencePanel').hidden=s.mode!=='multi';$('fluxPreserveSection').hidden=s.mode==='generate';$('textModeHint').hidden=s.mode!=='generate';
+ let shownStyle=null;
+ function refreshPrompt(){const s=settings(),preset=catalog.presets.find(item=>item.id===s.style),{warnings,compare:compareWarnings}=promptWarnings(s);
+  if(s.style!==shownStyle){shownStyle=s.style;$('presetSummary').textContent=preset?.description||'';$('promptDetails').open=s.style==='custom';}$('effectivePrompt').value=composePrompt(catalog,s);$('promptCount').textContent=`${$('effectivePrompt').value.length} حرف · يُتحقق من حد 512 رمزًا قبل التوليد`;$('referencePanel').hidden=s.mode!=='multi';$('fluxPreserveSection').hidden=s.mode==='generate';$('textModeHint').hidden=s.mode!=='generate';
   const summary=guidance(preset?.category);$('fluxNote').textContent=`${summary.purpose} ${summary.fit}`;$('promptConflict').textContent=warnings.join(' ');
   const a=$('comparePromptA');if(a)a.textContent=`A · ${preset?.title||'القالب الحالي'} · البذرة ${s.seed} · ${s.resolution}px`;
   const b=$('compareStyleB').value,c=$('compareStyleC').value,busyConflict=new Set([s.style,b,c].filter(Boolean)).size<[s.style,b,c].filter(Boolean).length;
