@@ -5,7 +5,6 @@ from django.contrib.admin import AllValuesFieldListFilter
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
-from django.core.exceptions import ValidationError
 from django.db import connections, transaction
 
 from .models import ADMIN_MODELS, DISPLAY_COLUMNS, FILTER_FIELDS, SEARCH_FIELDS
@@ -66,7 +65,6 @@ CODE_LABELS = {
     "intake": "استقبال الأمر",
     "assignment": "الإسناد",
     "advisory": "الرأي الاستشاري",
-    "delivery": "التسليم",
     "git_delivery": "التسليم عبر Git",
     "owner_decision": "قرار المالك",
     "verification": "التحقق",

@@ -165,3 +165,9 @@
 !/.codex/handoff.json
 
 # The laser business (Misk) moved to its own private repository, mesuef1974/misk, on 2026-11-16.
+
+# Lint configuration and its pinned dependencies.
+!/ruff.toml
+!/eslint.config.mjs
+!/package.json
+!/package-lock.json

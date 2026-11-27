@@ -114,7 +114,7 @@ def _record(database: Path, row: sqlite3.Row, *, state: str, note: str,
     db = connect(database)
     try:
         with db:
-            current = db.execute("SELECT * FROM coordination_git_integrations WHERE integration_id=?",
+            db.execute("SELECT * FROM coordination_git_integrations WHERE integration_id=?",
                                  (row["integration_id"],)).fetchone()
             retry_at = (datetime.now(timezone.utc) + timedelta(seconds=POLL_SECONDS)).isoformat()
             assignments = {"state_code": state, "last_error_code": code,

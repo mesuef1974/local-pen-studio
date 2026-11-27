@@ -5,7 +5,7 @@ export async function requestJson(path,body,{fetchImpl=globalThis.fetch,timeoutM
  const work=(async()=>{const payload=JSON.stringify(body);for(let attempt=0;;attempt++){
   if(controller.signal.aborted)throw Error('انتهت مهلة الاتصال.');
   const response=await fetchImpl(path,{method:'POST',headers:{'Content-Type':'application/json'},body:payload,signal:controller.signal});
-  let result;try{result=await response.json();}catch(error){if(controller.signal.aborted)throw error;throw Error('وصل رد غير مكتمل من الخادم المحلي. أعد المحاولة.');}
+  let result;try{result=await response.json();}catch(error){if(controller.signal.aborted)throw error;throw Error('وصل رد غير مكتمل من الخادم المحلي. أعد المحاولة.',{cause:error});}
   if(!result||typeof result!=='object')throw Error('رد المعالجة المحلية غير صالح.');
   if(response.status===429&&attempt<4){await retryDelay(Math.min(2000,300*2**attempt));continue;}
   if(!response.ok||result.error)throw Error(result.error||'تعذرت المعالجة المحلية.');return result;

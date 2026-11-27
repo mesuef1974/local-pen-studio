@@ -727,7 +727,7 @@ def create_command(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
         children: list[str] = []
         for target in targets:
             child_id = f"{root_id}-{target.upper()}"
-            assigned_event = insert_card(child_id, "assigned", parent=root_id, target=target)
+            insert_card(child_id, "assigned", parent=root_id, target=target)
             connection.execute("INSERT INTO coordination_command_cards(idempotency_key,card_id,role_code) VALUES(?,?, 'session')",
                 (key, child_id))
             for criterion in normalized_criteria:

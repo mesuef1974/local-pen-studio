@@ -1,4 +1,4 @@
-const $=id=>document.getElementById(id),nf=new Intl.NumberFormat('en-US');
+const $=id=>document.getElementById(id);
 const names={front:'وجه أمامي',side:'وجه جانبي',full:'شخصية مرسومة',animal:'قطة',object:'فنجان'};
 const styles={ink:'خطوط قلم نظيفة',minimal:'رسم مختصر','pencil-light':'رصاص خفيف'};
 const casesOrder=Object.keys(names),styleOrder=Object.keys(styles);

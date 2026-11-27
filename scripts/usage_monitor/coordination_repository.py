@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 import sqlite3
-from typing import Any
 
 from usage_database import utc_now
 
@@ -282,7 +281,7 @@ def record_deliverable(connection: sqlite3.Connection, card_id: str, path: str, 
                        actor_id: str | None = None) -> int:
     now = utc_now()
     with connection:
-        event_id = _event(connection, card_id, "deliverable_registered", actor_id=actor_id,
+        _event(connection, card_id, "deliverable_registered", actor_id=actor_id,
                           stage_code="delivery", source_type="file", source_id=path,
                           note=f"مخرج مسجل من النوع {kind}")
         connection.execute(

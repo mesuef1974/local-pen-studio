@@ -5,7 +5,7 @@ import json
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from path_fidelity import decode_image,ink_mask,measure,validate_paths
+from path_fidelity import decode_image,ink_mask,measure
 
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'fidelity-review'

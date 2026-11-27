@@ -14,7 +14,6 @@ import re
 import subprocess
 import sys
 import tempfile
-import time
 import urllib.request
 
 SECTIONS = ('الحالة', 'الهدف والتفويض', 'المنجز وأدلة التحقق', 'الخطوة الجارية',

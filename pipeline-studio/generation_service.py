@@ -87,7 +87,6 @@ def run(data):
         return
     import torch
     from diffusers import StableDiffusionXLImg2ImgPipeline, EulerDiscreteScheduler
-    from PIL import Image, ImageOps
     if not torch.cuda.is_available():
         raise ValueError('التوليد يحتاج كرت NVIDIA وبيئة CUDA المتاحة على جهازك.')
     start = time.perf_counter()
