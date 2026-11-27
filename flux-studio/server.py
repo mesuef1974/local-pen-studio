@@ -12,7 +12,7 @@ if not LOG.handlers:
     _handler=logging.handlers.RotatingFileHandler(ROOT/'server-errors.log',maxBytes=512_000,backupCount=2,encoding='utf-8',delay=True)
     _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'));LOG.addHandler(_handler);LOG.setLevel(logging.INFO)
 sys.path[:0]=[str(TRACE),str(DRAW)]
-ASSETS={'/':ROOT/'index.html','/prepare':ROOT/'index.html','/review':ROOT/'index.html','/adoption':ROOT/'platform-adoption.html','/paths':ROOT/'index.html','/output':ROOT/'index.html','/app.js':ROOT/'app.js','/webgpu-audit.js':ROOT/'webgpu-audit.js','/webgpu-path-raster.js':ROOT/'webgpu-path-raster.js','/workspace.css':ROOT/'workspace.css','/paper.js':ROOT/'paper.js','/styles.css':ROOT/'styles.css','/workflow.js':ROOT/'workflow.js','/geometry.js':ROOT/'geometry.js','/sample-ink.png':ROOT/'sample-ink.png','/sample.png':DRAW/'photo-lineart-comparison/original.png','/sample-art.png':TRACE/'sample.png','/image-editor.js':DRAW/'image-editor.js','/image-editor.css':DRAW/'image-editor.css'}
+ASSETS={'/':ROOT/'index.html','/prepare':ROOT/'index.html','/review':ROOT/'index.html','/adoption':ROOT/'platform-adoption.html','/paths':ROOT/'index.html','/output':ROOT/'index.html','/app.js':ROOT/'app.js','/webgpu-audit.js':ROOT/'webgpu-audit.js','/webgpu-path-raster.js':ROOT/'webgpu-path-raster.js','/workspace.css':ROOT/'workspace.css','/paper.js':ROOT/'paper.js','/workflow.js':ROOT/'workflow.js','/geometry.js':ROOT/'geometry.js','/sample-ink.png':ROOT/'sample-ink.png','/sample.png':DRAW/'photo-lineart-comparison/original.png','/sample-art.png':TRACE/'sample.png','/image-editor.js':DRAW/'image-editor.js','/image-editor.css':DRAW/'image-editor.css'}
 ASSETS['/swot']=ROOT/'ui-swot-report-ar.html'
 ASSETS['/swot-samples/horse-style-transfer.png']=ROOT/'reference-style-samples'/'horse-style-transfer.png'
 ASSETS['/swot-samples/pen-style-transfer.png']=ROOT/'reference-style-samples'/'pen-style-transfer.png'
@@ -37,7 +37,7 @@ ASSETS.update({f'/assets/fonts/{font.name}':font for font in (ROOT.parent/'asset
 ASSETS['/audit']=ROOT/'pipeline-review-ar.html'
 for audit_asset in ['raw-flux.png','verified-paths.svg','verified-paths.json','review-results.json']:
     ASSETS['/pipeline-audit/'+audit_asset]=ROOT/'pipeline-audit'/audit_asset
-ASSETS.update({'/flux-controls.js':ROOT/'flux-controls.js','/flux-prompts.js':ROOT/'flux-prompts.js','/flux-catalog.json':ROOT/'flux-catalog.json','/flux.css':ROOT/'flux.css'})
+ASSETS.update({'/flux-controls.js':ROOT/'flux-controls.js','/flux-prompts.js':ROOT/'flux-prompts.js','/flux-catalog.json':ROOT/'flux-catalog.json'})
 # Brand identity delivered by Sima; icons sit at the root because site.webmanifest names them there.
 BRAND=ROOT/'brand'/'masar'
 ASSETS.update({'/'+name:BRAND/name for name in ('favicon.svg','favicon.ico','favicon-32.png','apple-touch-icon.png','icon-192.png','icon-512.png','maskable-512.png','site.webmanifest')})
