@@ -662,7 +662,7 @@ button svg {
   background:transparent;
   border-radius:4px;
   font-size:13px;
-  color:var(--masar-text-muted);
+  color:var(--masar-text);
 }
 .orientation-group button[aria-pressed=true] {
   background:var(--masar-surface);
@@ -1231,6 +1231,10 @@ body[data-stage="2"] .app-shell[data-view=paper] #imageGrid {
   min-height:440px;
   height:clamp(440px,calc(100dvh - 300px),850px);
   padding:16px 26px 15px;
+}
+/* The paper area stays light in both modes, so its text uses the sheet ink. */
+.paper-preview .waiting {
+  color:var(--sheet-ink);
 }
 .paper-preview-meta {
   display:flex;
