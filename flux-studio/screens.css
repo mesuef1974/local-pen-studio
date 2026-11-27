@@ -112,3 +112,7 @@ input[type=range],.paper-preview-meta .check,.tools-footer>label,.tool-tabs butt
 .pro-editor .ed-inspector .ed-layer-row button,.pro-editor .ed-project-actions button,.pro-editor .ed-inspector .check-label{min-height:44px;height:auto}
 .pro-editor .ed-layer-row{grid-template-columns:44px minmax(0,1fr) 44px 44px 44px}
 .skip{min-height:44px}
+/* A generated result adds a review box and a history strip: the column scrolls instead of squeezing the two images. */
+@media(min-width:801px){
+ body[data-stage="0"] .preview-area:has(>#generationReview:not([hidden]),>#generationHistory:not([hidden]))>.viewer{flex:0 0 auto;height:max(480px,calc(100% - 96px))}
+}
