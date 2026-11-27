@@ -452,6 +452,14 @@ class FluxTests(unittest.TestCase):
 
 
 class DependencyLockTests(unittest.TestCase):
+    def test_server_requirements_pin_every_package_once(self):
+        text = (Path(__file__).resolve().parent / 'requirements-server.txt').read_text(encoding='utf-8')
+        lines = [line.strip() for line in text.splitlines() if line.strip() and not line.startswith('#')]
+        self.assertTrue(all(line.count('==') == 1 for line in lines), lines)
+        names = [line.split('==')[0].lower() for line in lines]
+        self.assertEqual(len(names), len(set(names)))
+        self.assertLessEqual({'cairosvg', 'numpy', 'opencv-contrib-python', 'pillow', 'pycairo', 'requests'}, set(names))
+
     def test_lock_pins_every_direct_requirement_with_hashes(self):
         import re
         root = Path(__file__).resolve().parent

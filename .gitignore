@@ -94,6 +94,7 @@
 !/flux-studio/*.html
 !/flux-studio/workflow-image-to-pen-ar.svg
 !/flux-studio/workflow-image-to-pen-ar.png
+!/flux-studio/requirements-server.txt
 !/flux-studio/requirements-flux.txt
 !/flux-studio/requirements-flux.in
 !/flux-studio/requirements-flux.lock
