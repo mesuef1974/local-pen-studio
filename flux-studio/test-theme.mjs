@@ -6,6 +6,7 @@ const read=name=>readFileSync(new URL(name,import.meta.url),'utf8').replace(/\/\
 const literal=/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(|(?<![-\w])(?:white|black)(?![-\w])/g;
 const tokens=read('./brand/masar/identity/tokens/tokens.css');
 const sheets=['./workspace.css','./flux.css','./screens.css'].map(read);
+sheets.push(read('./platform-adoption.html').match(/<style>([\s\S]*?)<\/style>/)[1]);
 
 test('app stylesheets take every colour from the identity tokens',()=>{
  for(const css of sheets){
@@ -31,5 +32,12 @@ test('text roles reach AA contrast on every surface in both modes',()=>{
   for(const fg of ['text','text-muted','brand-text','error','warning'])for(const bg of ['bg','surface'])pairs.push([fg,bg]);
   pairs.push(['text','raised'],['text','brand-soft']);
   for(const [fg,bg] of pairs)assert.ok(contrast(c[fg],c[bg])>=4.5,`${mode}: ${fg} on ${bg} = ${contrast(c[fg],c[bg]).toFixed(2)}`);
+ }
+});
+
+test('app text is at least 13px and touch targets at least 44px',()=>{
+ for(const css of [read('./workspace.css'),read('./screens.css')]){
+  assert.deepEqual(css.match(/(?<![\w-])font(?:-size)?:\s*(?:\d{3} )?(?:\d|1[0-2])px/g)??[],[]);
+  assert.deepEqual(css.match(/min-height:(?:2[4-9]|3\d|4[0-3])px/g)??[],[]);
  }
 });
