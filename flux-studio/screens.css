@@ -286,6 +286,19 @@ body[data-stage="0"] .workspace-title,body[data-stage="1"] .workspace-title,body
 body[data-stage="3"] .source-box,body[data-stage="3"] .viewer,body[data-stage="3"] .metrics,body[data-stage="3"] .method-notes,body[data-stage="3"] #fidelityPanel,body[data-stage="3"] .tools-heading>span {
   display:none;
 }
+/* Paths stage: the page still scrolls, but the tool column stays in view and scrolls on its own. */
+@media(min-width:941px) {
+  body[data-stage="2"] .tools {
+    position:sticky;
+    top:calc(var(--header) + 12px);
+    max-height:calc(100dvh - var(--header) - 24px);
+  }
+  body[data-stage="2"] .tools-scroll {
+    flex:0 1 auto;
+    min-height:0;
+    overflow:auto;
+  }
+}
 @media(min-width:801px) {
   body[data-stage="3"] .app-shell {
     height:calc(100dvh - var(--header));
