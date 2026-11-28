@@ -1,0 +1,78 @@
+/* Account and project pages. Colours come from the identity tokens only. */
+.account-header {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 20px;
+  border-block-end:1px solid var(--masar-border);
+}
+#account {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+  margin-inline-start:auto;
+}
+.account-main {
+  max-width:720px;
+  margin-inline:auto;
+  padding:20px;
+}
+#message {
+  min-height:1.5em;
+  color:var(--masar-success);
+}
+#message.failed {
+  color:var(--masar-error);
+}
+.account-main label {
+  display:grid;
+  gap:8px;
+}
+.account-main form:not(.inline) {
+  display:grid;
+  gap:16px;
+  max-width:360px;
+}
+.account-main input {
+  min-height:44px;
+  padding:8px 12px;
+  background:var(--masar-surface);
+  border:1px solid var(--masar-border-strong);
+  border-radius:7px;
+}
+.inline,
+.card-actions {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.inline input {
+  flex:1 1 200px;
+  min-width:0;
+}
+#list {
+  display:grid;
+  gap:12px;
+  padding:0;
+  list-style:none;
+}
+#list li {
+  display:grid;
+  gap:8px;
+  padding:16px;
+  border:1px solid var(--masar-border);
+  border-radius:var(--radius);
+  overflow-wrap:anywhere;
+}
+#list time {
+  color:var(--masar-text-muted);
+  font-size:14px;
+}
+.button.danger {
+  background:var(--masar-surface);
+  border-color:var(--masar-error);
+  color:var(--masar-error);
+}
