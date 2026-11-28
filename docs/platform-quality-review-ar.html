@@ -12,6 +12,7 @@ h1{font-size:1.7rem;margin-block:0 4px}h2{font-size:1.25rem;margin-block-start:3
 .muted{color:var(--muted)}table{width:100%;border-collapse:collapse;display:block;overflow-x:auto}
 th,td{border:1px solid var(--line);padding:8px 10px;text-align:right;vertical-align:top}th{background:var(--head)}
 code{direction:ltr;unicode-bidi:isolate;font-size:.86em}a{color:var(--accent)}
+del{text-decoration:line-through 2px #d11a1a}tr.done td,li.done{text-decoration:line-through 2px #d11a1a}
 @media print{body{max-width:none;color:#000;background:#fff}table{display:table}tr{break-inside:avoid}h2{break-after:avoid}}
 </style>
 </head>
@@ -19,42 +20,65 @@ code{direction:ltr;unicode-bidi:isolate;font-size:.86em}a{color:var(--accent)}
 <h1>تقييم جودة استوديو FLUX «مسار»</h1>
 <p class="muted">2026-11-27 · الفرع main عند 2886562 · تقييم دون تعديل على الشيفرة</p>
 
+<h2>حالة التنفيذ وما التالي</h2>
+<p>المشطوب بالأحمر نُفِّذ ودُمج في <code>main</code> حتى <code>253e709</code> (2026-11-27). الشطب يعني التنفيذ والدمج لا اكتمال التجربة. النصوص أدناه تصف الحال وقت التقييم.</p>
+<table>
+<tr><th>الدفعة</th><th>الحالة</th><th>الطلبات</th></tr>
+<tr><td>الأولى: حماية العمل</td><td>نُفِّذت (البنود 1-9)</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/104">#104</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/106">#106</a></td></tr>
+<tr><td>الثانية: متانة الخادم</td><td>نُفِّذت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/105">#105</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/111">#111</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/112">#112</a></td></tr>
+<tr><td>الثالثة: تجربة الاستخدام</td><td>نُفِّذت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/107">#107</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/114">#114</a></td></tr>
+<tr><td>الرابعة: الصيانة والأداء</td><td>نُفِّذت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/108">#108</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/109">#109</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/110">#110</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/115">#115</a></td></tr>
+<tr><td>بعد الدفعات: ثغرات التبعيات والتباين</td><td>نُفِّذ؛ جُرِّب التوليد بالحزم المرقّاة على الكرت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/117">#117</a></td></tr>
+<tr><td>تدقيق ASVS المستوى الأول</td><td>نُفِّذ وأُصلح؛ بقي متطلبان جزئيان (<a href="#asvs">النتائج</a>)</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/119">#119</a></td></tr>
+<tr><td>التجربة دون توليد، والبيئة المعزولة، وتوثيق التحقق</td><td>نُفِّذت وأُصلح خلل الاستيراد؛ الخادم المحلي يعمل من <code>.venv-server</code></td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/121">#121</a></td></tr>
+<tr><td>تجربة الكرت، وإصلاح قوالب التوليد من النص</td><td>نجح التوليد واستئنافه وإلغاؤه وفتح نسخة سابقة وإزالة الخلفية ومقارنة <bdi dir="ltr">A/B</bdi>؛ وأُصلحت كتابة مشوّهة ظهرت تحت البورتريه</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/123">#123</a></td></tr>
+</table>
+<p><strong>التالي، بالترتيب المقترح:</strong></p>
+<ol>
+<li><del>تجربة على الكرت بحزم <a href="https://github.com/mesuef1974/local-pen-studio/pull/117">#117</a>: توليد ناجح، ثم استئنافه بعد إعادة تحميل الصفحة، ومقارنة النسخ</del> (جُرِّبت في 2026-11-27، ومنها مقارنة <bdi dir="ltr">A/B</bdi>؛ عنوان النسخة A فيها كان يظهر بالإنجليزية وعُرِّب).</li>
+<li>تجربة ما لم يُجرَّب: <del>السحب والإفلات</del>، <del>وإلغاء التوليد</del>، <del>وتحديد الخطوط بالفأرة</del>، <del>وتدقيق WebGPU</del>، <del>وتأكيد الوصفة وقالب الليزر</del>. (كشفت التجربة أن استيراد ملف تالف يبطل الاعتماد والمسارات، وأُصلح. وجُرِّبت قوالب التعديل والمراجع الثلاثة التي فيها تعليمات موجّهة للمستخدم (تنظيف المشهد، ودمج غرض، وشخصية بمرجع هوية) دون إضافة نص، بالبذرتين 42 و43: لم تظهر كتابة فلم تُغيَّر. وفي قالب الهوية، حين كانت الصورة الرئيسية لقطة وجه قريبة والمرجع مشهدًا كاملًا، اتبع الناتج تكوين المشهد. وجُرِّب تدقيق WebGPU على رسم تجريبي (قلم <bdi dir="ltr">0.2</bdi> مم): تطابق <bdi dir="ltr">IoU 95.25%</bdi> مقابل <bdi dir="ltr">94.58%</bdi> في التدقيق المعتاد، والحبر المفقود <bdi dir="ltr">3.41%</bdi> مقابل <bdi dir="ltr">4.26%</bdi>، والزائد <bdi dir="ltr">1.44%</bdi> مقابل <bdi dir="ltr">1.26%</bdi>. استعمل المتصفح بطاقة Intel المدمجة لا NVIDIA؛ عينة واحدة، ولم تُقَس السرعة.)</li>
+<li>هاتف حقيقي، وقارئ الشاشة، <del>وقياس التباين</del> (قِيس تباين النص في الحالة الفارغة وأُصلح في <a href="https://github.com/mesuef1974/local-pen-studio/pull/117">#117</a>).</li>
+<li><del>بيئة Python معزولة للخادم مع تجزئات التبعيات</del> (<code>.venv-server</code> و<code>requirements-server.lock</code>؛ <a href="https://github.com/mesuef1974/local-pen-studio/pull/121">#121</a>؛ جُرِّب التوليد وإزالة الخلفية من الخادم العامل منها؛ وكلاهما ينفَّذ في عملية فرعية ببيئته الخاصة).</li>
+<li><del>تدقيق ثغرات التبعيات</del> (فحص OSV وnpm audit، ورُقّيت 7 حزم في <a href="https://github.com/mesuef1974/local-pen-studio/pull/117">#117</a>؛ جُرِّب التوليد بها على الكرت)، <del>وقياس تسريع لقطات المحرر</del> (قِيس: ترميز PNG للقطة 10-16 م.ث حتى 1024، و51-107 م.ث عند 2048، و161 م.ث عند 4000 لرسم خطي؛ لا تغيير).</li>
+<li>متطلبات ASVS الجزئية: <del>توثيق قواعد التحقق (<bdi dir="ltr">2.1.1</bdi>)</del> (<a href="flux-input-validation-ar.html">وُثِّقت</a>)؛ و<bdi dir="ltr">2.3.1</bdi> و<bdi dir="ltr">14.2.1</bdi> أثرهما ضئيل لمستخدم واحد.</li>
+</ol>
+
 <h2>الخلاصة</h2>
 <p>الأساس جيد: المراحل الأربع تعمل حتى الإخراج، وتحصين الخادم المحلي سليم، ولم يظهر XSS. الضعف الأول ليس أمنيًّا بل <strong>ضياع عمل المستخدم</strong>، ثم متانة التوليد، ثم تجربة الهاتف وقابلية صيانة <code>app.js</code> وCSS. لا توجد قاعدة بيانات، ولا نوصي بإضافة قاعدة خادمية لأداة محلية لمستخدم واحد؛ المطلوب حفظ المشروع في المتصفح (IndexedDB).</p>
 <table>
 <tr><th>المجال</th><th>الحكم</th><th>أبرز ما ينقص</th></tr>
-<tr><td>الأمن</td><td>جيد؛ لا ثغرة حرجة أو عالية فيما فُحص</td><td>حصر صيغ الصور المقبولة</td></tr>
-<tr><td>الخادم</td><td>جيد مع فجوات متانة</td><td>التفريغ، استئناف المهمة، خادم ثانٍ</td></tr>
-<tr><td>كود الواجهة</td><td>متوسط</td><td>تقسيم app.js واختبار سلوكه</td></tr>
-<tr><td>تجربة الاستخدام</td><td>جيدة على الحاسوب، أضعف على الهاتف</td><td>حفظ العمل، التأكيد قبل الهدم، وضوح الرسائل</td></tr>
-<tr><td>البيانات</td><td>لا قاعدة بيانات</td><td>حفظ المشروع محليًّا، كتابة ذرية لملف التحقق</td></tr>
-<tr><td>الاختبارات وCI</td><td>جيدة للوحدات</td><td>اختبار متصفح، lint، تغطية</td></tr>
+<tr><td>الأمن</td><td>جيد؛ لا ثغرة حرجة أو عالية فيما فُحص</td><td><del>حصر صيغ الصور المقبولة</del></td></tr>
+<tr><td>الخادم</td><td>جيد مع فجوات متانة</td><td><del>التفريغ، استئناف المهمة، خادم ثانٍ</del></td></tr>
+<tr><td>كود الواجهة</td><td>متوسط</td><td><del>تقسيم app.js واختبار سلوكه</del></td></tr>
+<tr><td>تجربة الاستخدام</td><td>جيدة على الحاسوب، أضعف على الهاتف</td><td><del>حفظ العمل، التأكيد قبل الهدم، وضوح الرسائل</del></td></tr>
+<tr><td>البيانات</td><td>لا قاعدة بيانات</td><td><del>حفظ المشروع محليًّا، كتابة ذرية لملف التحقق</del></td></tr>
+<tr><td>الاختبارات وCI</td><td>جيدة للوحدات</td><td><del>اختبار متصفح، lint، تغطية</del></td></tr>
 </table>
 
 <h2>الدفعة الأولى: حماية عمل المستخدم (جهد صغير غالبًا)</h2>
 <p class="muted">«متحقَّق» تعني أني راجعت السطر بنفسي؛ «تقرير المراجِع» تعني أنه من مراجعة آلية فرعية ولم أُعد التحقق منه. لم يُعَد إنتاج بنود هذه الدفعة في المتصفح. الجهد: S صغير، M متوسط، L كبير.</p>
 <table>
 <tr><th>#</th><th>المشكلة</th><th>الإصلاح</th><th>الموضع</th><th>الجهد</th><th>الثقة</th></tr>
-<tr><td>1</td><td>«إلغاء» أو Escape في المحرر يتخلى عن التعديلات غير المعتمدة بلا تأكيد</td><td>تأكيد عند وجود تغيير</td><td><code>drawing-simulator/image-editor.js:85</code></td><td>S</td><td>متحقَّق</td></tr>
-<tr><td>2</td><td>اللصق أثناء فتح المحرر يُحمَّل بعد إغلاقه فوق ما اعتُمد للتو</td><td>تجاهل اللصق مع الحوار، وتأكيد قبل استبدال العمل</td><td><code>app.js:89,94,127</code></td><td>S</td><td>متحقَّق</td></tr>
-<tr><td>3</td><td>إلغاء التوليد أو فشله يبطل الاعتماد والمسارات، مع رسالة «لم تتغير الصورة»</td><td>الإبطال بعد النجاح أو استعادة لقطة</td><td><code>app.js:183-185</code></td><td>M</td><td>متحقَّق</td></tr>
-<tr><td>4</td><td>Ctrl+Enter في تبويب التوليد يشغّل زر التجهيز المخفي</td><td>فحص <code>hidden</code> أو توجيهه إلى التوليد</td><td><code>app.js:159,201</code></td><td>S</td><td>متحقَّق</td></tr>
-<tr><td>5</td><td>إعادة تحميل الصفحة تمسح الصورة والنتائج والإعدادات (يوجد تحذير فقط)</td><td>لقطة مشروع في IndexedDB واستعادتها</td><td><code>app.js:88</code></td><td>L</td><td>مُجرَّب</td></tr>
-<tr><td>6</td><td>مهمة التوليد تضيع بإعادة التحميل ويبقى القفل مشغولًا</td><td>حفظ المعرّف في sessionStorage واستئنافه</td><td><code>generation.py:176</code>، <code>app.js:184</code></td><td>S</td><td>تقرير المراجِع</td></tr>
-<tr><td>7</td><td>رسائل أخطاء FLUX والمراجع تُمحى فورًا أو تظهر داخل درج مغلق</td><td>عنصر حالة مستقل قرب الإجراء</td><td><code>flux-controls.js:61,118</code></td><td>S</td><td>تقرير المراجِع</td></tr>
-<tr><td>8</td><td>فتح مشروع .masar فوق عمل قائم يبقي مرجع المقارنة القديم</td><td>تمرير مرجع المشروع</td><td><code>app.js:127</code></td><td>S</td><td>تقرير المراجِع</td></tr>
-<tr><td>9</td><td>تغيير القلم أو الورقة يمسح استبعادات الخطوط وسجل التراجع</td><td>تأكيد أو إمكانية تراجع</td><td><code>app.js:140</code></td><td>S</td><td>تقرير المراجِع</td></tr>
+<tr class="done"><td>1</td><td>«إلغاء» أو Escape في المحرر يتخلى عن التعديلات غير المعتمدة بلا تأكيد</td><td>تأكيد عند وجود تغيير</td><td><code>drawing-simulator/image-editor.js:85</code></td><td>S</td><td>متحقَّق</td></tr>
+<tr class="done"><td>2</td><td>اللصق أثناء فتح المحرر يُحمَّل بعد إغلاقه فوق ما اعتُمد للتو</td><td>تجاهل اللصق مع الحوار، وتأكيد قبل استبدال العمل</td><td><code>app.js:89,94,127</code></td><td>S</td><td>متحقَّق</td></tr>
+<tr class="done"><td>3</td><td>إلغاء التوليد أو فشله يبطل الاعتماد والمسارات، مع رسالة «لم تتغير الصورة»</td><td>الإبطال بعد النجاح أو استعادة لقطة</td><td><code>app.js:183-185</code></td><td>M</td><td>متحقَّق</td></tr>
+<tr class="done"><td>4</td><td>Ctrl+Enter في تبويب التوليد يشغّل زر التجهيز المخفي</td><td>فحص <code>hidden</code> أو توجيهه إلى التوليد</td><td><code>app.js:159,201</code></td><td>S</td><td>متحقَّق</td></tr>
+<tr class="done"><td>5</td><td>إعادة تحميل الصفحة تمسح الصورة والنتائج والإعدادات (يوجد تحذير فقط)</td><td>لقطة مشروع في IndexedDB واستعادتها</td><td><code>app.js:88</code></td><td>L</td><td>مُجرَّب</td></tr>
+<tr class="done"><td>6</td><td>مهمة التوليد تضيع بإعادة التحميل ويبقى القفل مشغولًا</td><td>حفظ المعرّف في sessionStorage واستئنافه</td><td><code>generation.py:176</code>، <code>app.js:184</code></td><td>S</td><td>تقرير المراجِع</td></tr>
+<tr class="done"><td>7</td><td>رسائل أخطاء FLUX والمراجع تُمحى فورًا أو تظهر داخل درج مغلق</td><td>عنصر حالة مستقل قرب الإجراء</td><td><code>flux-controls.js:61,118</code></td><td>S</td><td>تقرير المراجِع</td></tr>
+<tr class="done"><td>8</td><td>فتح مشروع .masar فوق عمل قائم يبقي مرجع المقارنة القديم</td><td>تمرير مرجع المشروع</td><td><code>app.js:127</code></td><td>S</td><td>تقرير المراجِع</td></tr>
+<tr class="done"><td>9</td><td>تغيير القلم أو الورقة يمسح استبعادات الخطوط وسجل التراجع</td><td>تأكيد أو إمكانية تراجع</td><td><code>app.js:140</code></td><td>S</td><td>تقرير المراجِع</td></tr>
 </table>
 
 <h2>الدفعة الثانية: متانة الخادم</h2>
 <table>
 <tr><th>المشكلة</th><th>الإصلاح</th><th>الموضع</th><th>الجهد</th></tr>
-<tr><td>النموذج قد يبقى على الكرت إن انتهى مؤقت الخمول وقفل المعالجة مشغول</td><td>إعادة تسليح المؤقت</td><td><code>generation.py:276</code></td><td>S</td></tr>
-<tr><td>يمكن على ويندوز تشغيل خادمين على المنفذ نفسه</td><td><code>allow_reuse_address=False</code></td><td><code>server.py:159</code></td><td>S</td></tr>
-<tr><td>ملف نموذج تالف بالحجم الصحيح يفشل كل إعادة إعداد</td><td>عزله وإعادة تنزيله بموافقة</td><td><code>setup_flux.py:49</code></td><td>S</td></tr>
-<tr><td>الإلغاء أثناء تشغيل العامل قد لا يُحترم</td><td>فحص العلم بعد التشغيل</td><td><code>generation.py:218</code></td><td>S</td></tr>
-<tr><td><code>/api/paths</code> يقبل صيغًا غير PNG بترويسة PNG</td><td><code>formats=('PNG',)</code></td><td><code>drawing-simulator/pen_paths.py:91</code></td><td>S</td></tr>
-<tr><td>تبعيات الخادم غير مثبتة خارج CI، وسجل العامل يُمحى عند كل تشغيل</td><td>ملف متطلبات وبيئة معزولة، وتدوير السجل</td><td><code>start-server.ps1</code>، <code>generation.py:244</code></td><td>M</td></tr>
+<tr class="done"><td>النموذج قد يبقى على الكرت إن انتهى مؤقت الخمول وقفل المعالجة مشغول</td><td>إعادة تسليح المؤقت</td><td><code>generation.py:276</code></td><td>S</td></tr>
+<tr class="done"><td>يمكن على ويندوز تشغيل خادمين على المنفذ نفسه</td><td><code>allow_reuse_address=False</code></td><td><code>server.py:159</code></td><td>S</td></tr>
+<tr class="done"><td>ملف نموذج تالف بالحجم الصحيح يفشل كل إعادة إعداد</td><td>عزله وإعادة تنزيله بموافقة</td><td><code>setup_flux.py:49</code></td><td>S</td></tr>
+<tr class="done"><td>الإلغاء أثناء تشغيل العامل قد لا يُحترم</td><td>فحص العلم بعد التشغيل</td><td><code>generation.py:218</code></td><td>S</td></tr>
+<tr class="done"><td><code>/api/paths</code> يقبل صيغًا غير PNG بترويسة PNG</td><td><code>formats=('PNG',)</code></td><td><code>drawing-simulator/pen_paths.py:91</code></td><td>S</td></tr>
+<tr><td><del>تبعيات الخادم غير مثبتة خارج CI، وسجل العامل يُمحى عند كل تشغيل</del></td><td><del>ملف متطلبات</del> وبيئة معزولة، <del>وتدوير السجل</del></td><td><code>start-server.ps1</code>، <code>generation.py:244</code></td><td>M</td></tr>
 </table>
 <p>البند الأول والثاني: راجعت الشيفرة وهي توافق الوصف. البقية من تقرير المراجِع، الذي أفاد بنجاح 47 اختبار Python.</p>
 
@@ -62,21 +86,21 @@ code{direction:ltr;unicode-bidi:isolate;font-size:.86em}a{color:var(--accent)}
 <p class="muted">ملاحظات من تجربة حيّة بالرسم التجريبي، دون توليد على الكرت ودون تنزيل ملفات.</p>
 <table>
 <tr><th>الملاحظة</th><th>الاقتراح</th></tr>
-<tr><td>على عرض 375: الشاشة الأولى لا تُظهر زر «افتح صورة»، ونص الترحيب مقطوع</td><td>رفع زر البدء أعلى المعاينة وتصغير بطاقة المثال</td></tr>
-<tr><td>على عرض 375 في مرحلة المسارات: 19 من 23 عنصر تحكم ظاهرًا أقل من 44 بكسل في أحد البعدين</td><td>الحد الأدنى في WCAG 2.2 AA هو 24 بكسل، و44 هدف معزَّز؛ يُرفع الأهم إلى 44</td></tr>
-<tr><td>على الهاتف: تنبيه زمن الرسم يزاحم المعاينة قرب شريط القرار</td><td>تنبيه قابل للطي</td></tr>
-<tr><td>تنبيه «يتجاوز 10 دقائق» لا يقدّم إجراء</td><td>زر «خفّف الخطوط» مع الزمن المتوقع بعده</td></tr>
-<tr><td>في الإخراج: أربعة أزرار تنزيل وزر «صدّر» معًا</td><td>تسمية الزر بما سيصدّره، مثل «صدّر SVG للقلم»</td></tr>
-<tr><td>وصف التوليد إنجليزي داخل واجهة عربية</td><td>ملخص عربي للقالب، وإبقاء النص الإنجليزي في «متقدم»</td></tr>
-<tr><td>التركيز يضيع في قائمة الطبقات، ومناطق aria-live تُعاد كتابتها كل 5 ثوانٍ (تقرير المراجِع)</td><td>تحديث العنصر المتغير فقط</td></tr>
+<tr class="done"><td>على عرض 375: الشاشة الأولى لا تُظهر زر «افتح صورة»، ونص الترحيب مقطوع</td><td>رفع زر البدء أعلى المعاينة وتصغير بطاقة المثال</td></tr>
+<tr class="done"><td>على عرض 375 في مرحلة المسارات: 19 من 23 عنصر تحكم ظاهرًا أقل من 44 بكسل في أحد البعدين</td><td>الحد الأدنى في WCAG 2.2 AA هو 24 بكسل، و44 هدف معزَّز؛ يُرفع الأهم إلى 44</td></tr>
+<tr class="done"><td>على الهاتف: تنبيه زمن الرسم يزاحم المعاينة قرب شريط القرار</td><td>تنبيه قابل للطي</td></tr>
+<tr class="done"><td>تنبيه «يتجاوز 10 دقائق» لا يقدّم إجراء</td><td>زر «خفّف الخطوط» مع الزمن المتوقع بعده</td></tr>
+<tr class="done"><td>في الإخراج: أربعة أزرار تنزيل وزر «صدّر» معًا</td><td>تسمية الزر بما سيصدّره، مثل «صدّر SVG للقلم»</td></tr>
+<tr class="done"><td>وصف التوليد إنجليزي داخل واجهة عربية</td><td>ملخص عربي للقالب، وإبقاء النص الإنجليزي في «متقدم»</td></tr>
+<tr class="done"><td>التركيز يضيع في قائمة الطبقات، ومناطق aria-live تُعاد كتابتها كل 5 ثوانٍ (تقرير المراجِع)</td><td>تحديث العنصر المتغير فقط</td></tr>
 </table>
 
 <h2>الدفعة الرابعة: الصيانة والأداء</h2>
 <ul>
-<li>تقسيم <code>app.js</code> (53 ألف حرف في نحو 200 سطر) إلى وحدات للتوليد والمسارات والتصدير مع منسّق انشغال واحد. لا مبرر لإطار عمل.</li>
-<li>تنسيق CSS وحذف <code>styles.css</code> و<code>flux.css</code> غير المربوطين بالصفحة، بعد التأكد من عدم استخدامهما في غيرها.</li>
-<li>نقل توليد SVG الليزر إلى Worker، وتخفيف لقطات المحرر عند كل ضربة (قياس المراجِع: نحو نصف ثانية لخطة مصطنعة كبيرة).</li>
-<li>الاختبارات: اختبار متصفح صغير يغطي بنود الدفعة الأولى، واكتشاف تلقائي لملفات الاختبار في CI، وlint وقياس تغطية. أي حزمة جديدة تحتاج موافقتك.</li>
+<li class="done">تقسيم <code>app.js</code> (53 ألف حرف في نحو 200 سطر) إلى وحدات للتوليد والمسارات والتصدير مع منسّق انشغال واحد. لا مبرر لإطار عمل.</li>
+<li class="done">تنسيق CSS وحذف <code>styles.css</code> و<code>flux.css</code> غير المربوطين بالصفحة، بعد التأكد من عدم استخدامهما في غيرها.</li>
+<li class="done">نقل توليد SVG الليزر إلى Worker، وتخفيف لقطات المحرر عند كل ضربة (قياس المراجِع: نحو نصف ثانية لخطة مصطنعة كبيرة).</li>
+<li class="done">الاختبارات: اختبار متصفح صغير يغطي بنود الدفعة الأولى، واكتشاف تلقائي لملفات الاختبار في CI، وlint وقياس تغطية. أي حزمة جديدة تحتاج موافقتك.</li>
 </ul>
 
 <h2>ما يجب الحفاظ عليه</h2>
@@ -87,13 +111,44 @@ code{direction:ltr;unicode-bidi:isolate;font-size:.86em}a{color:var(--accent)}
 <li>أساس وصولية جيد: تنقل بلوحة المفاتيح ورابط تخطٍّ وتقليل الحركة، واتجاه منطقي RTL.</li>
 </ul>
 
+<h2 id="asvs">تدقيق OWASP ASVS 5.0.0 — المستوى الأول</h2>
+<p class="muted">2026-11-27 · خادم FLUX وواجهته، بقراءة الشيفرة وفحص حي محدود دون تعديل · مراجعة ذاتية وليست شهادة امتثال · محرر الصور وبيئة إزالة الخلفية لم يُفحصا بعمق.</p>
+<p>من 70 متطلبًا: <del>18 مستوفى، 5 جزئي، 2 غير مستوفى</del> <strong>23 مستوفى، 2 جزئي، 45 لا ينطبق</strong> (بعد الإصلاح). «لا ينطبق» على المصادقة لا يعني الحماية: أي برنامج على الجهاز يستطيع استدعاء الواجهة، لأن Origin يُزوَّر من خارج المتصفح.</p>
+<p><strong>تحديث 2026-11-27:</strong> هذه النتائج للنسخة القائمة اليوم، وهي لمستخدم واحد، وما زالت تصفها. وقد تقرّر بعدها تعدد المستخدمين، ولم يُبنَ خادمه بعد؛ ما يتغيّر معه مبيَّن في أسطر «لا ينطبق»، وهو تقدير على التصميم لا تدقيق.</p>
+<table>
+<tr><th>المتطلب</th><th>الحكم</th><th>الدليل أو الملاحظة</th></tr>
+<tr><td><bdi dir="ltr">5.2.2</bdi></td><td><del>جزئي</del> مستوفى</td><td>أُصلح: <code>/api/import</code> و<code>decode</code> يحدّدان <code>formats=</code> قبل فتح الصورة.</td></tr>
+<tr><td><bdi dir="ltr">4.1.1</bdi></td><td><del>غير مستوفى</del> مستوفى</td><td>أُصلح: الملفات النصية تُرسل بـ<code>charset=utf-8</code>.</td></tr>
+<tr><td><bdi dir="ltr">15.1.1</bdi></td><td><del>غير مستوفى</del> مستوفى</td><td>أُضيفت المهل في <code>SECURITY.md</code>: حرجة 7 أيام، عالية 30، الباقي 90.</td></tr>
+<tr><td><bdi dir="ltr">15.2.1</bdi></td><td><del>جزئي</del> مستوفى</td><td>فحص OSV كان نظيفًا بعد #117 (2026-11-27) مقابل المهل أعلاه.</td></tr>
+<tr><td><bdi dir="ltr">2.1.1</bdi></td><td><del>جزئي</del> مستوفى</td><td>وُثِّقت في <a href="flux-input-validation-ar.html">قواعد التحقق من المدخلات</a>.</td></tr>
+<tr><td><bdi dir="ltr">2.3.1</bdi></td><td>جزئي</td><td>ترتيب «الاعتماد ثم المسارات» تفرضه الواجهة وحدها؛ <code>/api/paths</code> يقبل أي PNG. أثره ضئيل لمستخدم واحد.</td></tr>
+<tr><td><bdi dir="ltr">14.2.1</bdi></td><td>جزئي</td><td>معرّف مهمة التوليد، وهو يخوّل قراءة النتيجة، يُرسل في رابط <code>?job=</code>. السجل معطّل و<code>Referrer-Policy: no-referrer</code>.</td></tr>
+<tr><td><bdi dir="ltr">1.2.1، 1.2.2، 1.2.3</bdi></td><td>مستوفى</td><td>مخرجات JSON عبر <code>json.dumps</code>؛ لم يُرصد إدخال مستخدم غير مرمَّز في <code>innerHTML</code>.</td></tr>
+<tr><td><bdi dir="ltr">1.2.5</bdi></td><td>مستوفى</td><td>استدعاء العمليات بقوائم وسائط دون shell.</td></tr>
+<tr><td><bdi dir="ltr">1.3.2</bdi></td><td>مستوفى</td><td>لم يُرصد <code>eval</code> ولا تنفيذ ديناميكي.</td></tr>
+<tr><td><bdi dir="ltr">2.2.1، 2.2.2</bdi></td><td>مستوفى</td><td>قوائم سماح وحدود للمدخلات على الخادم.</td></tr>
+<tr><td><bdi dir="ltr">3.2.1، 3.2.2</bdi></td><td>مستوفى</td><td><code>nosniff</code> وCSP صارمة.</td></tr>
+<tr><td><bdi dir="ltr">3.4.2</bdi></td><td>مستوفى</td><td>لا ترويسات CORS.</td></tr>
+<tr><td><bdi dir="ltr">3.5.1، 3.5.2، 3.5.3</bdi></td><td>مستوفى</td><td>POST يشترط Origin المحلي ونوع JSON؛ طلب من أصل أجنبي رُدّ بـ403.</td></tr>
+<tr><td><bdi dir="ltr">5.2.1</bdi></td><td>مستوفى</td><td>حدود للحجم وعدد البكسلات. <code>/api/import</code> و<code>/api/editor</code> خارج قفل المعالجة.</td></tr>
+<tr><td><bdi dir="ltr">5.3.2</bdi></td><td>مستوفى</td><td>قائمة ملفات ثابتة؛ لا مسار يأتي من المستخدم.</td></tr>
+<tr><td><bdi dir="ltr">11.4.1</bdi></td><td>مستوفى</td><td>SHA-256 فقط في المواضع المفحوصة.</td></tr>
+<tr><td><bdi dir="ltr">13.4.1</bdi></td><td>مستوفى</td><td><code>.git</code> غير مخدوم (404).</td></tr>
+<tr><td><bdi dir="ltr">15.3.1</bdi></td><td>مستوفى</td><td>حالة المهمة دون المعرّف تعرض التقدم فقط.</td></tr>
+<tr><td><bdi dir="ltr">1.2.4، 1.3.1، 1.5.1، 5.3.1</bdi></td><td>لا ينطبق</td><td>لا قاعدة بيانات خادمية، ولا محرر HTML، ولا XML من المستخدم، ولا حفظ للملفات المرفوعة في مجلد عام.<br><strong>مع تعدد المستخدمين:</strong> ينطبق 1.2.4 (قاعدة بيانات) و5.3.1 (حفظ ملفات)، و1.5.1 إن حلّل الخادم ملفات SVG. ولا ينطبق 1.3.1.</td></tr>
+<tr><td><bdi dir="ltr">3.3.1، 3.4.1، 4.4.1، 12.1.1، 12.2.1، 12.2.2</bdi></td><td>لا ينطبق</td><td>خدمة على 127.0.0.1 دون كعكات ولا TLS ولا WebSocket. تنطبق إن نُشرت.<br><strong>مع تعدد المستخدمين:</strong> تنطبق كلها عدا 4.4.1، فلا WebSocket في التصميم.</td></tr>
+<tr><td><bdi dir="ltr">الفصول 6 و7 و8 و9 و10</bdi></td><td>لا ينطبق</td><td>لا حسابات ولا جلسات ولا صلاحيات ولا رموز ولا OAuth (32 متطلبًا).<br><strong>مع تعدد المستخدمين:</strong> تنطبق الفصول 6 و7 و8. ولا ينطبق 9 و10 ما دامت الجلسات عادية.</td></tr>
+<tr><td><bdi dir="ltr">11.3.1، 11.3.2، 14.3.1</bdi></td><td>لا ينطبق</td><td>لا تشفير ولا بيانات مصادَقة.<br><strong>مع تعدد المستخدمين:</strong> ينطبق 14.3.1، و11.3.1 و11.3.2 إن شفّر التطبيق بيانات بنفسه.</td></tr>
+</table>
+
 <h2>حدود التقييم</h2>
-<p>لم يُفحص: توليد حقيقي على الكرت، وقارئ الشاشة، والتباين قياسًا، وثغرات التبعيات المعروفة، وسكربتات القياس والتحقق، و<code>background_service.py</code>، ومجلدا القياسات. التقييم لا يشمل منصة مسك.</p>
+<p>وقت التقييم الأول (فُحصت لاحقًا ثغرات التبعيات وتباين الحالة الفارغة) لم يُفحص: توليد حقيقي على الكرت، وقارئ الشاشة، والتباين قياسًا، وثغرات التبعيات المعروفة، وسكربتات القياس والتحقق، و<code>background_service.py</code>، ومجلدا القياسات. التقييم لا يشمل منصة مسك.</p>
 
 <h2>المراجع</h2>
 <ul>
 <li><a href="https://www.w3.org/TR/WCAG22/">WCAG 2.2</a> (حجم الهدف: 2.5.8 و2.5.5)</li>
-<li><a href="https://owasp.org/www-project-application-security-verification-standard/">OWASP ASVS</a> — إطار مرجعي؛ لم يُجرَ تدقيق امتثال كامل.</li>
+<li><a href="https://owasp.org/www-project-application-security-verification-standard/">OWASP ASVS</a> — دُقِّق المستوى الأول من الإصدار <a href="https://github.com/OWASP/ASVS/tree/v5.0.0">5.0.0</a> (<a href="#asvs">النتائج</a>)؛ المستويان الثاني والثالث لم يُفحصا.</li>
 </ul>
 </body>
 </html>

@@ -20,6 +20,20 @@ class StartupTests(unittest.TestCase):
             with self.assertRaises(OSError):
                 server.StudioServer(('127.0.0.1', first.server_port), server.Handler).server_close()
 
+    def test_unlisted_formats_are_not_decoded_by_import_or_png_paths(self):
+        import base64
+        from PIL import Image
+        import preparation, processing
+        buffer = io.BytesIO()
+        Image.new('RGB', (8, 8)).save(buffer, format='TGA')
+        data = base64.b64encode(buffer.getvalue()).decode()
+        # A rejection alone would also pass with every decoder enabled, so check what Pillow was allowed to try.
+        for module, call, allowed in ((preparation, lambda: preparation.import_image({'image': 'data:image/png;base64,' + data}), preparation.IMPORT_FORMATS),
+                                      (processing, lambda: processing.decode('data:image/png;base64,' + data), ('PNG',))):
+            with patch.object(module.Image, 'open', wraps=Image.open) as opened, self.assertRaises(ValueError):
+                call()
+            self.assertEqual(opened.call_args.kwargs.get('formats'), allowed)
+
     def test_path_source_must_really_be_png(self):
         import base64
         import pen_paths
@@ -106,6 +120,11 @@ class HandlerTests(unittest.TestCase):
             self.assertEqual((response.status, response.getheader('Content-Type').split(';')[0]), (200, kind), path)
             self.assertTrue(body)
         self.assertEqual(self.request('GET', '/assets/fonts/../server.py')[0], 404)
+
+    def test_textual_assets_declare_utf8_and_binary_ones_do_not(self):
+        for kind in ('text/html', 'application/javascript', 'application/json', 'image/svg+xml'):
+            self.assertEqual(server.content_type(kind), kind + '; charset=utf-8')
+        self.assertEqual(server.content_type('image/png'), 'image/png')
 
     def test_brand_icons_manifest_and_tokens_are_served_with_their_types(self):
         manifest = json.loads((server.BRAND / 'site.webmanifest').read_text(encoding='utf-8'))

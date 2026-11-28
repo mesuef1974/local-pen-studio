@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>قواعد التحقق من المدخلات</title>
+<style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#17232a;--muted:#55666f;--line:#d6dfe3;--head:#eef5f6;--accent:#0f766e}
+@media (prefers-color-scheme:dark){:root{--bg:#121a1e;--fg:#e8eef0;--muted:#a3b2b9;--line:#2d3b42;--head:#1d292f;--accent:#5ec4bc}}
+body{margin:0 auto;max-width:960px;padding:32px 16px;background:var(--bg);color:var(--fg);font:16px/1.85 "Segoe UI",Tahoma,sans-serif;text-align:right}
+h1{font-size:1.7rem;margin-block:0 4px}h2{font-size:1.25rem;margin-block-start:36px;border-block-end:2px solid var(--accent);padding-block-end:4px}
+.muted{color:var(--muted)}table{width:100%;border-collapse:collapse;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:right;vertical-align:top}th{background:var(--head)}
+code{direction:ltr;unicode-bidi:isolate;font-size:.86em}a{color:var(--accent)}
+@media print{body{max-width:none;color:#000;background:#fff}table{display:table}tr{break-inside:avoid}h2{break-after:avoid}}
+</style>
+</head>
+<body>
+<h1>قواعد التحقق من مدخلات خادم FLUX</h1>
+<p class="muted">2026-11-27 · متطلب ASVS 5.0.0 رقم <bdi dir="ltr">2.1.1</bdi> · توثيق ما تفرضه الشيفرة. عند التعارض فالشيفرة هي المرجع، ويُحدَّث هذا الملف مع كل تغيير في الحدود.</p>
+
+<h2>قواعد كل الطلبات</h2>
+<table>
+<tr><th>القاعدة</th><th>الحد</th></tr>
+<tr><td><code>Host</code></td><td><code>localhost</code> أو <code>127.0.0.1</code> بمنفذ الخادم، وإلا 403.</td></tr>
+<tr><td><code>Origin</code> في <code>POST</code></td><td>الأصل المحلي نفسه، وإلا 403.</td></tr>
+<tr><td>المسارات</td><td>قائمة ثابتة للملفات ولنقاط <code>POST</code>؛ غيرها 404.</td></tr>
+<tr><td>نوع المحتوى والجسم</td><td><code>application/json</code>، وكائن JSON.</td></tr>
+<tr><td>حجم الجسم</td><td>22,000,000 بايت لـ<code>/api/import</code> و<code>/api/generate</code> و<code>/api/path-audit</code> و<code>/api/path-audit-target</code>، و9,000,000 للباقي.</td></tr>
+<tr><td>الأرقام</td><td>منتهية، وليست قيمًا منطقية، وضمن المجال المذكور لكل حقل.</td></tr>
+<tr><td>مهلة المقبس</td><td>30 ثانية.</td></tr>
+<tr><td>التزامن</td><td>قفل معالجة واحد (429 عند الانشغال) للتوليد والتجهيز والمسارات والتدقيق وإزالة الخلفية. <code>/api/import</code> و<code>/api/editor</code> خارجه.</td></tr>
+</table>
+
+<h2>الصور</h2>
+<p>كلها <code>data:</code> بترميز base64 صارم، وتُحدَّد صيغ المفكِّك قبل الفتح.</p>
+<table>
+<tr><th>الموضع</th><th>الصيغ</th><th>حجم الملف</th><th>الأبعاد</th></tr>
+<tr><td><code>/api/import</code></td><td>PNG وJPEG وWebP وBMP وTIFF وGIF (الإطار الأول)</td><td>15,000,000 بايت</td><td>حتى 40 مليون بكسل، وأصغر ضلع 3؛ تُصغَّر إلى 2000 ضلعًا</td></tr>
+<tr><td><code>/api/prepare</code> و<code>/api/background</code></td><td>PNG</td><td>6,000,000</td><td>حتى 4 ملايين بكسل، وأصغر ضلع 3</td></tr>
+<tr><td><code>/api/editor</code></td><td>PNG وJPEG وWebP</td><td>6,000,000</td><td>حتى 4 ملايين بكسل</td></tr>
+<tr><td><code>/api/paths</code> (غير الدقيق)</td><td>PNG</td><td>6,000,000</td><td>حتى 4 ملايين بكسل</td></tr>
+<tr><td>التدقيق والوضع الدقيق <code>faithful</code></td><td>PNG وJPEG وWebP</td><td>6,000,000</td><td>حتى 4 ملايين بكسل، وأكبر ضلع 4096</td></tr>
+<tr><td><code>/api/generate</code></td><td>PNG وJPEG وWebP</td><td>6,000,000 للصورة، و12,000,000 لمجموع الصورة والمراجع</td><td>حتى 4 ملايين بكسل</td></tr>
+</table>
+
+<h2>التوليد <code>/api/generate</code></h2>
+<table>
+<tr><th>الحقل</th><th>القاعدة</th></tr>
+<tr><td>الحقول المقبولة</td><td><code>image, style, prompt, resolution, seed, mode, references, aspect, controls, preserve</code> فقط.</td></tr>
+<tr><td><code>style, aspect, controls</code></td><td>قيم من الكتالوج وحده.</td></tr>
+<tr><td><code>preserve</code></td><td>مفاتيح معروفة بقيم منطقية.</td></tr>
+<tr><td><code>prompt</code></td><td>حتى 1200 حرف، وإلزامي مع <code>style=custom</code>. والعامل يرفض ما يتجاوز 512 رمزًا دون قص.</td></tr>
+<tr><td><code>resolution</code> و<code>seed</code></td><td>512 أو 768 أو 1024؛ بذرة صحيحة من 0 إلى 2147483647.</td></tr>
+<tr><td><code>mode</code> و<code>references</code></td><td><code>generate</code> بلا صورة ولا مراجع؛ <code>edit</code> صورة بلا مراجع؛ <code>multi</code> مرجع أو مرجعان بدور معروف.</td></tr>
+<tr><td>المهمة والإلغاء</td><td>معرّف عشوائي؛ يُحتفظ بآخر 8 مهام؛ الإلغاء يشترط معرّفًا نصيًّا.</td></tr>
+</table>
+
+<h2>التجهيز والمحرر</h2>
+<table>
+<tr><th>الحقل</th><th>القاعدة</th></tr>
+<tr><td><code>prepare.settings</code></td><td>لا مفاتيح مجهولة. <code>background</code>: auto أو subject أو keep أو border. <code>style</code>: color أو tones أو ink أو gray. أعداد صحيحة: levels من 4 إلى 32، وdenoise وtolerance من 0 إلى 100، وcontrast من 50 إلى 180، وbrightness من −60 إلى 60.</td></tr>
+<tr><td><code>editor.operation</code></td><td>من قائمة معروفة، وغيرها مرفوض.</td></tr>
+<tr><td>أبعاد المحرر</td><td>القص داخل الصورة؛ تغيير المقاس من 2 إلى 2000؛ الدوران من −270 إلى 270؛ DPI من 36 إلى 1200.</td></tr>
+<tr><td>التحديد</td><td>يطابق أبعاد الصورة، وإلزامي للترميم.</td></tr>
+</table>
+
+<h2>المسارات والتدقيق</h2>
+<table>
+<tr><th>الحقل</th><th>القاعدة</th></tr>
+<tr><td><code>lineMode</code></td><td>edges أو centerline أو ink، أو faithful.</td></tr>
+<tr><td>إعدادات التتبع</td><td>level من 0 إلى 100؛ tolerance من 0 إلى 2.5؛ minLength من 2 إلى 25؛ inkThreshold من 0 إلى 245؛ componentMin من 0 إلى 150؛ spurLength من 0 إلى 20؛ junctionRouting منطقي.</td></tr>
+<tr><td>القياس الفيزيائي</td><td>mmPerPixel من 0.005 إلى 5؛ penMm من 0.05 إلى 1.2.</td></tr>
+<tr><td>حد المسارات والنقاط</td><td>من 10,000 إلى 40,000 مسار بحسب المساحة (10,000 للتتبع غير الدقيق)، والنقاط 40 ضعف حد المسارات.</td></tr>
+<tr><td>نسخ الحبر <code>ink</code></td><td>حتى 120,000 بكسل حبر و6000 مكوّن.</td></tr>
+<tr><td>الوضع الدقيق</td><td>الحبر لا يتجاوز 45% من المساحة.</td></tr>
+<tr><td>مسارات التدقيق</td><td>كل مسار نقطتان فأكثر، وكل نقطة داخل الصورة.</td></tr>
+<tr><td>لوحة التدقيق</td><td>أكبر ضلع 8192، وحتى 40 مليون بكسل.</td></tr>
+</table>
+
+<h2>ما لا يفرضه الخادم</h2>
+<ul>
+<li>ترتيب «الاعتماد ثم المسارات» تفرضه الواجهة وحدها (<bdi dir="ltr">2.3.1</bdi>).</li>
+<li>التحقق من قالب الليزر يجري في المتصفح (<code>laser-template.js</code>) لأنه لا يُرسل إلى الخادم.</li>
+</ul>
+</body>
+</html>
