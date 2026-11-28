@@ -33,7 +33,7 @@ section{margin-block-start:2.5rem}section+section{border-block-start:6px double 
 <body>
 <main>
 <h1>مسار: تقييم الجودة وتصميم تعدد المستخدمين</h1>
-<p class="muted">تجمع تقرير الجودة ووثيقة التصميم. آخر تحديث: 2026-11-27.</p>
+<p class="muted">تجمع تقرير الجودة ووثيقة التصميم. آخر تحديث: 2026-11-28.</p>
 <ol>
 <li><a href="#status">الحالة الآن</a></li>
 <li><a href="#review">تقييم جودة استوديو FLUX «مسار»</a></li>
@@ -44,13 +44,13 @@ section{margin-block-start:2.5rem}section+section{border-block-start:6px double 
 <div class="scroll"><table>
 <tr><th>البند</th><th>الحالة</th></tr>
 <tr><td>المنصة القائمة</td><td>استوديو لمستخدم واحد على <code>127.0.0.1:8770</code>، بمراحل أربع حتى الإخراج، بلا حسابات ولا قاعدة بيانات</td></tr>
-<tr><td>تقرير الجودة</td><td>دفعاته الأربع نُفِّذت ودُمجت. بقيت تجربة الهاتف الحقيقي وقارئ الشاشة، ومتطلبا ASVS جزئيان</td></tr>
-<tr><td>الاختبارات</td><td>شُغِّلت في 2026-11-27: 77 اختبار JavaScript و56 اختبار Python (<code>test_fidelity</code> و<code>test_generation</code> و<code>test_server</code>) ناجحة كلها</td></tr>
-<tr><td>تعدد المستخدمين</td><td>القرارات الأساسية معتمدة، والتصميم التفصيلي مقترح. لم يُبنَ من الخادم شيء ولم تُثبَّت حزمة</td></tr>
-<tr><td>المرحلة 0: الكرت</td><td>تم: 23 طلبًا متتاليًا ناجحًا (<a href="#phase0">القياس</a>)</td></tr>
+<tr><td>تقرير الجودة</td><td><del>دفعاته الأربع نُفِّذت ودُمجت.</del> بقيت تجربة الهاتف الحقيقي وقارئ الشاشة، ومتطلبا ASVS جزئيان</td></tr>
+<tr><td>الاختبارات</td><td>شُغِّلت في 2026-11-27: 77 اختبار JavaScript و56 اختبار Python (<code>test_fidelity</code> و<code>test_generation</code> و<code>test_server</code>) ناجحة كلها. وخادم تعدد المستخدمين: 30 اختبارًا، ناجحة في CI على PostgreSQL 17 (2026-11-28)</td></tr>
+<tr><td>تعدد المستخدمين</td><td><del>نُفِّذت المرحلة 1 ودُمجت في 2026-11-28 (<a href="https://github.com/mesuef1974/local-pen-studio/pull/136"><span class="ltr">#136</span></a>)</del>: <a href="../masar-server/README.md"><code>masar-server/</code></a>. <del>أُعدَّت القاعدة <code>masar</code> وحساب المشرف على جهاز المالك.</del> لا واجهة دخول بعد، ولم يُجرَّب الدخول على خادم عامل، ولا يعمل على الشبكة المحلية. المراحل 2 إلى 6 لم تبدأ</td></tr>
+<tr class="done"><td>المرحلة 0: الكرت</td><td>تم: 23 طلبًا متتاليًا ناجحًا (<a href="#phase0">القياس</a>)</td></tr>
 <tr><td>المرحلة 0: الشبكة</td><td>لم تكتمل: يلزم تشغيل <code>scripts/masar_phase0/reach_test.py</code> على شبكة المدرسة وفتح الرابط من جهاز معلم. شبكة البيت لا تُثبت شيئًا</td></tr>
-<tr><td>تدقيق الأمان لتعدد المستخدمين</td><td>لم يُجرَ. تدقيق ASVS الحالي يخص المستخدم الواحد، ويُعاد كله على الخادم الجديد قبل تشغيل عدة معلمين (<a href="#asvs">ما يتغيّر</a>)</td></tr>
-<tr><td>تحديثات التبعيات</td><td>روجعت طلبات Dependabot الستة: دُمجت ترقيات إجراءات CI (<span class="ltr">#90, #91, #93</span>)، وأُغلقت ترقيات Python (<span class="ltr">#92, #94, #95</span>) لأنها ترقّي ملف CI دون ملفات التشغيل (<a href="https://github.com/mesuef1974/local-pen-studio/pulls?q=is%3Apr+is%3Aclosed">الطلبات المغلقة</a>)</td></tr>
+<tr><td>تدقيق الأمان لتعدد المستخدمين</td><td>لم يُجرَ تدقيق ASVS. <del>جرت للمرحلة 1 مراجعة أمنية آلية مستقلة أُصلحت نتائجها (4 متوسطة و3 منخفضة).</del> تدقيق ASVS الحالي يخص المستخدم الواحد، ويُعاد كله على الخادم الجديد قبل تشغيل عدة معلمين (<a href="#asvs">ما يتغيّر</a>)</td></tr>
+<tr class="done"><td>تحديثات التبعيات</td><td>روجعت طلبات Dependabot الستة: دُمجت ترقيات إجراءات CI (<span class="ltr">#90, #91, #93</span>)، وأُغلقت ترقيات Python (<span class="ltr">#92, #94, #95</span>) لأنها ترقّي ملف CI دون ملفات التشغيل (<a href="https://github.com/mesuef1974/local-pen-studio/pulls?q=is%3Apr+is%3Aclosed">الطلبات المغلقة</a>)</td></tr>
 </table></div>
 <p><strong>المنتظر من المالك:</strong></p>
 <ul>
@@ -68,14 +68,14 @@ section{margin-block-start:2.5rem}section+section{border-block-start:6px double 
 <p>المشطوب بالأحمر نُفِّذ ودُمج في <code>main</code> (2026-11-27). الشطب يعني التنفيذ والدمج لا اكتمال التجربة. بعد <code>253e709</code> لم يتغيّر في شيفرة الاستوديو إلا تعريب عنوان النسخة A (<bdi dir="ltr">#125</bdi>). النصوص ومواضع الأسطر أدناه تصف الحال وقت التقييم.</p>
 <table>
 <tr><th>الدفعة</th><th>الحالة</th><th>الطلبات</th></tr>
-<tr><td>الأولى: حماية العمل</td><td>نُفِّذت (البنود 1-9)</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/104">#104</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/106">#106</a></td></tr>
-<tr><td>الثانية: متانة الخادم</td><td>نُفِّذت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/105">#105</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/111">#111</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/112">#112</a></td></tr>
-<tr><td>الثالثة: تجربة الاستخدام</td><td>نُفِّذت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/107">#107</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/114">#114</a></td></tr>
-<tr><td>الرابعة: الصيانة والأداء</td><td>نُفِّذت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/108">#108</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/109">#109</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/110">#110</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/115">#115</a></td></tr>
-<tr><td>بعد الدفعات: ثغرات التبعيات والتباين</td><td>نُفِّذ؛ جُرِّب التوليد بالحزم المرقّاة على الكرت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/117">#117</a></td></tr>
-<tr><td>تدقيق ASVS المستوى الأول</td><td>نُفِّذ وأُصلح؛ بقي متطلبان جزئيان (<a href="#asvs">النتائج</a>)</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/119">#119</a></td></tr>
-<tr><td>التجربة دون توليد، والبيئة المعزولة، وتوثيق التحقق</td><td>نُفِّذت وأُصلح خلل الاستيراد؛ الخادم المحلي يعمل من <code>.venv-server</code></td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/121">#121</a></td></tr>
-<tr><td>تجربة الكرت، وإصلاح قوالب التوليد من النص</td><td>نجح التوليد واستئنافه وإلغاؤه وفتح نسخة سابقة وإزالة الخلفية ومقارنة <bdi dir="ltr">A/B</bdi>؛ وأُصلحت كتابة مشوّهة ظهرت تحت البورتريه</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/123">#123</a></td></tr>
+<tr class="done"><td>الأولى: حماية العمل</td><td>نُفِّذت (البنود 1-9)</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/104">#104</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/106">#106</a></td></tr>
+<tr class="done"><td>الثانية: متانة الخادم</td><td>نُفِّذت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/105">#105</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/111">#111</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/112">#112</a></td></tr>
+<tr class="done"><td>الثالثة: تجربة الاستخدام</td><td>نُفِّذت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/107">#107</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/114">#114</a></td></tr>
+<tr class="done"><td>الرابعة: الصيانة والأداء</td><td>نُفِّذت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/108">#108</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/109">#109</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/110">#110</a> <a href="https://github.com/mesuef1974/local-pen-studio/pull/115">#115</a></td></tr>
+<tr class="done"><td>بعد الدفعات: ثغرات التبعيات والتباين</td><td>نُفِّذ؛ جُرِّب التوليد بالحزم المرقّاة على الكرت</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/117">#117</a></td></tr>
+<tr><td>تدقيق ASVS المستوى الأول</td><td><del>نُفِّذ وأُصلح</del>؛ بقي متطلبان جزئيان (<a href="#asvs">النتائج</a>)</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/119">#119</a></td></tr>
+<tr class="done"><td>التجربة دون توليد، والبيئة المعزولة، وتوثيق التحقق</td><td>نُفِّذت وأُصلح خلل الاستيراد؛ الخادم المحلي يعمل من <code>.venv-server</code></td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/121">#121</a></td></tr>
+<tr class="done"><td>تجربة الكرت، وإصلاح قوالب التوليد من النص</td><td>نجح التوليد واستئنافه وإلغاؤه وفتح نسخة سابقة وإزالة الخلفية ومقارنة <bdi dir="ltr">A/B</bdi>؛ وأُصلحت كتابة مشوّهة ظهرت تحت البورتريه</td><td><a href="https://github.com/mesuef1974/local-pen-studio/pull/123">#123</a></td></tr>
 </table>
 <p><strong>التالي، بالترتيب المقترح:</strong></p>
 <ol>
@@ -159,7 +159,7 @@ section{margin-block-start:2.5rem}section+section{border-block-start:6px double 
 <h2 id="asvs">تدقيق OWASP ASVS 5.0.0 — المستوى الأول</h2>
 <p class="muted">2026-11-27 · خادم FLUX وواجهته، بقراءة الشيفرة وفحص حي محدود دون تعديل · مراجعة ذاتية وليست شهادة امتثال · محرر الصور وبيئة إزالة الخلفية لم يُفحصا بعمق.</p>
 <p>من 70 متطلبًا: <del>18 مستوفى، 5 جزئي، 2 غير مستوفى</del> <strong>23 مستوفى، 2 جزئي، 45 لا ينطبق</strong> (بعد الإصلاح). «لا ينطبق» على المصادقة لا يعني الحماية: أي برنامج على الجهاز يستطيع استدعاء الواجهة، لأن Origin يُزوَّر من خارج المتصفح.</p>
-<p><strong>تحديث 2026-11-27:</strong> هذه النتائج للنسخة القائمة اليوم، وهي لمستخدم واحد، وما زالت تصفها. وقد تقرّر بعدها تعدد المستخدمين، ولم يُبنَ خادمه بعد؛ ما يتغيّر معه مبيَّن في أسطر «لا ينطبق»، وهو تقدير على التصميم لا تدقيق.</p>
+<p><strong>تحديث 2026-11-27:</strong> هذه النتائج للنسخة القائمة اليوم، وهي لمستخدم واحد، وما زالت تصفها. وقد تقرّر بعدها تعدد المستخدمين، وبُنيت من خادمه المرحلة 1 في 2026-11-28 ولم يُدقَّق على ASVS؛ ما يتغيّر معه مبيَّن في أسطر «لا ينطبق»، وهو تقدير على التصميم لا تدقيق.</p>
 <table>
 <tr><th>المتطلب</th><th>الحكم</th><th>الدليل أو الملاحظة</th></tr>
 <tr><td><bdi dir="ltr">5.2.2</bdi></td><td><del>جزئي</del> مستوفى</td><td>أُصلح: <code>/api/import</code> و<code>decode</code> يحدّدان <code>formats=</code> قبل فتح الصورة.</td></tr>
@@ -199,7 +199,7 @@ section{margin-block-start:2.5rem}section+section{border-block-start:6px double 
 </section>
 <section id="design">
 <h1>مسار متعدد المستخدمين: وثيقة التصميم</h1>
-<p class="muted">التاريخ: 2026-11-27. الحالة: القرارات أدناه معتمدة والباقي مقترح. لم يُبنَ من الخادم شيء ولم تُثبَّت أي حزمة؛ بُنيت أداتا المرحلة 0 وحدهما.</p>
+<p class="muted">التاريخ: 2026-11-27. الحالة: القرارات أدناه معتمدة والباقي مقترح. تحديث 2026-11-28: بُنيت أداتا المرحلة 0، ثم المرحلة 1 من الخادم (<a href="https://github.com/mesuef1974/local-pen-studio/pull/136"><span class="ltr">#136</span></a>) بموافقة المالك قبل اختبار الشبكة.</p>
 
 <h2>القرارات المعتمدة من المالك</h2>
 <div class="scroll"><table>
@@ -251,7 +251,7 @@ File store (sha256)  <-----  Compute worker (FLUX, background removal, paths)
 <h2>قاعدة البيانات</h2>
 <div class="scroll"><table>
 <tr><th>الكيان</th><th>أهم الحقول</th><th>قيود</th></tr>
-<tr><td><code>User</code></td><td>اسم الدخول، الاسم، الدور، مفعّل</td><td>دوران: معلم ومشرف</td></tr>
+<tr class="done"><td><code>User</code></td><td>اسم الدخول، الاسم، الدور، مفعّل</td><td>دوران: معلم ومشرف</td></tr>
 <tr><td><code>Project</code></td><td>المالك، العنوان، المرحلة، تاريخ التحديث، تاريخ الحذف</td><td>مالك واحد</td></tr>
 <tr><td><code>ProjectShare</code></td><td>المشروع، المستخدم، قراءة أو تعديل</td><td>فريد لكل زوج؛ يؤجَّل إلى المرحلة الأخيرة</td></tr>
 <tr><td><code>Asset</code></td><td>sha256، النوع، الحجم، العرض، الارتفاع</td><td>sha256 فريد؛ القاعدة لا تحمل محتوى الملف</td></tr>
@@ -261,7 +261,7 @@ File store (sha256)  <-----  Compute worker (FLUX, background removal, paths)
 <tr><td><code>PathSet</code></td><td>الاعتماد، الإعدادات، الورق، الملف، مقاييس المطابقة</td><td>لا يُنشأ بلا اعتماد</td></tr>
 <tr><td><code>Export</code></td><td>مجموعة المسارات، قلم أو ليزر، الصيغة، الأصل</td><td>تُنزَّل مرفقًا لا صفحة</td></tr>
 <tr><td><code>Preset</code></td><td>المالك أو عام، النوع (وصف، ورق، خامة)، القيم</td><td>العام يحرره المشرف</td></tr>
-<tr><td><code>AuditEvent</code></td><td>المستخدم، الفعل، الهدف، الوقت، عنوان الجهاز</td><td>إضافة فقط؛ بلا صور ولا كلمات مرور</td></tr>
+<tr class="done"><td><code>AuditEvent</code></td><td>المستخدم، الفعل، الهدف، الوقت، عنوان الجهاز</td><td>إضافة فقط؛ بلا صور ولا كلمات مرور</td></tr>
 </table></div>
 <pre>
 User 1--* Project 1--* ImageVersion 1--* Approval 1--* PathSet 1--* Export
@@ -305,13 +305,13 @@ ImageVersion *--1 Asset        PathSet *--1 Asset        Export *--1 Asset
 <tr><th>الفعل</th><th>المعلم</th><th>المشرف</th></tr>
 <tr><td>إنشاء مشروع وتوليد وتصدير</td><td>نعم</td><td>نعم</td></tr>
 <tr><td>فتح مشروع غيره</td><td>إن شورك معه فقط</td><td>لا، إلا بإجراء صريح مسجَّل</td></tr>
-<tr><td>إنشاء الحسابات وتعطيلها</td><td>لا</td><td>نعم</td></tr>
+<tr class="done"><td>إنشاء الحسابات وتعطيلها</td><td>لا</td><td>نعم</td></tr>
 <tr><td>إلغاء مهمة</td><td>مهمته فقط</td><td>أي مهمة</td></tr>
 <tr><td>سجل التدقيق والإعدادات العامة</td><td>لا</td><td>نعم</td></tr>
 </table></div>
 <ul>
-<li>لا تسجيل ذاتي. كلمة المرور الأولى تُغيَّر عند أول دخول، وتُخزَّن بتجزئة Argon2.</li>
-<li>جلسات HttpOnly وSecure وSameSite مع حماية CSRF، وانتهاء بالخمول، وحد لمحاولات الدخول.</li>
+<li class="done">لا تسجيل ذاتي. كلمة المرور الأولى تُغيَّر عند أول دخول، وتُخزَّن بتجزئة Argon2.</li>
+<li class="done">جلسات HttpOnly وSecure وSameSite مع حماية CSRF، وانتهاء بالخمول، وحد لمحاولات الدخول.</li>
 <li>فحص الملكية في كل مسار، ومعرّفات غير متسلسلة، ويُختبر صراحةً أن معلمًا لا يقرأ بيانات آخر.</li>
 <li>الحفاظ على القيود الحالية: فحص المضيف والأصل، وسياسة CSP، وحدود الحجم، وحصر صيغ الصور.</li>
 <li>ملفات SVG الآتية من المتصفح تُفحص قبل الحفظ وتُقدَّم مرفقًا للتنزيل.</li>
@@ -354,8 +354,8 @@ ImageVersion *--1 Asset        PathSet *--1 Asset        Export *--1 Asset
 <p>كل مرحلة طلب دمج مستقل.</p>
 <div class="scroll"><table>
 <tr><th>#</th><th>العمل</th><th>معيار القبول</th></tr>
-<tr><td>0 (قياس الكرت تم، والشبكة باقية)</td><td>تأكيد الشبكة، وقياس FLUX تحت طلبات متتالية على هذا الجهاز</td><td>أزمنة مقيسة، وجهازا معلمين يصلان إلى صفحة تجريبية عبر الواي فاي</td></tr>
-<tr><td>1</td><td>هيكل الخادم، الحسابات، الأدوار، التدقيق</td><td>دخول وخروج وإنشاء حساب بالاختبارات</td></tr>
+<tr><td>0 (<del>قياس الكرت تم</del>، والشبكة باقية)</td><td>تأكيد الشبكة، <del>وقياس FLUX تحت طلبات متتالية على هذا الجهاز</del></td><td><del>أزمنة مقيسة</del>، وجهازا معلمين يصلان إلى صفحة تجريبية عبر الواي فاي</td></tr>
+<tr class="done"><td>1</td><td>هيكل الخادم، الحسابات، الأدوار، التدقيق</td><td>دخول وخروج وإنشاء حساب بالاختبارات</td></tr>
 <tr><td>2</td><td>المشاريع والملفات، وربط الواجهة بدل IndexedDB، واستيراد العمل الحالي مرة واحدة</td><td>مشروع يُفتح من جهاز آخر، ومعلم لا يرى مشروع غيره</td></tr>
 <tr><td>3</td><td>الطابور والعامل لكل العمليات الثقيلة</td><td>طلبان متزامنان ينجحان بالترتيب، وإعادة الإرسال لا تكرر المهمة</td></tr>
 <tr><td>4</td><td>الاعتماد والمسارات والتصدير على الخادم</td><td>مخرجات SVG مطابقة بايتًا للنسخة الحالية للمدخلات نفسها</td></tr>
@@ -363,13 +363,13 @@ ImageVersion *--1 Asset        PathSet *--1 Asset        Export *--1 Asset
 <tr><td>6</td><td>المشاركة، وتجربة مع معلمين اثنين أو ثلاثة</td><td>رحلة كاملة من الصورة إلى الإخراج دون مساعدة</td></tr>
 </table></div>
 
-<h2>حزم تحتاج موافقة قبل التثبيت</h2>
-<p>Django، وdjango-ninja، ومشغّل اتصال PostgreSQL (<code>psycopg</code>)، و<code>argon2-cffi</code>، وخادم WSGI يعمل على ويندوز (مثل <code>waitress</code>)، وPostgreSQL، والوسيط العكسي. لم يُوافَق على شيء منها بعد. تُحدَّد الإصدارات وتُقفل ببصماتها عند المرحلة 1.</p>
+<h2>الحزم وموافقاتها</h2>
+<p>Django، وdjango-ninja، ومشغّل اتصال PostgreSQL (<code>psycopg</code>)، و<code>argon2-cffi</code>، وخادم WSGI يعمل على ويندوز (مثل <code>waitress</code>)، وPostgreSQL، والوسيط العكسي. <del>وافق المالك في 2026-11-28 على Django وdjango-ninja و<code>psycopg</code> و<code>argon2-cffi</code> واستعمال PostgreSQL 17 المثبَّت؛ ثُبِّتت وقُفلت ببصماتها في <code>masar-server/requirements.lock</code>.</del> خادم WSGI والوسيط العكسي لم يُوافَق عليهما بعد.</p>
 
 <h2>المخاطر</h2>
 <div class="scroll"><table>
 <tr><th>الخطر</th><th>المعالجة</th></tr>
-<tr><td>شبكة المدرسة تعزل الأجهزة أو تمنع الخوادم</td><td>تقنية المعلومات تسمح بإفادة المالك؛ ويبقى اختبار الوصول في المدرسة قبل أي بناء</td></tr>
+<tr><td>شبكة المدرسة تعزل الأجهزة أو تمنع الخوادم</td><td>تقنية المعلومات تسمح بإفادة المالك؛ ويبقى اختبار الوصول في المدرسة قبل النشر على الشبكة</td></tr>
 <tr><td>تعذر توزيع الشهادة الداخلية على أجهزة المعلمين</td><td>اسم نطاق من تقنية المعلومات بشهادة موثوقة لديها</td></tr>
 <tr><td>لابتوب شخصي واحد هو نقطة تعطل وحيدة</td><td>نسخ احتياطي وخطوات استرجاع مكتوبة</td></tr>
 <tr><td>من يدير النظام بعد الإطلاق</td><td>تسمية مشرف قبل المرحلة 5</td></tr>
