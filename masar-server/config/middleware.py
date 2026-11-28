@@ -1,3 +1,6 @@
+from django.http import HttpResponse
+
+
 class ResponseHeadersMiddleware:
     """The API serves JSON only: nothing may be cached, framed or executed."""
 
@@ -9,3 +12,15 @@ class ResponseHeadersMiddleware:
         response['Cache-Control'] = 'no-store'
         response['Content-Security-Policy'] = "default-src 'none'; frame-ancestors 'none'"
         return response
+
+
+class RefuseMultipartMiddleware:
+    """No endpoint takes multipart, and the CSRF check would spool its files to disk before authentication."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.content_type.startswith('multipart/'):
+            return HttpResponse(status=415)
+        return self.get_response(request)

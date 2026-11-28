@@ -86,6 +86,7 @@
 **/.DS_Store
 
 !/masar-server/
+/masar-server/var/
 
 !/flux-studio/
 /flux-studio/*

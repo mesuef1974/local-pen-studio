@@ -26,10 +26,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'audit',
     'accounts',
+    'projects',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'config.middleware.ResponseHeadersMiddleware',
+    'config.middleware.RefuseMultipartMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -84,6 +86,10 @@ SECURE_REFERRER_POLICY = 'no-referrer'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 DATA_UPLOAD_MAX_MEMORY_SIZE = 64 * 1024
+# Project files live outside git. The two upload endpoints enforce their own limits.
+FILES_DIR = os.environ.get('MASAR_FILES_DIR') or BASE_DIR / 'var' / 'files'
+MAX_ASSET_BYTES = 32 * 1024 * 1024
+MAX_STATE_BYTES = 16 * 1024 * 1024
 
 LANGUAGE_CODE = 'ar'
 TIME_ZONE = 'Asia/Qatar'
