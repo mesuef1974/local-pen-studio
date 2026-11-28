@@ -64,6 +64,8 @@ async function load(){
 async function enter(account){
  user=account;
  if(account.must_change_password){show('password');return;}
+ // Sent here by the studio: go back once signed in. Only this fixed target, never a URL from the query.
+ if(new URLSearchParams(location.search).get('next')==='studio'){location.replace('/prepare');return;}
  await load();show('projects');
 }
 

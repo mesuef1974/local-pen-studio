@@ -7,7 +7,7 @@ from ninja.utils import check_csrf
 
 from accounts import services
 from accounts.models import User
-from accounts.permissions import require_supervisor, session_auth
+from accounts.permissions import require_password_changed, require_supervisor, session_auth
 
 auth_router = Router()
 users_router = Router(auth=session_auth)
@@ -54,6 +54,13 @@ def login(request, body: Credentials):
     if check_csrf(request):
         raise HttpError(403, 'CSRF check Failed')
     return services.sign_in(request, body.username, body.password)
+
+
+@auth_router.post('/verify', auth=session_auth, response={204: None})
+def verify(request):
+    # Asked by the studio before it computes anything: a live session, its CSRF token, a permanent password.
+    require_password_changed(request)
+    return 204, None
 
 
 @auth_router.get('/me', auth=session_auth, response=UserOut)

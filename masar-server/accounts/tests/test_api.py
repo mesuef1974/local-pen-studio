@@ -29,7 +29,7 @@ class Api:
 
     def token(self):
         self.client.get('/api/auth/csrf', secure=True)
-        return self.client.cookies['csrftoken'].value
+        return self.client.cookies['masar_csrftoken'].value
 
     def post(self, path, body=None, csrf=True, **extra):
         if csrf:

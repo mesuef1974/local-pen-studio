@@ -29,7 +29,7 @@ ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/cuda-results.json']=ROOT/'g
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/webgpu-direct-fixed-heldout-comparison.json']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'webgpu-direct-fixed-heldout-comparison.json'
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/benchmark_cuda_path.py']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'benchmark_cuda_path.py'
 GATE=threading.Lock()
-ASSETS.update({'/projects':ROOT/'projects.html','/projects.js':ROOT/'projects.js','/projects.css':ROOT/'projects.css','/account-api.js':ROOT/'account-api.js'})
+ASSETS.update({'/session-gate.js':ROOT/'session-gate.js','/projects':ROOT/'projects.html','/projects.js':ROOT/'projects.js','/projects.css':ROOT/'projects.css','/account-api.js':ROOT/'account-api.js'})
 ASSETS['/api-client.js']=ROOT/'api-client.js'
 ASSETS.update({'/tool-settings.js':ROOT/'tool-settings.js','/path-canvas.js':ROOT/'path-canvas.js'})
 ASSETS.update({'/'+name:ROOT/name for name in ('plan-export.js','stage-metrics.js','fidelity-panel.js','paper-preview.js','laser-export.js','laser-template.js','theme.js','ui-text.js','lens.js','screens.css','output-stage.js','work-store.js','export-actions.js','laser-worker.js','work-gate.js','paths-stage.js','generation-stage.js')})
@@ -122,6 +122,13 @@ class Handler(SimpleHTTPRequestHandler):
         except OSError:self.close_connection=True;return
         if len(body)<size:self.close_connection=True;return  # never forward a truncated body
         self.account('POST',path,body)
+    def authorized(self):
+        try:verdict=account_proxy.verify(self.headers)
+        except (OSError,http.client.HTTPException):verdict=None
+        if verdict==204:return True
+        if verdict in (401,403):self.reply(verdict,{'error':'سجّل الدخول من «مشاريعي» ثم أعد المحاولة.','code':'auth_required'})
+        else:self.reply(503,{'error':'خادم الحسابات غير مشغَّل؛ المعالجة تحتاج دخولًا.','code':'accounts_unavailable'})
+        return False
     def do_GET(self):self.asset()
     def do_HEAD(self):self.asset(True)
     def refuse(self,status,message):
@@ -146,6 +153,8 @@ class Handler(SimpleHTTPRequestHandler):
             size=int(self.headers.get('Content-Length','0'))
             if self.headers.get_content_type()!='application/json' or not 0<size<=(22_000_000 if path in ['/api/import','/api/generate','/api/path-audit','/api/path-audit-target'] else 9_000_000):raise ValueError()
             raw=self.rfile.read(size);size=None
+            # Nothing is parsed or computed before the account server accepts the session.
+            if not self.authorized():return
             data=json.loads(raw)
             if not isinstance(data,dict):raise ValueError()
         except (ValueError,UnicodeError,RecursionError):
