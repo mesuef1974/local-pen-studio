@@ -1,5 +1,5 @@
 """Standalone three-stage local workspace. Reuses existing engines, no remote services."""
-import argparse,hashlib,json,logging,logging.handlers,sys,threading
+import argparse,hashlib,http.client,json,logging,logging.handlers,sys,threading
 from http.server import SimpleHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit,parse_qs
@@ -12,6 +12,7 @@ if not LOG.handlers:
     _handler=logging.handlers.RotatingFileHandler(ROOT/'server-errors.log',maxBytes=512_000,backupCount=2,encoding='utf-8',delay=True)
     _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'));LOG.addHandler(_handler);LOG.setLevel(logging.INFO)
 sys.path[:0]=[str(TRACE),str(DRAW)]
+import account_proxy
 ASSETS={'/':ROOT/'index.html','/prepare':ROOT/'index.html','/review':ROOT/'index.html','/adoption':ROOT/'platform-adoption.html','/paths':ROOT/'index.html','/output':ROOT/'index.html','/app.js':ROOT/'app.js','/webgpu-audit.js':ROOT/'webgpu-audit.js','/webgpu-path-raster.js':ROOT/'webgpu-path-raster.js','/workspace.css':ROOT/'workspace.css','/paper.js':ROOT/'paper.js','/workflow.js':ROOT/'workflow.js','/geometry.js':ROOT/'geometry.js','/sample-ink.png':ROOT/'sample-ink.png','/sample.png':DRAW/'photo-lineart-comparison/original.png','/sample-art.png':TRACE/'sample.png','/image-editor.js':DRAW/'image-editor.js','/image-editor.css':DRAW/'image-editor.css'}
 ASSETS['/swot']=ROOT/'ui-swot-report-ar.html'
 ASSETS['/swot-samples/horse-style-transfer.png']=ROOT/'reference-style-samples'/'horse-style-transfer.png'
@@ -28,6 +29,7 @@ ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/cuda-results.json']=ROOT/'g
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/webgpu-direct-fixed-heldout-comparison.json']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'webgpu-direct-fixed-heldout-comparison.json'
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/benchmark_cuda_path.py']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'benchmark_cuda_path.py'
 GATE=threading.Lock()
+ASSETS.update({'/projects':ROOT/'projects.html','/projects.js':ROOT/'projects.js','/projects.css':ROOT/'projects.css','/account-api.js':ROOT/'account-api.js'})
 ASSETS['/api-client.js']=ROOT/'api-client.js'
 ASSETS.update({'/tool-settings.js':ROOT/'tool-settings.js','/path-canvas.js':ROOT/'path-canvas.js'})
 ASSETS.update({'/'+name:ROOT/name for name in ('plan-export.js','stage-metrics.js','fidelity-panel.js','paper-preview.js','laser-export.js','laser-template.js','theme.js','ui-text.js','lens.js','screens.css','output-stage.js','work-store.js','export-actions.js','laser-worker.js','work-gate.js','paths-stage.js','generation-stage.js')})
@@ -95,6 +97,7 @@ class Handler(SimpleHTTPRequestHandler):
     def asset(self,head=False):
         if not self.valid_host():self.reply(403,{'error':'عنوان المضيف غير مسموح.'});return
         path=urlsplit(self.path).path
+        if not head and account_proxy.matches(path):self.account('GET',path);return
         if path=='/api/status':self.reply(200,{'service':'flux-studio','stages':['flux-editing','image-approval','pen-paths'],'imageModel':'FLUX.2 Klein 4B Q5_K_M','optionalBackgroundModel':'BiRefNet','approvalRequired':True,'retiredEngines':['SDXL','Lineart']});return
         if path=='/api/generation':
             query=parse_qs(urlsplit(self.path).query)
@@ -103,6 +106,22 @@ class Handler(SimpleHTTPRequestHandler):
         if not file or not file.is_file():self.reply(404,{'error':'غير موجود.'});return
         raw=file.read_bytes();self.send_response(200);self.send_header('Content-Type',content_type(TYPES.get(file.suffix) or self.guess_type(str(file))));self.send_header('Content-Length',str(len(raw)));self.end_headers()
         if not head:self.wfile.write(raw)
+    def account(self,method,path,body=None):
+        try:status,headers,raw=account_proxy.forward(method,path,urlsplit(self.path).query,self.headers,body)
+        except (OSError,http.client.HTTPException):self.reply(503,{'detail':'خادم الحسابات غير مشغَّل.','code':'accounts_unavailable'});return
+        try:
+            self.send_response(status)
+            for name,value in headers:self.send_header(name,value)
+            self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
+        except (BrokenPipeError,ConnectionResetError,TimeoutError):pass
+    def account_post(self,path):
+        try:size=int(self.headers.get('Content-Length','0'))
+        except ValueError:size=-1
+        if not 0<=size<=account_proxy.body_limit(path):self.refuse(413,'بيانات الطلب غير صالحة أو أكبر من الحد.');return
+        try:body=self.rfile.read(size)
+        except OSError:self.close_connection=True;return
+        if len(body)<size:self.close_connection=True;return  # never forward a truncated body
+        self.account('POST',path,body)
     def do_GET(self):self.asset()
     def do_HEAD(self):self.asset(True)
     def refuse(self,status,message):
@@ -120,6 +139,7 @@ class Handler(SimpleHTTPRequestHandler):
         port=self.server.server_port
         if not self.valid_host() or self.headers.get('Origin') not in {f'http://localhost:{port}',f'http://127.0.0.1:{port}'}:self.refuse(403,'افتح مساحة العمل المحلية.');return
         path=urlsplit(self.path).path
+        if account_proxy.matches(path):self.account_post(path);return
         if path not in ['/api/import','/api/prepare','/api/paths','/api/path-audit','/api/path-audit-target','/api/editor','/api/background','/api/generate','/api/generation/cancel']:self.refuse(404,'غير موجود.');return
         size=None
         try:

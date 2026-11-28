@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 const read=name=>readFileSync(new URL(name,import.meta.url),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
 const literal=/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(|(?<![-\w])(?:white|black)(?![-\w])/g;
 const tokens=read('./brand/masar/identity/tokens/tokens.css');
-const sheets=['./workspace.css','./screens.css'].map(read);
+const sheets=['./workspace.css','./screens.css','./projects.css'].map(read);
 sheets.push(read('./platform-adoption.html').match(/<style>([\s\S]*?)<\/style>/)[1]);
 
 test('app stylesheets take every colour from the identity tokens',()=>{

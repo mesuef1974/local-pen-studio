@@ -1,0 +1,24 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>مشاريعي | مسار</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="stylesheet" href="/brand/masar/identity/tokens/tokens.css"><link rel="stylesheet" href="/workspace.css"><link rel="stylesheet" href="/projects.css"><script src="/theme.js"></script><script src="/projects.js" type="module"></script></head>
+<body>
+<header class="account-header"><a class="button secondary" href="/">العودة إلى الاستوديو</a>
+<div id="account" hidden><span id="accountName" dir="auto"></span><button id="changePassword" type="button" class="button secondary">كلمة المرور</button><button id="logout" type="button" class="button secondary">خروج</button></div>
+<button id="themeToggle" type="button" class="button secondary" aria-pressed="false" aria-label="الوضع الليلي" title="الوضع الليلي">◐</button></header>
+<main class="account-main">
+<p id="message" role="status"></p>
+<section id="view-loading"><p>جارٍ التحميل…</p></section>
+<section id="view-offline" hidden><h1>خادم الحسابات غير مشغَّل</h1><p>الاستوديو يعمل دونه. للمشاريع شغّل خادم مسار على المنفذ 8780 كما في <code dir="ltr">masar-server/README.md</code>.</p><button id="retry" type="button" class="button primary">أعد المحاولة</button></section>
+<form id="view-login" method="post" hidden><h1>الدخول</h1>
+<label>اسم الدخول<input name="username" dir="ltr" autocomplete="username" maxlength="64" required></label>
+<label>كلمة المرور<input name="password" type="password" dir="ltr" autocomplete="current-password" maxlength="128" required></label>
+<button type="submit" class="button primary">دخول</button></form>
+<form id="view-password" method="post" hidden><h1>تغيير كلمة المرور</h1><p>10 أحرف على الأقل. كلمة المرور المؤقتة تُغيَّر قبل المتابعة.</p>
+<label>الحالية<input name="current" type="password" dir="ltr" autocomplete="current-password" maxlength="128" required></label>
+<label>الجديدة<input name="next" type="password" dir="ltr" autocomplete="new-password" minlength="10" maxlength="128" required></label>
+<label>تأكيد الجديدة<input name="again" type="password" dir="ltr" autocomplete="new-password" minlength="10" maxlength="128" required></label>
+<button type="submit" class="button primary">حفظ</button><button id="cancelPassword" type="button" class="button secondary">رجوع</button></form>
+<section id="view-projects" hidden><h1>مشاريعي</h1>
+<form id="create" class="inline" method="post"><input name="title" maxlength="150" required aria-label="اسم المشروع" placeholder="اسم المشروع"><button type="submit" class="button primary">مشروع جديد</button></form>
+<p>المشاريع محفوظة في خادم مسار. عمل الاستوديو لم يُربط بها بعد، وما زال محفوظًا في هذا المتصفح.</p>
+<p id="empty" hidden>لا مشاريع بعد.</p>
+<ul id="list"></ul></section>
+</main></body></html>
