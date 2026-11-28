@@ -103,6 +103,17 @@ def _canonical(value):
     return json.dumps(value, sort_keys=True, ensure_ascii=False)
 
 
+def storable_json(value, *, canonical=False):
+    """The value encoded, or None when PostgreSQL JSONB would refuse it."""
+    try:
+        # Re-encoding finds NUL, lone surrogates and 1e999 wherever they hide.
+        encoded = json.dumps(value, ensure_ascii=False, allow_nan=False, sort_keys=canonical)
+        encoded.encode('utf-8')
+    except (ValueError, TypeError, RecursionError):
+        return None
+    return None if re.search(r'(?<!\\)(\\\\)*\\u0000', encoded) else encoded
+
+
 def parse_state(raw):
     """Parse a snapshot strictly enough that PostgreSQL JSONB will accept it."""
     def reject(_):
@@ -111,12 +122,10 @@ def parse_state(raw):
     try:
         body = json.loads(raw.decode('utf-8'), parse_constant=reject)
         revision, state = body['revision'], body['state']
-        # Re-encoding finds NUL, lone surrogates and 1e999 wherever they hide.
-        encoded = json.dumps(state, ensure_ascii=False, allow_nan=False)
-        encoded.encode('utf-8')
     except (ValueError, KeyError, TypeError, RecursionError) as error:
         raise DomainError('invalid_state', 'بيانات المشروع غير صالحة.') from error
-    if type(revision) is not int or not isinstance(state, dict) or re.search(r'(?<!\\)(\\\\)*\\u0000', encoded):
+    encoded = storable_json(state)
+    if type(revision) is not int or not isinstance(state, dict) or encoded is None:
         raise DomainError('invalid_state', 'بيانات المشروع غير صالحة.')
     if 'data:image/' in encoded:
         raise DomainError('inline_image', 'ارفع الصور ملفات وأشر إليها، لا تضمّنها.')

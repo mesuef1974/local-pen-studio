@@ -1,3 +1,4 @@
+import uuid
 from urllib.parse import urlencode
 
 from django.contrib.staticfiles import finders
@@ -6,6 +7,7 @@ from django.test import TestCase
 from accounts import services
 from accounts.models import Role
 from audit.models import AuditEvent
+from jobs import services as jobs
 from projects import services as projects
 
 PASSWORD = 'a-long-test-passphrase'
@@ -18,6 +20,8 @@ class AdminTests(TestCase):
         self.boss, self.teacher = make('boss', Role.SUPERVISOR), make('teacher', Role.TEACHER)
         projects.create_project(owner=self.boss, title='mine-title')
         projects.create_project(owner=self.teacher, title='theirs-title')
+        for owner, word in ((self.boss, 'mine-prompt'), (self.teacher, 'theirs-prompt')):
+            jobs.create_job(owner=owner, inputs={'mode': 'generate', 'prompt': word}, key=uuid.uuid4())
 
     def sign_in(self, username, password=PASSWORD):
         # Urlencoded, as the browser sends the form; multipart is refused by the server.
@@ -43,9 +47,13 @@ class AdminTests(TestCase):
         page = self.client.get('/admin/projects/project/')
         self.assertContains(page, 'mine-title')
         self.assertNotContains(page, 'theirs-title')
-        for model in ('accounts/user', 'projects/project', 'projects/asset', 'audit/auditevent'):
+        for model in ('accounts/user', 'projects/project', 'projects/asset', 'jobs/job',
+                      'audit/auditevent'):
             self.assertEqual(self.client.get(f'/admin/{model}/').status_code, 200, model)
             self.assertEqual(self.client.get(f'/admin/{model}/add/').status_code, 403, model)
+        page = self.client.get('/admin/jobs/job/')
+        self.assertContains(page, 'mine-prompt')
+        self.assertNotContains(page, 'theirs-prompt')
         detail = self.client.get(f'/admin/accounts/user/{self.teacher.pk}/change/')
         self.assertNotContains(detail, 'argon2')
 

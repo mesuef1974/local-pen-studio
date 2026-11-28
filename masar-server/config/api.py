@@ -3,6 +3,7 @@ from ninja import NinjaAPI
 from accounts.api import auth_router, users_router
 from accounts.errors import DomainError
 from audit.api import audit_router
+from jobs.api import jobs_router
 from projects.api import assets_router, projects_router
 
 # Interactive docs and the schema stay off: they would be readable without signing in.
@@ -12,6 +13,7 @@ api.add_router('/users', users_router)
 api.add_router('/audit', audit_router)
 api.add_router('/projects', projects_router)
 api.add_router('/assets', assets_router)
+api.add_router('/jobs', jobs_router)
 
 
 @api.exception_handler(DomainError)
