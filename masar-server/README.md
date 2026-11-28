@@ -1,0 +1,68 @@
+# خادم مسار (متعدد المستخدمين) — المرحلة 1
+
+حسابات المعلمين والمشرف، الدخول والخروج، وسجل التدقيق. لا يعمل بعد على الشبكة المحلية (ذلك في المرحلة 5)، ولا يمس استوديو المستخدم الواحد على 8770. التصميم في [الوثيقة](../docs/masar-review-and-design-ar.html).
+
+## الإعداد (مرة واحدة)
+
+الأوامر من مجلد `masar-server` في PowerShell.
+
+```powershell
+py -3.12 -m venv .venv-server
+```
+```powershell
+.\.venv-server\Scripts\python.exe -m pip install --require-hashes -r requirements.lock
+```
+
+تشغيل خدمة قاعدة البيانات (في PowerShell بصلاحية المسؤول):
+
+```powershell
+Start-Service postgresql-x64-17
+```
+
+إنشاء الدور والقاعدة وملف `.env` والجداول. كلمات المرور تُكتب في مطالبات مخفية:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup-db.ps1
+```
+
+أول حساب مشرف (كلمة المرور: 10 أحرف على الأقل):
+
+```powershell
+.\.venv-server\Scripts\python.exe manage.py create_supervisor boss "اسم المشرف"
+```
+
+## التشغيل المحلي والاختبارات
+
+خادم التطوير على الجهاز نفسه فقط. الكعكات `Secure`، فللتجربة عبر HTTP أضف `MASAR_INSECURE_COOKIES=1` إلى `.env`.
+
+```powershell
+.\.venv-server\Scripts\python.exe manage.py runserver 127.0.0.1:8780
+```
+
+الاختبارات دون خادم قاعدة (SQLite في الذاكرة، ويُتخطى اختبار مشغّل PostgreSQL):
+
+```powershell
+$env:MASAR_DB='sqlite'; $env:MASAR_SECRET_KEY='test-only'; .\.venv-server\Scripts\python.exe manage.py test; Remove-Item Env:MASAR_DB, Env:MASAR_SECRET_KEY
+```
+
+وفي CI تعمل الاختبارات على PostgreSQL 17.
+
+## الواجهة البرمجية
+
+كل الطلبات `POST` تحتاج ترويسة `X-CSRFToken` من `GET /api/auth/csrf`.
+
+| المسار | من |
+|---|---|
+| `GET /api/auth/csrf` و`POST /api/auth/login` | أي زائر |
+| `GET /api/auth/me` و`POST /api/auth/logout` و`POST /api/auth/change-password` | صاحب جلسة |
+| `GET` و`POST /api/users` و`POST /api/users/{id}/disable` و`enable` و`reset-password` | المشرف |
+| `GET /api/audit` | المشرف |
+
+## الضوابط وحدودها
+
+- كلمات المرور بـArgon2، بحد أدنى 10 أحرف ورفض الشائعة. كلمة المرور المؤقتة تظهر مرة واحدة وتُغيَّر عند أول دخول.
+- الجلسة تنتهي بعد 30 دقيقة خمول أو 12 ساعة، وتبطل بتغيير كلمة المرور أو تعطيل الحساب.
+- 5 محاولات للحساب و20 للعنوان كل ربع ساعة. أثر ذلك أن من يعرف اسم الدخول يستطيع قفله ربع ساعة؛ إعادة ضبط المشرف لكلمة المرور تفك القفل.
+- سجل التدقيق إضافة فقط: يمنع الـORM تعديله، ومشغّل في PostgreSQL يرفض التعديل والحذف. الدور `masar` يملك الجدول فيستطيع تعطيل المشغّل؛ فصل مالك الجداول عن مستخدم التشغيل عمل المرحلة 5.
+- عنوان الجهاز من `REMOTE_ADDR` وحده. خلف الوسيط العكسي (المرحلة 5) يجب تمرير العنوان الحقيقي وإلا صار حد العنوان مشتركًا بين الجميع.
+- لم يُبنَ: واجهة للدخول، وحذف الجلسات المنتهية دوريًّا (`manage.py clearsessions`)، ومدة احتفاظ سجل التدقيق.

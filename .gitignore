@@ -85,6 +85,8 @@
 **/*.key
 **/.DS_Store
 
+!/masar-server/
+
 !/flux-studio/
 /flux-studio/*
 !/flux-studio/*.py
