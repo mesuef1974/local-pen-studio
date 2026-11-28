@@ -1,19 +1,9 @@
 from django.db import models
 
-
-class AppendOnlyError(RuntimeError):
-    pass
+from config.appendonly import AppendOnly
 
 
-class AuditQuerySet(models.QuerySet):
-    def update(self, **kwargs):
-        raise AppendOnlyError('audit events cannot be changed')
-
-    def delete(self):
-        raise AppendOnlyError('audit events cannot be deleted')
-
-
-class AuditEvent(models.Model):
+class AuditEvent(AppendOnly):
     """Who did what, to what, from where. No foreign keys, so history outlives accounts."""
 
     actor_id = models.UUIDField(null=True)
@@ -25,15 +15,5 @@ class AuditEvent(models.Model):
     detail = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
-    objects = AuditQuerySet.as_manager()
-
     class Meta:
         ordering = ['-id']
-
-    def save(self, *args, **kwargs):
-        if not self._state.adding:
-            raise AppendOnlyError('audit events cannot be changed')
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        raise AppendOnlyError('audit events cannot be deleted')

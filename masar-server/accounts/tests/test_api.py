@@ -9,7 +9,8 @@ from django.utils import timezone
 
 from accounts import services
 from accounts.models import LoginThrottle, Role, User
-from audit.models import AppendOnlyError, AuditEvent
+from audit.models import AuditEvent
+from config.appendonly import AppendOnlyError
 
 PASSWORD = 'Test-only-passphrase-41'
 NEW_PASSWORD = 'Another-test-passphrase-92'
