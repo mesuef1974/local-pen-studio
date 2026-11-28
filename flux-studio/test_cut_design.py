@@ -55,7 +55,9 @@ class RequestTests(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform == 'win32', 'name rendering uses Windows GDI+')
     def test_text_is_data_not_script(self):
-        ink = cut_design.render_name("a'); throw 1 #", cut_design.FONTS[0])
+        # Arial: CI's Windows Server image lacks the Arabic supplemental fonts.
+        with patch.object(cut_design, 'FONTS', ('Arial',)):
+            ink = cut_design.render_name("a'); throw 1 #", 'Arial')
         self.assertGreater(ink.shape[1], ink.shape[0])
 
 
