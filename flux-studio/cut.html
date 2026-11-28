@@ -1,0 +1,22 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>قطعة قص | مسار</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="stylesheet" href="/brand/masar/identity/tokens/tokens.css"><link rel="stylesheet" href="/workspace.css"><link rel="stylesheet" href="/projects.css"><link rel="stylesheet" href="/cut.css"><script src="/theme.js"></script><script src="/cut.js" type="module"></script></head>
+<body>
+<header class="account-header"><a class="button secondary" href="/">العودة إلى الاستوديو</a><a class="button secondary" href="/projects">مشاريعي</a>
+<button id="themeToggle" type="button" class="button secondary" aria-pressed="false" aria-label="الوضع الليلي" title="الوضع الليلي">◐</button></header>
+<main class="account-main">
+<h1>قطعة قص</h1>
+<p>اسم داخل إطار ورد، قطعة واحدة جاهزة للقص. التوليد على جهازك ويأخذ ثواني قليلة.</p>
+<form id="cutForm" method="post">
+<label>الاسم<input name="name" maxlength="30" required dir="auto" autocomplete="off"></label>
+<label>الخط<select name="font"><option>Aldhabi</option><option>DecoType Thuluth</option><option>Andalus</option><option>Sakkal Majalla</option><option>Traditional Arabic</option></select></label>
+<label>أطول ضلع (مم)<input name="sizeMm" type="number" min="80" max="280" step="1" value="120" required dir="ltr"></label>
+<button id="build" type="submit" class="button primary">أنشئ القطعة</button>
+</form>
+<p id="message" role="status" aria-live="polite"></p>
+<section id="result" hidden>
+<img id="preview" alt="معاينة القطعة">
+<p id="facts"></p>
+<ul id="warnings"></ul>
+<div class="cut-downloads"><a id="mirrored" class="button primary">ملف القص المعكوس (مرآة، يُقص من الظهر)</a><a id="plain" class="button secondary">ملف القص غير المعكوس</a></div>
+<p>راجع المقاس في برنامج الآلة، واجعل كل الخطوط «قص» لا «نقش». القوة والسرعة تُضبطان هناك.</p>
+</section>
+</main></body></html>

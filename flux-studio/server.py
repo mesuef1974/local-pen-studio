@@ -33,6 +33,7 @@ CARD=engine_pipe.Card()
 CARD_WAIT=15
 ASSETS.update({'/session-gate.js':ROOT/'session-gate.js','/projects':ROOT/'projects.html','/projects.js':ROOT/'projects.js','/projects.css':ROOT/'projects.css','/account-api.js':ROOT/'account-api.js','/project-state.js':ROOT/'project-state.js','/project-session.js':ROOT/'project-session.js'})
 ASSETS['/api-client.js']=ROOT/'api-client.js'
+ASSETS.update({'/cut':ROOT/'cut.html'}|{'/'+name:ROOT/name for name in ('cut.js','cut-view.js','cut.css')})
 ASSETS['/job-queue.js']=ROOT/'job-queue.js'
 ASSETS.update({'/tool-settings.js':ROOT/'tool-settings.js','/path-canvas.js':ROOT/'path-canvas.js'})
 ASSETS.update({'/'+name:ROOT/name for name in ('plan-export.js','stage-metrics.js','fidelity-panel.js','paper-preview.js','laser-export.js','laser-template.js','theme.js','ui-text.js','lens.js','screens.css','output-stage.js','work-store.js','export-actions.js','laser-worker.js','work-gate.js','paths-stage.js','generation-stage.js')})
@@ -83,6 +84,9 @@ def process(path,data):
     if path=='/api/background':
         from preparation import remove_subject
         return {'image':remove_subject(data.get('image',''))}
+    if path=='/api/cut-piece':
+        from cut_design import design
+        return design(data)
     raise ValueError('مسار معالجة غير معروف.')
 
 class Handler(SimpleHTTPRequestHandler):
@@ -150,7 +154,7 @@ class Handler(SimpleHTTPRequestHandler):
         if not self.valid_host() or self.headers.get('Origin') not in {f'http://localhost:{port}',f'http://127.0.0.1:{port}'}:self.refuse(403,'افتح مساحة العمل المحلية.');return
         path=urlsplit(self.path).path
         if account_proxy.matches(path):self.account_post(path);return
-        if path not in ['/api/import','/api/prepare','/api/paths','/api/path-audit','/api/path-audit-target','/api/editor','/api/background','/api/generate','/api/generation/cancel']:self.refuse(404,'غير موجود.');return
+        if path not in ['/api/import','/api/prepare','/api/paths','/api/path-audit','/api/path-audit-target','/api/editor','/api/background','/api/generate','/api/generation/cancel','/api/cut-piece']:self.refuse(404,'غير موجود.');return
         size=None
         try:
             size=int(self.headers.get('Content-Length','0'))
@@ -175,7 +179,7 @@ class Handler(SimpleHTTPRequestHandler):
             except BlockingIOError as error:self.reply(429,{'error':str(error)})
             except ValueError as error:self.reply(400,{'error':str(error)})
             return
-        locked=path in ['/api/prepare','/api/paths','/api/path-audit','/api/path-audit-target','/api/background']
+        locked=path in ['/api/prepare','/api/paths','/api/path-audit','/api/path-audit-target','/api/background','/api/cut-piece']
         if locked and not GATE.acquire(blocking=False):self.reply(429,{'error':'هناك معالجة محلية أخرى. أعد المحاولة بعد اكتمالها.'});return
         try:
             # Background removal runs its own GPU model; give it the VRAM a warm FLUX worker holds.
