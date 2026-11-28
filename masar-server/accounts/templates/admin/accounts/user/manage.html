@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+{% if error %}<p class="errornote">{{ error }}</p>{% endif %}
+
+{% if password %}
+<p>كلمة المرور المؤقتة للحساب <strong>{{ account.username }}</strong>، تظهر الآن فقط ولا تُحفظ:</p>
+<p><code dir="ltr" id="temporary-password">{{ password }}</code></p>
+<p>يغيّرها صاحب الحساب عند أول دخول.</p>
+{% else %}
+<form method="post">
+  {% csrf_token %}
+  {% if form %}
+  <table>{{ form.as_table }}</table>
+  {% else %}
+  <p>{{ question }} <strong>{{ account.username }}</strong> ({{ account.full_name }})؟</p>
+  {% endif %}
+  <div class="submit-row"><input type="submit" class="default" value="{{ button }}"></div>
+</form>
+{% endif %}
+
+<p><a href="{% url 'admin:accounts_user_changelist' %}">العودة إلى الحسابات</a></p>
+{% endblock %}

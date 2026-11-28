@@ -1,0 +1,13 @@
+{% extends "admin/change_form.html" %}
+
+{% block object-tools-items %}
+{% if original and original.pk != request.user.pk %}
+{% if original.is_active %}
+<li><a href="{% url 'admin:accounts_user_act' original.pk 'disable' %}">تعطيل الحساب</a></li>
+{% else %}
+<li><a href="{% url 'admin:accounts_user_act' original.pk 'enable' %}">تفعيل الحساب</a></li>
+{% endif %}
+<li><a href="{% url 'admin:accounts_user_act' original.pk 'reset-password' %}">إعادة ضبط كلمة المرور</a></li>
+{% endif %}
+{{ block.super }}
+{% endblock %}

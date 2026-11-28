@@ -1,8 +1,12 @@
-"""The Django admin, read-only. Changes stay in the services, which keep the rules and the audit log."""
+"""The Django admin. Only accounts can be managed, and only through the services, which keep the rules
+and the audit log. Everything else is read-only."""
+from django import forms
 from django.contrib import admin
 from django.contrib.admin.forms import AdminAuthenticationForm
-from django.core.exceptions import ValidationError
-from django.http import HttpResponseRedirect
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
+from django.template.response import TemplateResponse
+from django.urls import path
 
 from accounts import services
 from accounts.errors import DomainError
@@ -72,9 +76,72 @@ class OwnOnly(ReadOnly):
         return super().get_queryset(request).filter(owner=request.user)
 
 
+class NewAccountForm(forms.Form):
+    username = forms.CharField(label='اسم الدخول', max_length=64)
+    full_name = forms.CharField(label='الاسم الكامل', max_length=150)
+    role = forms.ChoiceField(label='الدور', choices=Role.choices, initial=Role.TEACHER)
+
+
+# action: (title and button, question before doing it)
+ACCOUNT_ACTIONS = {
+    'disable': ('تعطيل الحساب', 'هل تعطّل الحساب'),
+    'enable': ('تفعيل الحساب', 'هل تفعّل الحساب'),
+    'reset-password': ('إعادة ضبط كلمة المرور', 'هل تعيد ضبط كلمة مرور'),
+}
+
+
 class UserAdmin(ReadOnly):
     fields = list_display = ('username', 'full_name', 'role', 'is_active', 'must_change_password', 'created_at')
     search_fields = ('username', 'full_name')
+
+    def has_add_permission(self, request):
+        return self.admin_site.has_permission(request)
+
+    def get_urls(self):
+        act = path('<uuid:user_id>/do/<str:action>/', self.admin_site.admin_view(self.act_view),
+                   name='accounts_user_act')
+        return [act, *super().get_urls()]
+
+    def _page(self, request, title, **context):
+        context = {**self.admin_site.each_context(request), 'title': title, 'button': title, **context}
+        return TemplateResponse(request, 'admin/accounts/user/manage.html', context)
+
+    def add_view(self, request, form_url='', extra_context=None):
+        if not self.has_add_permission(request):
+            raise PermissionDenied
+        form = NewAccountForm(request.POST if request.method == 'POST' else None)
+        context = {'form': form}
+        if form.is_valid():
+            try:
+                account, password = services.create_user(actor=request.user, request=request, **form.cleaned_data)
+                # Rendered in this response, never put in a message: messages travel in a cookie or the session.
+                context = {'account': account, 'password': password}
+            except DomainError as error:
+                context['error'] = error.message
+        return self._page(request, 'إنشاء حساب', **context)
+
+    def act_view(self, request, user_id, action):
+        if action not in ACCOUNT_ACTIONS:
+            raise Http404
+        if request.method not in ('GET', 'POST'):
+            return HttpResponseNotAllowed(['GET', 'POST'])
+        account = User.objects.filter(pk=user_id).first()
+        if account is None:
+            raise Http404
+        title, question = ACCOUNT_ACTIONS[action]
+        context = {'account': account, 'question': question}
+        if request.method == 'POST':
+            try:
+                if action == 'reset-password':
+                    _, context['password'] = services.reset_password(actor=request.user, user_id=user_id,
+                                                                     request=request)
+                else:
+                    services.set_active(actor=request.user, user_id=user_id, active=action == 'enable',
+                                        request=request)
+                    return HttpResponseRedirect(f'/admin/accounts/user/{account.pk}/change/')
+            except DomainError as error:
+                context['error'] = error.message
+        return self._page(request, title, **context)
 
 
 class ProjectAdmin(OwnOnly):
