@@ -71,6 +71,24 @@ $env:MASAR_DB='sqlite'; $env:MASAR_SECRET_KEY='test-only'; .\.venv-server\Script
 
 وفي CI تعمل الاختبارات على PostgreSQL 17.
 
+## النسخ الاحتياطي
+
+من `masar-server`، وخدمة PostgreSQL تعمل:
+
+```powershell
+.\.venv-server\Scripts\python.exe manage.py backup
+```
+
+يُنشئ مجلدًا جديدًا في `%USERPROFILE%\masar-backups` (أو `MASAR_BACKUP_DIR` أو `--dest`) فيه `db.dump` وملفات الأصول، ثم يستعيده في خادم PostgreSQL مؤقت خاص به ويطابق كل ملف ببصمته، ولا يمس القاعدة الحقيقية. لاختبار نسخة سابقة: `manage.py backup --verify-only <المجلد>`. المجلد المنتهي بـ`.partial` نسخة لم تكتمل. لا يحذف الأمر نسخة، ولا يُجدول نفسه.
+
+النسخة تحوي أسماء الحسابات وبصمات كلمات المرور والأعمال، فاحفظها حيث لا يقرأها غيرك. لا تشمل `.env` (يُنشأ من جديد بـ`setup-db.ps1`) ولا الجلسات. نسخة على الجهاز نفسه لا تحمي من فقده: انسخ المجلد إلى قرص خارجي.
+
+الاستعادة بعد فقد القاعدة: أنشئ الدور والقاعدة بـ`setup-db.ps1`، ثم استعد في قاعدة فارغة (يُسأل عن كلمة مرور `masar`)، وانسخ مجلد `files` إلى `var\files`:
+
+```powershell
+& 'C:\Program Files\PostgreSQL\17\bin\pg_restore.exe' -h 127.0.0.1 -U masar -d masar --clean --if-exists --no-owner <المجلد>\db.dump
+```
+
 ## الواجهة البرمجية
 
 كل الطلبات `POST` تحتاج ترويسة `X-CSRFToken` من `GET /api/auth/csrf`.
