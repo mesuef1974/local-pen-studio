@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'">
+<title>مسار · تجهيز ملف الليزر</title>
+<link rel="stylesheet" href="laser.css">
+</head>
+<body>
+<header><h1>تجهيز ملف الليزر</h1><p>xTool P2S · المعالجة على جهازك · <a href="/">العودة إلى مرسم</a></p></header>
+<main>
+<form id="form">
+  <fieldset>
+    <legend>1. المنتج</legend>
+    <label>الخامة
+      <select id="material"><option value="wood">خشب</option><option value="acrylic">أكريليك</option></select>
+    </label>
+    <label>العملية
+      <select id="operation">
+        <option value="engrave">نقش الصورة</option>
+        <option value="score">رسم بخطوط مفردة (لرسم أسود على أبيض)</option>
+      </select>
+    </label>
+    <label>العرض بالمليمتر <input id="width" type="number" min="10" max="600" step="1" value="100" required></label>
+    <p class="hint">الارتفاع يُحسب من أبعاد الصورة. أقصى مساحة 600×305 مم.</p>
+  </fieldset>
+  <fieldset>
+    <legend>2. الصورة</legend>
+    <label>اختر صورة <input id="file" type="file" accept="image/png,image/jpeg,image/webp" required></label>
+    <div id="engraveOptions">
+      <label>الأسلوب
+        <select id="style">
+          <option value="gray">صورة متدرجة</option>
+          <option value="dots">صورة منقطة</option>
+          <option value="bw">أبيض وأسود فقط</option>
+        </select>
+      </label>
+      <label>التفتيح
+        <select id="brightness"><option value="0">دون</option><option value="1" selected>متوسط</option><option value="2">قوي</option></select>
+      </label>
+      <div id="acrylicOptions" hidden>
+        <label class="check"><input id="mirror" type="checkbox"> أنقش من خلف اللوح (قلب أفقي)</label>
+        <label class="check"><input id="invert" type="checkbox"> عكس الدرجات (لأن المحفور يظهر فاتحًا)</label>
+        <p class="hint">إن فعّلت خيارًا هنا فلا تفعّله مرة ثانية في xTool Studio.</p>
+      </div>
+    </div>
+  </fieldset>
+  <button id="run" type="submit">جهّز المعاينة</button>
+</form>
+<section aria-labelledby="previewTitle">
+  <h2 id="previewTitle">3. المعاينة</h2>
+  <p id="status" role="status">ارفع صورة ثم اضغط «جهّز المعاينة».</p>
+  <ul id="warnings" class="warnings" hidden></ul>
+  <figure id="stage" hidden><img id="preview" alt="معاينة ملف الليزر"></figure>
+  <p class="hint">المعاينة تقريبية؛ لون الخامة الفعلي ونتيجة الحرق يختلفان.</p>
+  <div id="done" hidden>
+    <h2>4. التنزيل والتشغيل</h2>
+    <a id="download" class="button">تنزيل الملف</a>
+    <ol>
+      <li>استورد الملف في xTool Studio وتأكد أن المقاس <strong id="size"></strong>.</li>
+      <li id="processHint"></li>
+      <li>خذ القدرة والسرعة من اختبار على قصاصة من الخامة نفسها.</li>
+      <li>شغّل العادم، ولا تترك الجهاز وحده، ولا تضع PVC أو خامة مجهولة.</li>
+    </ol>
+    <p class="hint">إعدادات التحضير أولية ولم تُعاير على الجهاز بعد.</p>
+  </div>
+</section>
+</main>
+<script src="laser.js"></script>
+</body>
+</html>
