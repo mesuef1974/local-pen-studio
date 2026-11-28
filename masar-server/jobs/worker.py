@@ -60,19 +60,23 @@ def _png(result):
 
 
 class Worker:
-    def __init__(self, command=None, log_path=None, keep_warm=None, tick=2.0):
+    def __init__(self, command=None, log_path=None, keep_warm=None, tick=2.0, card_dir=None):
         self.command = command or [engine_pipe.PYTHON, engine_pipe.SERVICE]
         self.log_path = Path(log_path or settings.BASE_DIR / 'var' / 'worker-engine.log')
         self.keep_warm = engine_pipe.keep_warm_seconds() if keep_warm is None else keep_warm
         self.tick = tick
+        self.card = engine_pipe.Card(card_dir)
         self.cancel_file = Path(tempfile.gettempdir()) / f'masar-worker-cancel-{os.getpid()}.txt'
         self.process = self.log = None
         self.idle_since = 0.0
 
     def run_one(self):
-        """Run the oldest queued job. False when there was nothing to take."""
+        """Run the oldest queued job. False when there was nothing to take, or the card is not free."""
+        if self.card.wanted() or not self.card.acquire():
+            return False
         job = services.claim_next()
         if job is None:
+            self._release_if_unloaded()
             return False
         LOG.info('job %s: attempt %s', job.pk, job.attempts)
         try:
@@ -93,13 +97,23 @@ class Worker:
             self.discard()
             services.fail(job.pk, job.attempts, 'تعذر تشغيل مهمة التوليد المحلية.')
         self.idle_since = time.monotonic()
+        self._release_if_unloaded()
         return True
 
     def unload_if_idle(self):
-        if self.process and time.monotonic() - self.idle_since >= self.keep_warm:
+        if self.process and (self.card.wanted() or time.monotonic() - self.idle_since >= self.keep_warm):
             self.discard()
 
     def discard(self):
+        """End the service and let the card go."""
+        self._stop_service()
+        self.card.release()
+
+    def _release_if_unloaded(self):
+        if not self.process:
+            self.card.release()
+
+    def _stop_service(self):
         process, log = self.process, self.log
         self.process = self.log = None
         engine_pipe.stop(process, log)
@@ -108,7 +122,7 @@ class Worker:
         message = _message(job)
         self.cancel_file.unlink(missing_ok=True)
         if not self.process or self.process.poll() is not None:
-            self.discard()
+            self._stop_service()
             self.log_path.parent.mkdir(parents=True, exist_ok=True)
             self.process, self.log = engine_pipe.spawn(self.command, self.log_path, self.cancel_file)
         process = self.process

@@ -5,7 +5,7 @@ import re
 
 UPSTREAM_PORT = int(os.environ.get('MASAR_UPSTREAM_PORT', '8780'))
 # Only these API groups leave the studio. Segments cannot hold dots or percent escapes, so nothing climbs out.
-ROUTE = re.compile(r'/api/(auth|users|audit|projects|assets)(/[A-Za-z0-9-]+)*')
+ROUTE = re.compile(r'/api/(auth|users|audit|projects|assets|jobs)(/[A-Za-z0-9-]+)*')
 QUERY = re.compile(r'[A-Za-z0-9=&-]*')
 REQUEST_HEADERS = ('Host', 'Origin', 'Cookie', 'Content-Type', 'X-CSRFToken')
 RESPONSE_HEADERS = {'content-type', 'content-disposition', 'set-cookie', 'vary'}

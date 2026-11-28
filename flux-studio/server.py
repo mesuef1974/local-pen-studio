@@ -12,7 +12,7 @@ if not LOG.handlers:
     _handler=logging.handlers.RotatingFileHandler(ROOT/'server-errors.log',maxBytes=512_000,backupCount=2,encoding='utf-8',delay=True)
     _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'));LOG.addHandler(_handler);LOG.setLevel(logging.INFO)
 sys.path[:0]=[str(TRACE),str(DRAW)]
-import account_proxy
+import account_proxy,engine_pipe
 ASSETS={'/':ROOT/'index.html','/prepare':ROOT/'index.html','/review':ROOT/'index.html','/adoption':ROOT/'platform-adoption.html','/paths':ROOT/'index.html','/output':ROOT/'index.html','/app.js':ROOT/'app.js','/webgpu-audit.js':ROOT/'webgpu-audit.js','/webgpu-path-raster.js':ROOT/'webgpu-path-raster.js','/workspace.css':ROOT/'workspace.css','/paper.js':ROOT/'paper.js','/workflow.js':ROOT/'workflow.js','/geometry.js':ROOT/'geometry.js','/sample-ink.png':ROOT/'sample-ink.png','/sample.png':DRAW/'photo-lineart-comparison/original.png','/sample-art.png':TRACE/'sample.png','/image-editor.js':DRAW/'image-editor.js','/image-editor.css':DRAW/'image-editor.css'}
 ASSETS['/swot']=ROOT/'ui-swot-report-ar.html'
 ASSETS['/swot-samples/horse-style-transfer.png']=ROOT/'reference-style-samples'/'horse-style-transfer.png'
@@ -29,8 +29,11 @@ ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/cuda-results.json']=ROOT/'g
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/webgpu-direct-fixed-heldout-comparison.json']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'webgpu-direct-fixed-heldout-comparison.json'
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/benchmark_cuda_path.py']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'benchmark_cuda_path.py'
 GATE=threading.Lock()
+CARD=engine_pipe.Card()
+CARD_WAIT=15
 ASSETS.update({'/session-gate.js':ROOT/'session-gate.js','/projects':ROOT/'projects.html','/projects.js':ROOT/'projects.js','/projects.css':ROOT/'projects.css','/account-api.js':ROOT/'account-api.js','/project-state.js':ROOT/'project-state.js','/project-session.js':ROOT/'project-session.js'})
 ASSETS['/api-client.js']=ROOT/'api-client.js'
+ASSETS['/job-queue.js']=ROOT/'job-queue.js'
 ASSETS.update({'/tool-settings.js':ROOT/'tool-settings.js','/path-canvas.js':ROOT/'path-canvas.js'})
 ASSETS.update({'/'+name:ROOT/name for name in ('plan-export.js','stage-metrics.js','fidelity-panel.js','paper-preview.js','laser-export.js','laser-template.js','theme.js','ui-text.js','lens.js','screens.css','output-stage.js','work-store.js','export-actions.js','laser-worker.js','work-gate.js','paths-stage.js','generation-stage.js')})
 # Shared identity: index.html links ../typography.css, which imports the local font faces.
@@ -176,12 +179,16 @@ class Handler(SimpleHTTPRequestHandler):
         if locked and not GATE.acquire(blocking=False):self.reply(429,{'error':'هناك معالجة محلية أخرى. أعد المحاولة بعد اكتمالها.'});return
         try:
             # Background removal runs its own GPU model; give it the VRAM a warm FLUX worker holds.
-            if path=='/api/background':GENERATION.unload()
+            if path=='/api/background':
+                GENERATION.unload()
+                if not CARD.borrow(CARD_WAIT):raise BlockingIOError('الكرت مشغول بمهمة توليد. أعد المحاولة بعد اكتمالها.')
             status,result=200,process(path,data)
+        except BlockingIOError as error:status,result=429,{'error':str(error)}
         except ValueError as error:status,result=400,{'error':str(error)}
         except Exception:
             LOG.exception('processing failed: %s',path);status,result=500,{'error':'تعذرت المعالجة. جرّب إعدادات أخف أو دقة أصغر.'}
         finally:
+            if path=='/api/background':CARD.release()
             if locked:GATE.release()
         # A cancelled/slow browser must not keep the compute gate locked while writing.
         try:self.reply(status,result)

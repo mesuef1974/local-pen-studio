@@ -10,7 +10,7 @@ from django.core.management import call_command
 from jobs import services
 from jobs.models import Job
 from jobs.tests.test_jobs import JobBase
-from jobs.worker import Worker
+from jobs.worker import Worker, engine_pipe
 from projects import storage
 from projects.tests.test_api import PNG
 
@@ -49,7 +49,9 @@ class RunnerTests(JobBase):
         script = Path(folder.name) / 'service.py'
         script.write_text(FAKE_SERVICE, encoding='utf-8')
         self.worker = Worker(command=[sys.executable, script], log_path=Path(folder.name) / 'engine.log',
-                             keep_warm=60, tick=0.05)
+                             keep_warm=60, tick=0.05, card_dir=folder.name)
+        self.card = engine_pipe.Card(folder.name)
+        self.addCleanup(self.card.release)
         self.addCleanup(self.worker.discard)  # runs before the folder is removed
 
     def queue(self, prompt='ok', **inputs):
@@ -128,6 +130,20 @@ class RunnerTests(JobBase):
         self.worker.keep_warm = 0
         self.worker.unload_if_idle()
         self.assertIsNone(self.worker.process)
+
+    def test_the_card_is_never_shared(self):
+        job_id = self.queue()
+        self.assertTrue(self.card.acquire())
+        self.assertFalse(self.worker.run_one())
+        self.assertEqual(Job.objects.get(pk=job_id).status, 'queued')
+        self.card.release()
+        self.run_job(job_id)
+        self.assertFalse(self.card.acquire())  # the loaded model keeps the card
+        self.card.wanted_path.touch()
+        self.worker.unload_if_idle()
+        self.assertIsNone(self.worker.process)
+        self.assertTrue(self.card.borrow(timeout=1))
+        self.assertFalse(self.card.wanted())
 
     def test_queued_jobs_of_a_deleted_project_are_cancelled(self):
         project_id = self.create(self.owner).json()['id']

@@ -26,7 +26,8 @@ export function phaseText(job){
  if(job.state==='running'&&job.total>0)return job.step>0?`الرسم · الخطوة ${job.step} من ${job.total}`:'بدء الرسم…';
  if(job.phase==='model')return 'تحميل النموذج إلى الذاكرة · أول طلب يأخذ نحو نصف دقيقة';
  if(job.phase==='prompt')return 'قراءة الوصف وتجهيز الصور…';
- return job.state==='queued'?'إرسال الطلب إلى المعالجة المحلية…':'تجهيز التوليد على جهازك…';
+ if(job.state==='queued'&&job.waiting)return 'ما زال الطلب في الطابور · تأكد أن عامل التوليد يعمل (start-masar.ps1)';
+ return job.state==='queued'?'الطلب في طابور التوليد…':'تجهيز التوليد على جهازك…';
 }
 
 export async function waitForJob(id,status,{onProgress=()=>{},onConnection=()=>{},clock=Date.now,sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms)),timeoutMs=1260000}={}){

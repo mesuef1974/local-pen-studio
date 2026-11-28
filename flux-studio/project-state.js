@@ -13,11 +13,11 @@ async function replaceAll(text,pattern,convert){
  const made=new Map();for(const match of found)if(!made.has(match))made.set(match,await convert(match));
  return text.replace(pattern,match=>made.get(match));
 }
-function decode(url){
+export function decode(url){
  const binary=atob(url.slice(url.indexOf(',')+1));
  return {type:url.slice(5,url.indexOf(';')),bytes:Uint8Array.from(binary,char=>char.charCodeAt(0))};
 }
-function encode({bytes,type}){
+export function encode({bytes,type}){
  const data=new Uint8Array(bytes);let binary='';
  for(let at=0;at<data.length;at+=0x8000)binary+=String.fromCharCode(...data.subarray(at,at+0x8000));
  return `data:${type};base64,${btoa(binary)}`;

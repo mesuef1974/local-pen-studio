@@ -39,5 +39,9 @@ export function createApi(fetchImpl=(...args)=>globalThis.fetch(...args)){
   project:id=>send(project(id)),
   saveState:(id,revision,state)=>post(`${project(id)}/state`,{revision,state}),
   uploadAsset,downloadAsset,
+  jobs:(limit=30)=>send(`/api/jobs?limit=${Number(limit)}`),
+  job:id=>send(`/api/jobs/${encodeURIComponent(id)}`),
+  createJob:body=>post('/api/jobs',body),
+  cancelJob:id=>post(`/api/jobs/${encodeURIComponent(id)}/cancel`),
  };
 }

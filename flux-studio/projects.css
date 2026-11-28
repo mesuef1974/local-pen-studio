@@ -53,13 +53,15 @@
   flex:1 1 200px;
   min-width:0;
 }
-#list {
+#list,
+#jobs {
   display:grid;
   gap:12px;
   padding:0;
   list-style:none;
 }
-#list li {
+#list li,
+#jobs li {
   display:grid;
   gap:8px;
   padding:16px;
@@ -67,7 +69,8 @@
   border-radius:var(--radius);
   overflow-wrap:anywhere;
 }
-#list time {
+#list time,
+#jobs time {
   color:var(--masar-text-muted);
   font-size:14px;
 }
@@ -75,4 +78,17 @@
   background:var(--masar-surface);
   border-color:var(--masar-error);
   color:var(--masar-error);
+}
+
+.job-image {
+  display:block;
+  max-inline-size:10rem;
+  max-block-size:10rem;
+  object-fit:contain;
+}
+.job-title {
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
 }
