@@ -49,5 +49,8 @@ function fixture(inferenceGate=null){
  const retry=[...f.timers.values()][0];f.timers.clear();await retry();assert.ok(f.controller.state().result,'busy model must retry even in manual mode');
  f=fixture();f.controller.setSource();f.context.fetch=async()=>({ok:false,status:429,json:async()=>({error:'busy'})});
  await f.controller.run();assert.equal(f.timers.size,1);f.controller.invalidate();assert.equal(f.timers.size,0,'changing settings cancels obsolete retries');
+ f=fixture();f.controller.setSource();f.context.fetch=async()=>({ok:false,status:502,json:async()=>({error:'model failed'})});
+ await f.controller.run();assert.equal(f.$('modelProgress').hidden,true,'a failed run must not leave a progress bar');
+ assert.equal(f.$('status').textContent,'model failed');assert.equal(f.context.document.body.dataset.activity,'error');
  console.log('PASS: manual update, stale indication, cached inference, rejection of obsolete input, busy retry and cancellation');
 })().catch(error=>{console.error(error);process.exitCode=1;});
