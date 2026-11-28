@@ -82,10 +82,13 @@ $env:MASAR_DB='sqlite'; $env:MASAR_SECRET_KEY='test-only'; .\.venv-server\Script
 | `GET` و`POST /api/users` و`POST /api/users/{id}/disable` و`enable` و`reset-password` | المشرف |
 | `GET /api/audit` | المشرف |
 | `GET` و`POST /api/projects` و`GET /api/projects/{id}` و`POST /api/projects/{id}/rename` و`state` و`delete` | صاحب المشروع وحده |
+| `GET` و`POST /api/projects/{id}/versions` و`GET /api/projects/{id}/versions/{vid}` و`POST …/{vid}/approve` | صاحب المشروع وحده |
 | `GET` و`POST /api/jobs` و`GET /api/jobs/{id}` و`POST /api/jobs/{id}/cancel` و`review` | صاحب المهمة وحده |
 | `POST /api/assets` (بايتات الصورة) و`GET /api/assets/{sha256}` | صاحب الملف وحده |
 
 حالة المشروع: `{"revision": n, "state": {...}}`، والصور فيها مراجع `asset:<sha256>` لا بيانات مضمَّنة. الرقم القديم يُرفض بالرمز 409، وإعادة الإرسال نفسها لا تغيّر شيئًا. `client_key` عند الإنشاء يمنع تكرار المشروع. الملفات في `var/files` (أو `MASAR_FILES_DIR`) خارج git، ويلزم نسخها مع القاعدة. الحد 32 ميغابايت للملف و16 للحالة.
+
+نسخ الصورة: `{"asset": "<sha256>", "source": "upload|generate|prepare", "parent_id": null}`. النسخة لا تُعدَّل ولا تُحذف، وإعادة الطلب نفسه تعيدها. الاعتماد (`approve`) لنسخة بعينها، فكل نسخة جديدة تحتاج اعتمادًا. `review` في المهمة رأي في محاولة توليد داخل السجل، وليس اعتمادًا ولا يُنشئه. المصدر يصرّح به العميل ولا يتحقق منه الخادم.
 
 مهام التوليد: `{"inputs": {...}, "idempotency_key": "<uuid>", "project_id": null}`، والصور فيها مراجع `asset:<sha256>`. المفتاح نفسه يعيد المهمة نفسها. `GET /api/jobs?project=&limit=&offset=` يعرض السجل. السقف ثلاث مهام منتظرة لكل حساب، وتعمل مهمة واحدة في كل مرة، والمهمة التي ينقطع نبضها 120 ثانية تُعاد مرة ثم تفشل. التقييم: `pending` أو `accepted` أو `rejected` أو `revise`. مهام مشروع حُذف وما زالت منتظرة تُلغى. الاستوديو يولّد عبر هذه المهام، وصفحة «مشاريعي» تعرض سجلها.
 

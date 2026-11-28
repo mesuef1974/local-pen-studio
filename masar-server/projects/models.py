@@ -36,3 +36,64 @@ class Project(models.Model):
     class Meta:
         ordering = ['-updated_at']
         constraints = [models.UniqueConstraint(fields=['owner', 'client_key'], name='project_owner_client_key')]
+
+
+class ImmutableError(RuntimeError):
+    pass
+
+
+class ImmutableQuerySet(models.QuerySet):
+    def update(self, **kwargs):
+        raise ImmutableError('these rows cannot be changed')
+
+    def delete(self):
+        raise ImmutableError('these rows cannot be deleted')
+
+
+class Immutable(models.Model):
+    """Written once. A change to the picture is a new row, never an edit."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = ImmutableQuerySet.as_manager()
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ImmutableError('these rows cannot be changed')
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ImmutableError('these rows cannot be deleted')
+
+
+class Source(models.TextChoices):
+    UPLOAD = 'upload'
+    GENERATE = 'generate'
+    PREPARE = 'prepare'
+
+
+class ImageVersion(Immutable):
+    """One picture of a project at one step of its making. The owner is the project's."""
+
+    project = models.ForeignKey(Project, on_delete=models.PROTECT, related_name='versions')
+    asset = models.ForeignKey(Asset, on_delete=models.PROTECT, related_name='versions')
+    source = models.CharField(max_length=10, choices=Source)
+    parent = models.ForeignKey('self', null=True, on_delete=models.PROTECT, related_name='children')
+
+    class Meta:
+        ordering = ['created_at']
+
+
+class Approval(Immutable):
+    """The formal go-ahead for one exact version: a later version needs its own."""
+
+    version = models.ForeignKey(ImageVersion, on_delete=models.PROTECT, related_name='approvals')
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='approvals')
+
+    class Meta:
+        ordering = ['created_at']
+        constraints = [models.UniqueConstraint(fields=['version', 'approved_by'], name='approval_version_user')]

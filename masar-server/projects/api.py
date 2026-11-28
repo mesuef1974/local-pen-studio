@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from django.conf import settings
@@ -7,7 +8,7 @@ from ninja import Field, Router, Schema
 
 from accounts.errors import DomainError
 from accounts.permissions import require_password_changed, session_auth
-from projects import services, storage
+from projects import services, storage, versions
 
 projects_router = Router(auth=session_auth)
 assets_router = Router(auth=session_auth)
@@ -38,6 +39,40 @@ class AssetOut(Schema):
     sha256: str
     content_type: str
     size: int
+
+
+class ApprovalOut(Schema):
+    id: UUID
+    approved_by: str
+    created_at: datetime
+
+    @staticmethod
+    def resolve_approved_by(approval):
+        return approval.approved_by.username
+
+
+class VersionOut(Schema):
+    id: UUID
+    asset: str
+    source: str
+    parent_id: UUID | None
+    approvals: list[ApprovalOut]
+    created_at: datetime
+
+    @staticmethod
+    def resolve_asset(version):
+        # The sha256, for GET /api/assets/{sha256}.
+        return version.asset.sha256
+
+    @staticmethod
+    def resolve_approvals(version):
+        return list(version.approvals.all())
+
+
+class NewVersion(Schema):
+    asset: str = Field(..., max_length=64)
+    source: Literal['upload', 'generate', 'prepare']
+    parent_id: UUID | None = None
 
 
 def _read_body(request, limit):
@@ -89,6 +124,34 @@ def delete_project(request, project_id: UUID):
     require_password_changed(request)
     services.delete_project(owner=request.user, project_id=project_id, request=request)
     return 204, None
+
+
+@projects_router.get('/{project_id}/versions', response=list[VersionOut])
+def list_versions(request, project_id: UUID):
+    require_password_changed(request)
+    return versions.list_versions(owner=request.user, project_id=project_id)
+
+
+@projects_router.post('/{project_id}/versions', response={200: VersionOut, 201: VersionOut})
+def create_version(request, project_id: UUID, body: NewVersion):
+    require_password_changed(request)
+    version, created = versions.create_version(owner=request.user, project_id=project_id, sha256=body.asset,
+                                               source=body.source, parent_id=body.parent_id, request=request)
+    return (201 if created else 200), version
+
+
+@projects_router.get('/{project_id}/versions/{version_id}', response=VersionOut)
+def get_version(request, project_id: UUID, version_id: UUID):
+    require_password_changed(request)
+    return versions.get_version(owner=request.user, project_id=project_id, version_id=version_id)
+
+
+@projects_router.post('/{project_id}/versions/{version_id}/approve', response={200: ApprovalOut, 201: ApprovalOut})
+def approve_version(request, project_id: UUID, version_id: UUID):
+    require_password_changed(request)
+    approval, created = versions.approve_version(owner=request.user, project_id=project_id,
+                                                 version_id=version_id, request=request)
+    return (201 if created else 200), approval
 
 
 @assets_router.post('', response=AssetOut)
