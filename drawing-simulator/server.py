@@ -7,6 +7,7 @@ import argparse,json,urllib.request,urllib.error,base64,binascii,subprocess,thre
 ROOT=Path(__file__).resolve().parent
 ASSETS={'/':'lineart.html','/simulator.html':'index.html','/index.html':'index.html','/app.js':'app.js','/styles.css':'styles.css','/trace-worker.js':'trace-worker.js','/path-refinement.js':'path-refinement.js','/reference-benchmark/reference.png':'reference-benchmark/reference.png','/reference-benchmark/report-ar.html':'reference-benchmark/report-ar.html','/reference-benchmark/edges-render.png':'reference-benchmark/edges-render.png','/reference-benchmark/centerline-render.png':'reference-benchmark/centerline-render.png','/reference-benchmark/reference.svg':'reference-benchmark/reference.svg','/reference-benchmark/centerline-output.svg':'reference-benchmark/centerline-output.svg','/reference-benchmark/results.json':'reference-benchmark/results.json','/reference-benchmark/provenance.json':'reference-benchmark/provenance.json','/reference-benchmark/centerline-paths.json':'reference-benchmark/centerline-paths.json'}
 ASSETS.update({'/image-editor.js':'image-editor.js','/image-editor.css':'image-editor.css','/lineart.html':'lineart.html','/lineart.js':'lineart.js','/lineart-tools.js':'lineart-tools.js','/lineart-layout.js':'lineart-layout.js','/lineart-controls.js':'lineart-controls.js','/lineart.css':'lineart.css','/photo-lineart-comparison/original.png':'photo-lineart-comparison/original.png'})
+ASSETS.update({'/laser.html':'laser.html','/laser.js':'laser.js','/laser.css':'laser.css'})
 SHARED_ASSETS = {"/typography.css": ROOT.parent / "typography.css", "/assets/fonts/fonts.css": ROOT.parent / "assets/fonts/fonts.css"}
 SHARED_ASSETS.update({f"/assets/fonts/{p.name}": p for p in (ROOT.parent / "assets/fonts").glob("*.woff2")})
 LINEART_GATE=threading.Lock()
@@ -60,13 +61,16 @@ class Handler(SimpleHTTPRequestHandler):
         if not self.valid_host() or self.headers.get('Origin') not in origins:
             self.reply(403,{'error':'الطلب يجب أن يأتي من صفحة المحاكاة المحلية.'});return
         path=urlsplit(self.path).path
-        if path not in {'/api/lm/models','/api/lm/analyze','/api/prepare','/api/paths','/api/lineart','/api/lineart/process','/api/editor','/api/background'}:self.reply(404,{'error':'غير موجود.'});return
+        if path not in {'/api/lm/models','/api/lm/analyze','/api/prepare','/api/paths','/api/lineart','/api/lineart/process','/api/editor','/api/background','/api/laser'}:self.reply(404,{'error':'غير موجود.'});return
         try:
             size=int(self.headers.get('Content-Length','0'))
             if not 0<size<=8_000_000:raise ValueError('حجم الطلب غير مناسب.')
             if self.headers.get_content_type()!='application/json':raise ValueError('نوع الطلب غير مناسب.')
             data=json.loads(self.rfile.read(size))
             if not isinstance(data,dict):raise ValueError('طلب غير صحيح.')
+            if path=='/api/laser':
+                from laser_processing import prepare_laser
+                self.reply(200,prepare_laser(data));return
             if path=='/api/editor':
                 from editor_ops import operate
                 self.reply(200,operate(data));return
