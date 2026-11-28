@@ -171,12 +171,12 @@ class FluxTests(unittest.TestCase):
             gate = threading.Lock()
             jobs = generation.Jobs(gate)
             job_id = jobs.start({'image': image()})['job']
-            with patch('generation.subprocess.Popen', return_value=Worker(lines)):
+            with patch('engine_pipe.subprocess.Popen', return_value=Worker(lines)):
                 jobs._run({})
             self.assertEqual(jobs.status(job_id)['job']['state'], 'complete')
             self.assertFalse(gate.locked())
             job_id = jobs.start({'image': image()})['job']
-            with patch('generation.subprocess.Popen', side_effect=RuntimeError('boom')), self.assertLogs('flux-studio', 'ERROR') as logs:
+            with patch('engine_pipe.subprocess.Popen', side_effect=RuntimeError('boom')), self.assertLogs('flux-studio', 'ERROR') as logs:
                 jobs._run({})
             self.assertEqual(jobs.status(job_id)['job']['error'], 'تعذر تشغيل مهمة التوليد المحلية.')
             self.assertIn('boom', logs.output[0])
@@ -215,7 +215,7 @@ class FluxTests(unittest.TestCase):
         rejected = json.dumps({'error': 'طلب مرفوض'}) + '\n'
         worker = self.live_worker([result, done, rejected, done, result, done])
         with tempfile.TemporaryDirectory() as folder, patch('generation.ROOT', Path(folder)), patch('generation.availability', return_value=(True, '')), \
-                patch('threading.Thread.start'), patch('generation.subprocess.Popen', return_value=worker) as popen:
+                patch('threading.Thread.start'), patch('engine_pipe.subprocess.Popen', return_value=worker) as popen:
             gate = threading.Lock()
             jobs = generation.Jobs(gate, keep_warm=60)
             states = []
@@ -253,7 +253,7 @@ class FluxTests(unittest.TestCase):
         crashed.poll = lambda: 1  # the worker exits after a fatal error
         fresh = self.live_worker([result, done])
         with tempfile.TemporaryDirectory() as folder, patch('generation.ROOT', Path(folder)), patch('generation.availability', return_value=(True, '')), \
-                patch('threading.Thread.start'), patch('generation.subprocess.Popen', side_effect=[crashed, fresh]) as popen:
+                patch('threading.Thread.start'), patch('engine_pipe.subprocess.Popen', side_effect=[crashed, fresh]) as popen:
             gate = threading.Lock()
             jobs = generation.Jobs(gate, keep_warm=60)
             first = jobs.start({'image': image()})['job']
@@ -304,7 +304,7 @@ class FluxTests(unittest.TestCase):
         events = [json.dumps({'state': 'running', 'step': 1, 'total': 4, 'phase': 'draw'}) + '\n']
         worker = self.live_worker(events)
         with tempfile.TemporaryDirectory() as folder, patch('generation.ROOT', Path(folder)), patch('generation.availability', return_value=(True, '')), \
-                patch('threading.Thread.start'), patch('threading.Timer.start'), patch('generation.subprocess.Popen', return_value=worker), \
+                patch('threading.Thread.start'), patch('threading.Timer.start'), patch('engine_pipe.subprocess.Popen', return_value=worker), \
                 patch('generation.terminate_tree') as kill:
             gate = threading.Lock()
             jobs = generation.Jobs(gate, keep_warm=60)
@@ -355,7 +355,7 @@ class FluxTests(unittest.TestCase):
                         kill.assert_called_once()
                 return line
             worker.stdout.readline = readline
-            with patch('generation.subprocess.Popen', return_value=worker):
+            with patch('engine_pipe.subprocess.Popen', return_value=worker):
                 jobs._run({'seed': 1})
             self.assertEqual(jobs.status(job_id)['job']['state'], 'cancelled')
             self.assertEqual(len(worker.stdin.lines), 1)
@@ -363,7 +363,7 @@ class FluxTests(unittest.TestCase):
             self.assertFalse(gate.locked())
             job_id = jobs.start({'image': image()})['job']
             self.assertEqual(jobs.cancel(job_id), {'cancelled': True})
-            with patch('generation.subprocess.Popen') as popen:
+            with patch('engine_pipe.subprocess.Popen') as popen:
                 jobs._run({'seed': 1})
             popen.assert_not_called()
             self.assertEqual(jobs.status(job_id)['job']['state'], 'cancelled')
@@ -379,7 +379,7 @@ class FluxTests(unittest.TestCase):
             def spawn(*args, **kwargs):
                 self.assertEqual(jobs.cancel(job_id), {'cancelled': True})
                 return worker
-            with patch('generation.subprocess.Popen', side_effect=spawn):
+            with patch('engine_pipe.subprocess.Popen', side_effect=spawn):
                 jobs._run({'seed': 1})
             self.assertEqual(worker.stdin.lines, [])
             self.assertEqual(jobs.status(job_id)['job']['state'], 'cancelled')

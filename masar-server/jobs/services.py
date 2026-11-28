@@ -148,10 +148,17 @@ def _recover_silent():
             _finish(job, Status.FAILED, error='انقطعت عملية المعالجة ولم تكتمل.')
 
 
+def _cancel_orphaned():
+    """Nobody waits for a queued job whose project was deleted."""
+    Job.objects.filter(status=Status.QUEUED, project__deleted_at__isnull=False).update(
+        status=Status.CANCELLED, finished_at=timezone.now())
+
+
 def claim_next():
     """Take the oldest queued job, or None when there is none or one is already running."""
     with transaction.atomic():
         _recover_silent()
+        _cancel_orphaned()
     try:
         with transaction.atomic():
             if Job.objects.filter(status=Status.RUNNING).exists():
