@@ -24,25 +24,26 @@ class ComposeTests(unittest.TestCase):
     def test_one_piece_at_the_requested_size(self):
         piece = cut_design.compose(word(), 150)
         self.assertEqual((piece['pieces'], max(piece['widthMm'], piece['heightMm'])), (1, 150.0))
-        self.assertTrue(piece['directTop'])
         self.assertIn(f'width="{piece["widthMm"]:.1f}', piece['svg'])
         self.assertTrue(piece['preview'].startswith('data:image/png;base64,'))
         first = [float(re.search(r'M([\d.]+),', piece[key]).group(1)) for key in ('svg', 'mirroredSvg')]
         self.assertAlmostEqual(sum(first), piece['widthMm'], delta=0.1)
 
-    def test_a_flat_name_gets_a_tail_instead(self):
-        piece = cut_design.compose(word(upright=True))
-        self.assertEqual((piece['pieces'], piece['directTop']), (1, False))
-
-    def test_direct_top_can_be_turned_off(self):
-        self.assertFalse(cut_design.compose(word(), 120, False)['directTop'])
+    def test_the_name_alone_reaches_the_ring_on_both_sides(self):
+        layer = cut_design.place_name(word())
+        ys, xs = np.nonzero(layer > 127)
+        away = (np.column_stack([xs, ys]) - cut_design.C) / cut_design.S
+        radius = np.hypot(*away.T)
+        self.assertGreater(radius.max(), cut_design.IN + 1)
+        self.assertLess(radius.max(), cut_design.IN + 4)
+        contact = away[radius > cut_design.IN + 1]
+        self.assertTrue(contact[:, 0].min() < 0 < contact[:, 0].max())
 
 
 class RequestTests(unittest.TestCase):
     def test_bad_requests_are_refused_before_rendering(self):
         bad = [{}, {'name': ' '}, {'name': 'a' * 31}, {'name': 'a\x00'}, {'name': 'مسك', 'sizeMm': 20},
-               {'name': 'مسك', 'sizeMm': True}, {'name': 'مسك', 'sizeMm': float('nan')},
-               {'name': 'مسك', 'directTop': 'yes'}]
+               {'name': 'مسك', 'sizeMm': True}, {'name': 'مسك', 'sizeMm': float('nan')}]
         with patch.object(cut_design, 'render_name') as render:
             for data in bad:
                 with self.subTest(data=data), self.assertRaises(ValueError):

@@ -7,11 +7,6 @@
   display:grid;
   gap:4px;
 }
-#cutForm label.check {
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
 #message.failed {
   color:var(--masar-error);
 }

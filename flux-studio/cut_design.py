@@ -21,6 +21,8 @@ C = SIDE // 2
 IN, OUT = 45.0, 53.0
 MID = (IN + OUT) / 2
 NECK = 1.6
+REACH = 2.5  # how far the name's outermost strokes enter the ring
+TOUCH = 0.6  # gap left between name parts before thickening, so dots touch yet stay readable
 FONTS = ('Aldhabi', 'DecoType Thuluth', 'Andalus', 'Sakkal Majalla', 'Traditional Arabic')
 SIZE_MM = (80, 280)  # longest side of the finished piece
 MAX_NAME = 30
@@ -181,59 +183,43 @@ def floral_ring():
     return mask
 
 
+def gather(ink, overlap):
+    """Slide every loose dot or letter towards the rest of the name; negative overlap leaves a gap."""
+    count, labels, stats, _ = cv2.connectedComponentsWithStats((ink > 127).astype(np.uint8), 8)
+    if count <= 2:
+        return ink
+    main = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
+    body = np.where(labels == main, 255, 0).astype(np.uint8)
+    loose = {i: np.column_stack(np.nonzero(labels == i)) for i in range(1, count) if i != main}
+    while loose:
+        distance, nearest = cv2.distanceTransformWithLabels(255 - body, cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
+        part = min(loose, key=lambda i: distance[loose[i][:, 0], loose[i][:, 1]].min())
+        points = loose.pop(part)
+        gaps = distance[points[:, 0], points[:, 1]]
+        start = points[int(np.argmin(gaps))]
+        targets = np.column_stack(np.nonzero(body))
+        end = targets[nearest[start[0], start[1]] - 1]
+        step = end - start
+        length = float(np.hypot(*step))
+        moved = points + np.round(step * (1 + overlap / max(length, 1))).astype(int)
+        moved = np.clip(moved, 0, np.array(body.shape) - 1)
+        body[moved[:, 0], moved[:, 1]] = 255
+    return body
+
+
 def place_name(word):
-    """The name scaled to the ring's opening and thickened so its hairlines survive cutting."""
-    scale = min(86 * S / word.shape[1], 74 * S / word.shape[0])
-    size = max(1, int(word.shape[1] * scale)), max(1, int(word.shape[0] * scale))
-    word = np.pad(cv2.resize(word, size, interpolation=cv2.INTER_AREA), 40)
-    word = cv2.dilate(word, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (int(1.1 * S) | 1,) * 2))
-    top, left = C - word.shape[0] // 2 + S, C - word.shape[1] // 2
-    layer = np.zeros((SIDE, SIDE), np.uint8)
-    layer[top:top + word.shape[0], left:left + word.shape[1]] = word
-    return layer
-
-
-def reach_ring(layer):
-    """Draw the highest stroke out along its own direction until it enters the ring.
-
-    Returns the new layer, or None when that stroke does not lead upwards to the ring nearby.
-    """
-    ys, xs = np.nonzero(layer > 127)
-    tip = np.array([xs[ys < ys.min() + 0.6 * S].mean(), ys.min()])
-    away = np.hypot(xs - tip[0], ys - tip[1])
-    near = (away > 9 * S) & (away < 13 * S)
-    count, labels = cv2.connectedComponents((layer > 127).astype(np.uint8))
-    near &= labels[ys, xs] == labels[int(tip[1]) + 2, int(tip[0])]
-    if count < 2 or not near.any():
-        return None
-    d = tip - np.array([xs[near].mean(), ys[near].mean()])
-    d /= np.linalg.norm(d)
-    if d[1] > -0.5:  # flatter than 30 degrees: not a stroke that rises to the ring
-        return None
-    # Distance from the tip to a circle just past the middle of the band, along d.
-    start = tip - C
-    along_start = float(start @ d)
-    gap = -along_start + math.sqrt(max(along_start ** 2 - float(start @ start) + ((IN + 2.4) * S) ** 2, 0))
-    if not 0 < gap <= 24 * S:
-        return None
-    length, extra = 17 * S, max(gap, 3 * S)
-    elbow = tip - d * length
-    gx, gy = np.meshgrid(np.arange(SIDE, dtype=np.float32), np.arange(SIDE, dtype=np.float32))
-    along = (gx - elbow[0]) * d[0] + (gy - elbow[1]) * d[1]
-    side = np.abs((gx - elbow[0]) * -d[1] + (gy - elbow[1]) * d[0])
-    part = (along > 0) & (along < length + 2 * S) & (side < 6 * S)
-    head = np.where(part, layer, 0).astype(np.uint8)
-    shift = np.where(along > 0, along - along * length / (length + extra), 0).astype(np.float32)
-    head = cv2.remap(head, (gx - shift * d[0]).astype(np.float32), (gy - shift * d[1]).astype(np.float32),
-                     cv2.INTER_LINEAR)
-    return np.maximum(np.where(part, 0, layer).astype(np.uint8), head)
-
-
-def tail(mask, start, angle, bow, width=2.6):
-    end = unit(angle) * (IN + 1.5)
-    middle = (start + end) / 2 + np.array(bow)
-    t = np.linspace(0, 1, 60)[:, None]
-    line(mask, (1 - t) ** 2 * start + 2 * (1 - t) * t * middle + t ** 2 * end, width)
+    """The name made one body, thickened, and sized so its outermost strokes enter the ring by themselves."""
+    unit_px = 86 * S / word.shape[1] if word.shape[1] >= word.shape[0] else 86 * S / word.shape[0]
+    size = max(1, int(word.shape[1] * unit_px)), max(1, int(word.shape[0] * unit_px))
+    word = np.pad(cv2.resize(word, size, interpolation=cv2.INTER_AREA), 20 * S)
+    word = gather(word, -TOUCH * S)
+    ys, xs = np.nonzero(word > 127)
+    (cx, cy), radius = cv2.minEnclosingCircle(cv2.convexHull(np.column_stack([xs, ys]).astype(np.int32)))
+    # The thickening below adds 0.55 mm all round.
+    scale = (IN + REACH - 0.55) * S / radius
+    matrix = np.float32([[scale, 0, C - cx * scale], [0, scale, C - cy * scale]])
+    layer = cv2.warpAffine(word, matrix, (SIDE, SIDE), flags=cv2.INTER_LINEAR)
+    return cv2.dilate(layer, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (int(1.1 * S) | 1,) * 2))
 
 
 def bridge(solid):
@@ -284,25 +270,10 @@ def reinforce(solid):
             cv2.line(solid, (int(qx[best]), int(qy[best])), (int(zx[index]), int(zy[index])), 1, int(2.6 * S))
 
 
-def compose(word, size_mm=120, direct_top=True):
+def compose(word, size_mm=120):
     """Build the piece from a name ink mask."""
     mask = floral_ring()
-    layer = place_name(word)
-    reached = reach_ring(layer) if direct_top else None
-    if reached is not None:
-        layer = reached
-    np.maximum(mask, layer, out=mask)
-
-    # Tails carry the name to the ring on both sides, and from the top when no stroke reaches it.
-    ys, xs = np.nonzero(layer > 127)
-    points = (np.column_stack([xs, ys]) - C) / S
-    right = points[points[:, 0] > points[:, 0].max() - 0.6].mean(axis=0) - np.array([1.0, 0])
-    left = points[points[:, 0] < points[:, 0].min() + 0.6].mean(axis=0) + np.array([1.0, 0])
-    tail(mask, right, -4, (0, -4))
-    tail(mask, left, 176, (0, 3))
-    if reached is None:
-        top = points[points[:, 1] < points[:, 1].min() + 0.6].mean(axis=0) + np.array([0, 1.0])
-        tail(mask, top, -68, (1.5, 0), 2.8)
+    np.maximum(mask, place_name(word), out=mask)
 
     solid = (cv2.GaussianBlur(mask, (9, 9), 0) > 127).astype(np.uint8)
     # Slits narrower than the cut can resolve are closed.
@@ -344,8 +315,7 @@ def compose(word, size_mm=120, direct_top=True):
     return {'svg': svg(False), 'mirroredSvg': svg(True),
             'preview': 'data:image/png;base64,' + base64.b64encode(png.getvalue()).decode(),
             'widthMm': round(float(width), 1), 'heightMm': round(float(height), 1),
-            'holes': len(shapes) - 1, 'pieces': int(pieces), 'weakParts': int(weak), 'struts': struts,
-            'directTop': reached is not None}
+            'holes': len(shapes) - 1, 'pieces': int(pieces), 'weakParts': int(weak), 'struts': struts}
 
 
 def design(data):
@@ -354,7 +324,4 @@ def design(data):
     size = data.get('sizeMm', 120)
     if isinstance(size, bool) or not isinstance(size, (int, float)) or not SIZE_MM[0] <= size <= SIZE_MM[1]:
         raise ValueError(f'المقاس من {SIZE_MM[0]} إلى {SIZE_MM[1]} مم.')
-    direct = data.get('directTop', True)
-    if not isinstance(direct, bool):
-        raise ValueError('خيار وصل أعلى الاسم غير صالح.')
-    return compose(render_name(name, data.get('font', FONTS[0])), float(size), direct)
+    return compose(render_name(name, data.get('font', FONTS[0])), float(size))

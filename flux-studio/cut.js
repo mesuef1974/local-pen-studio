@@ -25,7 +25,7 @@ form.addEventListener('input',()=>{$('result').hidden=true;say('');});
 form.addEventListener('submit',async event=>{
  event.preventDefault();
  const data=new FormData(form),name=String(data.get('name'));
- const body={name,font:data.get('font'),sizeMm:Number(data.get('sizeMm')),directTop:data.has('directTop')};
+ const body={name,font:data.get('font'),sizeMm:Number(data.get('sizeMm'))};
  const fields=[...form.elements];
  fields.forEach(field=>{field.disabled=true;});$('result').hidden=true;say('جارٍ إنشاء القطعة…');
  try{show(await requestJson('/api/cut-piece',body),name);say('جاهزة.');}
