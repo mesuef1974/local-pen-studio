@@ -1,5 +1,6 @@
 """Image versions and their approval. Every lookup goes through the owner's live project."""
 from django.db import transaction
+from django.db.models import Max
 
 from accounts.errors import DomainError
 from audit import services as audit
@@ -37,7 +38,9 @@ def create_version(*, owner, project_id, sha256, source, parent_id=None, request
         version = _versions(project).filter(asset=asset, source=source, parent=parent).first()
         if version is not None:
             return version, False
-        version = ImageVersion.objects.create(project=project, asset=asset, source=source, parent=parent)
+        number = (project.versions.aggregate(last=Max('number'))['last'] or 0) + 1
+        version = ImageVersion.objects.create(project=project, asset=asset, source=source, parent=parent,
+                                              number=number)
         audit.record('version.created', actor=owner, target=version, request=request,
                      detail={'project': str(project.pk), 'source': source.value})
     return version, True

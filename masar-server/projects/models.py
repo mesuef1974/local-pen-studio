@@ -3,6 +3,8 @@ import uuid
 from django.conf import settings
 from django.db import models
 
+from config.appendonly import AppendOnly
+
 
 class Asset(models.Model):
     """One uploaded file of one user. The bytes live on disk, named by their sha256."""
@@ -38,42 +40,20 @@ class Project(models.Model):
         constraints = [models.UniqueConstraint(fields=['owner', 'client_key'], name='project_owner_client_key')]
 
 
-class ImmutableError(RuntimeError):
-    pass
+class Source(models.TextChoices):
+    UPLOAD = 'upload'
+    GENERATE = 'generate'
+    PREPARE = 'prepare'
 
 
-class ImmutableQuerySet(models.QuerySet):
-    def update(self, **kwargs):
-        raise ImmutableError('these rows cannot be changed')
-
-    def delete(self):
-        raise ImmutableError('these rows cannot be deleted')
-
-
-class Immutable(models.Model):
+class Immutable(AppendOnly):
     """Written once. A change to the picture is a new row, never an edit."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    objects = ImmutableQuerySet.as_manager()
-
     class Meta:
         abstract = True
-
-    def save(self, *args, **kwargs):
-        if not self._state.adding:
-            raise ImmutableError('these rows cannot be changed')
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        raise ImmutableError('these rows cannot be deleted')
-
-
-class Source(models.TextChoices):
-    UPLOAD = 'upload'
-    GENERATE = 'generate'
-    PREPARE = 'prepare'
 
 
 class ImageVersion(Immutable):
@@ -83,9 +63,13 @@ class ImageVersion(Immutable):
     asset = models.ForeignKey(Asset, on_delete=models.PROTECT, related_name='versions')
     source = models.CharField(max_length=10, choices=Source)
     parent = models.ForeignKey('self', null=True, on_delete=models.PROTECT, related_name='children')
+    # The order of creation in the project: two clock readings can be equal.
+    number = models.PositiveIntegerField()
 
     class Meta:
-        ordering = ['created_at']
+        base_manager_name = 'objects'
+        ordering = ['number']
+        constraints = [models.UniqueConstraint(fields=['project', 'number'], name='version_project_number')]
 
 
 class Approval(Immutable):
@@ -95,5 +79,6 @@ class Approval(Immutable):
     approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='approvals')
 
     class Meta:
+        base_manager_name = 'objects'
         ordering = ['created_at']
         constraints = [models.UniqueConstraint(fields=['version', 'approved_by'], name='approval_version_user')]

@@ -1,9 +1,13 @@
 import uuid
+from unittest import mock
+
+from django.utils import timezone
 
 from accounts.models import User
 from accounts.tests.test_api import Api
 from audit.models import AuditEvent
-from projects.models import Approval, ImageVersion, ImmutableError
+from config.appendonly import AppendOnlyError
+from projects.models import Approval, ImageVersion, Project
 from projects.tests.test_api import PNG, Base
 
 
@@ -75,11 +79,32 @@ class VersionTests(Base):
         self.approve(self.add().json()['id'])
         for model in (ImageVersion, Approval):
             row = model.objects.get()
-            with self.assertRaises(ImmutableError):
+            with self.assertRaises(AppendOnlyError):
                 row.save()
-            with self.assertRaises(ImmutableError):
+            with self.assertRaises(AppendOnlyError):
                 row.delete()
-            with self.assertRaises(ImmutableError):
+            with self.assertRaises(AppendOnlyError):
                 model.objects.all().update(created_at=row.created_at)
-            with self.assertRaises(ImmutableError):
+            with self.assertRaises(AppendOnlyError):
                 model.objects.all().delete()
+
+    def test_related_managers_cannot_move_rows(self):
+        first = ImageVersion.objects.get(pk=self.add().json()['id'])
+        second = ImageVersion.objects.get(pk=self.add(source='prepare', parent_id=str(first.pk)).json()['id'])
+        self.approve(first.pk)
+        approval = Approval.objects.get()
+        elsewhere = Project.objects.get(pk=self.create(self.owner).json()['id'])
+        for move in (lambda: second.approvals.add(approval),
+                     lambda: elsewhere.versions.add(first),
+                     lambda: second.children.add(first),
+                     lambda: first.children.remove(second)):
+            with self.assertRaises(AppendOnlyError):
+                move()
+        self.assertEqual(Approval.objects.get().version_id, first.pk)
+
+    def test_order_does_not_depend_on_the_clock(self):
+        with mock.patch('django.utils.timezone.now', return_value=timezone.now()):
+            made = [self.add().json()['id']]
+            for _ in range(4):
+                made.append(self.add(source='prepare', parent_id=made[-1]).json()['id'])
+        self.assertEqual([v['id'] for v in self.owner.get(self.path).json()], made)
