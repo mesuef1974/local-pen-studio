@@ -4,9 +4,7 @@ import copy
 import io
 import json
 import logging
-import math
 import os
-import subprocess
 import sys
 import tempfile
 import threading
@@ -19,9 +17,8 @@ from setup_flux import MODEL_DIR, MODEL_ID, REVISION, QUANT_FILE
 ROOT = Path(__file__).resolve().parent
 LOG = logging.getLogger('flux-studio')
 sys.path.insert(0,str(ROOT.parent))
-from process_guard import terminate_tree
-# The environment lives beside the app; only the interpreter's place inside it depends on the system.
-PYTHON = ROOT / '.venv-flux' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
+import engine_pipe
+from engine_pipe import PYTHON, keep_warm_seconds, terminate_tree
 CATALOG = json.loads((ROOT / 'flux-catalog.json').read_text(encoding='utf-8'))
 PRESETS = {item['id']: item for item in CATALOG['presets']}
 STYLES = {key: item['prompt'] for key, item in PRESETS.items()}
@@ -137,15 +134,6 @@ def availability():
     return True, 'FLUX.2 Klein 4B · Q5_K_M · أوزان محلية مكتملة'
 
 
-def keep_warm_seconds():
-    """Idle seconds the loaded model is kept after a job; 0 restores one process per job."""
-    try:
-        value = float(os.environ.get('FLUX_KEEP_WARM_S', '300'))
-    except ValueError:
-        return 300.0
-    return value if math.isfinite(value) and 0 <= value <= 3600 else 300.0
-
-
 ACTIVE = ('queued', 'loading', 'running')
 
 
@@ -240,43 +228,15 @@ class Jobs:
 
     # Apart from cancel(), the worker is touched only by the thread that holds the compute gate.
     def _spawn(self):
-        # Stderr is diagnostic-only, kept outside HTTP responses and user images.
-        log = ROOT / 'generation-runtime.log'
-        try:
-            log.replace(ROOT / 'generation-runtime.previous.log')  # keep the last crash trace
-        except OSError:
-            pass
-        self.worker_log = log.open('w', encoding='utf-8')
-        try:
-            self.worker = subprocess.Popen([str(PYTHON), str(ROOT / 'generation_service.py')],
-                                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.worker_log,
-                                           text=True, encoding='utf-8',
-                                           env=os.environ | {'FLUX_CANCEL_FILE': str(self.cancel_file)},
-                                           creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
-        except BaseException:
-            self.worker_log.close()
-            self.worker_log = None
-            raise
+        self.worker, self.worker_log = engine_pipe.spawn(
+            [PYTHON, ROOT / 'generation_service.py'], ROOT / 'generation-runtime.log', self.cancel_file)
         return self.worker
 
     def _discard_worker(self):
         """End the worker process; the driver returns its VRAM once it has exited."""
         process, log = self.worker, self.worker_log
         self.worker = self.worker_log = None
-        if process:
-            try:
-                process.stdin.close()  # EOF is the worker's normal exit signal
-            except OSError:
-                pass
-            try:
-                process.wait(timeout=5 if process.poll() is None else 0)
-            except subprocess.TimeoutExpired:
-                terminate_tree(process)
-                process.wait()
-            if process.stdout:
-                process.stdout.close()
-        if log:
-            log.close()
+        engine_pipe.stop(process, log)
 
     def _unload_if_idle(self, token):
         if not self.gate.acquire(blocking=False):
@@ -321,32 +281,15 @@ class Jobs:
             with self.lock:
                 if job.get('cancelling'):  # cancelled while the process was still starting
                     raise JobCancelled()
-            process.stdin.write(json.dumps(settings | {'jobId': job['id']}) + '\n')
-            process.stdin.flush()
-            if not self.keep_warm:
-                process.stdin.close()
-            result = None
-            failure = None
-            done = False
-            for line in iter(process.stdout.readline, ''):
-                try:
-                    event = json.loads(line)
-                except ValueError:
-                    continue  # a library printed to stdout; not a protocol event
-                if not isinstance(event, dict):
-                    continue
+            engine_pipe.send(process, settings | {'jobId': job['id']}, self.keep_warm)
+
+            def progress(event):
                 with self.lock:
-                    if event.get('state') in ('loading', 'running'):
-                        job.update({key: event[key] for key in ('state', 'step', 'total')})
-                        if 'phase' in event:
-                            job['phase'] = event['phase']
-                if 'result' in event:
-                    result = event['result']
-                if 'error' in event:
-                    failure = event['error']
-                if event.get('done'):
-                    done = not event.get('exiting')  # a worker that announced its exit is not kept
-                    break
+                    job.update({key: event[key] for key in ('state', 'step', 'total')})
+                    if 'phase' in event:
+                        job['phase'] = event['phase']
+
+            result, failure, done = engine_pipe.read_reply(process, progress)
             # A worker that answered and is still alive keeps the model for the next job.
             keep = bool(self.keep_warm) and done and process.poll() is None
             if not keep:
