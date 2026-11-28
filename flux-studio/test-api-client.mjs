@@ -5,7 +5,7 @@ test('a cancelled job ends the wait with a marked error, never a result',async()
  await assert.rejects(waitForJob('a',async()=>({job:{id:'a',state:'cancelled',result:{image:'late'}}})),error=>error.cancelled===true&&/أُلغي/.test(error.message));
 });
 test('phase text follows the reported phase and never invents steps',()=>{
- assert.match(phaseText({state:'queued',step:0,total:0}),/إرسال/);
+ assert.match(phaseText({state:'queued',step:0,total:0}),/طابور/);
  assert.match(phaseText({state:'loading',phase:'model'}),/تحميل النموذج/);
  assert.match(phaseText({state:'loading',phase:'prompt'}),/الوصف/);
  assert.match(phaseText({state:'running',phase:'draw',step:0,total:4}),/بدء الرسم/);

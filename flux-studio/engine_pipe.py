@@ -7,7 +7,14 @@ import math
 import os
 import subprocess
 import sys
+import tempfile
+import time
 from pathlib import Path
+
+if os.name == 'nt':
+    import msvcrt
+else:
+    import fcntl
 
 ROOT = Path(__file__).resolve().parent
 sys.path.append(str(ROOT.parent))
@@ -25,6 +32,65 @@ def keep_warm_seconds():
     except ValueError:
         return 300.0
     return value if math.isfinite(value) and 0 <= value <= 3600 else 300.0
+
+
+# The studio and the job worker are separate processes with one graphics card between them.
+CARD_DIR = Path(os.environ.get('MASAR_GPU_DIR') or tempfile.gettempdir())
+WANTED_SECONDS = 60
+
+
+class Card:
+    """A lock file: whoever holds it may load a model. The system drops it if the holder dies."""
+
+    def __init__(self, folder=None):
+        folder = Path(folder or CARD_DIR)
+        self.path = folder / 'masar-gpu.lock'
+        self.wanted_path = folder / 'masar-gpu.wanted'
+        self.file = None
+
+    def acquire(self):
+        if self.file:
+            return True
+        file = open(self.path, 'a+b')
+        try:
+            file.seek(0)
+            if os.name == 'nt':
+                msvcrt.locking(file.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                fcntl.flock(file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            file.close()
+            return False
+        self.file = file
+        return True
+
+    def release(self):
+        file, self.file = self.file, None
+        if file:
+            if os.name == 'nt':
+                file.seek(0)
+                msvcrt.locking(file.fileno(), msvcrt.LK_UNLCK, 1)
+            file.close()  # closing also drops a flock
+
+    def wanted(self):
+        """Another process is waiting: an idle holder should unload and let go."""
+        try:
+            return time.time() - self.wanted_path.stat().st_mtime < WANTED_SECONDS
+        except OSError:
+            return False
+
+    def borrow(self, timeout):
+        """Ask an idle holder to let go, and wait for it. False while it is still working."""
+        self.wanted_path.touch()
+        deadline = time.monotonic() + timeout
+        try:
+            while not self.acquire():
+                if time.monotonic() >= deadline:
+                    return False
+                time.sleep(0.2)
+            return True
+        finally:
+            self.wanted_path.unlink(missing_ok=True)
 
 
 def spawn(command, log_path, cancel_file):

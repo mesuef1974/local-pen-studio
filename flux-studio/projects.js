@@ -58,11 +58,39 @@ function card(project){
  actions.append(open,rename,remove);reset();return item;
 }
 
+const JOB_STATUS={queued:'في الطابور',running:'يُولَّد الآن',succeeded:'اكتمل',failed:'فشل',cancelled:'أُلغي'};
+
+function jobCard(job){
+ const item=document.createElement('li'),title=document.createElement('strong'),status=document.createElement('span'),when=document.createElement('time');
+ title.textContent=job.inputs.prompt||job.inputs.style||'توليد';title.title=title.textContent;title.dir='auto';title.className='job-title';
+ status.textContent=JOB_STATUS[job.status]??job.status;if(job.error)status.textContent+=` · ${job.error}`;
+ when.dateTime=job.created_at;when.textContent=dates.format(new Date(job.created_at));
+ item.append(title,status,when);
+ if(job.result){
+  const link=document.createElement('a'),image=document.createElement('img');
+  link.href=`/api/assets/${job.result}`;link.download=`masar-${job.id}.png`;link.title='نزّل الصورة';
+  image.src=link.href;image.alt='نتيجة التوليد';image.loading='lazy';image.className='job-image';
+  link.append(image);item.append(link);
+ }
+ if(job.status==='queued'||(job.status==='running'&&!job.cancel_requested)){
+  const cancel=button('ألغِ','secondary',()=>run(cancel,async()=>{await api.cancelJob(job.id);await loadJobs();}));
+  item.append(cancel);
+ }
+ return item;
+}
+
+async function loadJobs(){
+ const jobs=await api.jobs();
+ $('jobs').replaceChildren(...jobs.map(jobCard));
+ $('jobsEmpty').hidden=jobs.length>0;
+}
+
 async function load(){
  const projects=await api.projects();
  $('list').replaceChildren(...projects.map(card));
  $('empty').hidden=projects.length>0;
  await offerImport(projects.map(project=>project.id));
+ await loadJobs();
 }
 
 // The work made before projects existed: offered until this account has a project holding it.
@@ -119,8 +147,9 @@ onSubmit('create',async form=>{
  await api.createProject(title,createKey);createKey=null;
  form.reset();await load();say('أُنشئ المشروع.');
 });
-$('logout').onclick=()=>run($('logout'),async()=>{await api.logout();sessionStorage.removeItem('masar-project');user=null;$('list').replaceChildren();show('login');say('خرجت من الحساب.');});
+$('logout').onclick=()=>run($('logout'),async()=>{await api.logout();sessionStorage.removeItem('masar-project');user=null;$('list').replaceChildren();$('jobs').replaceChildren();show('login');say('خرجت من الحساب.');});
 $('changePassword').onclick=()=>{say('');show('password');};
 $('cancelPassword').onclick=start;
 $('retry').onclick=start;
+$('refreshJobs').onclick=()=>run($('refreshJobs'),loadJobs);
 start();

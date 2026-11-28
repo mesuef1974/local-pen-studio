@@ -160,6 +160,16 @@ class HandlerTests(unittest.TestCase):
         self.assertEqual(refuse('70000', b'a' * 70_000), (0, True, (403, {'error': 'x'})))
         self.assertEqual(refuse('abc', b'{}'), (0, True, (403, {'error': 'x'})))
 
+    def test_background_removal_waits_for_the_card_and_gives_it_back(self):
+        with patch.object(server, 'process', return_value={'ok': True}) as process,                 patch.object(server.GENERATION, 'unload'), patch.object(server.CARD, 'release') as release:
+            with patch.object(server.CARD, 'borrow', return_value=False):
+                self.assertEqual(self.request('POST', '/api/background', body='{}')[0], 429)
+            process.assert_not_called()
+            with patch.object(server.CARD, 'borrow', return_value=True):
+                self.assertEqual(self.request('POST', '/api/background', body='{}')[0], 200)
+        self.assertEqual(release.call_count, 2)
+        self.assertFalse(server.GATE.locked())
+
     def test_cancel_needs_the_job_id_and_reports_whether_it_applied(self):
         self.assertEqual(self.request('POST', '/api/generation/cancel', body='{}')[0], 400)
         self.assertEqual(self.request('POST', '/api/generation/cancel', body='{"job": 5}')[0], 400)

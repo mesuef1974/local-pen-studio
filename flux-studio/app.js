@@ -2,6 +2,7 @@ import {Workflow} from './workflow.js';
 import {createWorkGate} from './work-gate.js';
 import {createPathsStage,LONG_PLAN_WARNING_SECONDS} from './paths-stage.js';
 import {createGeneration} from './generation-stage.js';
+import {createJobQueue} from './job-queue.js';
 import {requestJson as api} from './api-client.js';
 import {createImageEditor} from './image-editor.js';
 import {createWorkStore} from './work-store.js';
@@ -23,7 +24,7 @@ let activeRecipes=[null,null,0],auto=[false,false,true];
 const fluxUI=await createFluxControls({api,onChange:()=>generation.render(),onUseHistory:result=>generation.useHistory(result),download});
 const paths=createPathsStage({$,flow,gate,ui,api,read,assign,error,update:()=>update(),settingsValid,onChange:(step,key)=>onChange(step,key),updateView:()=>updateView(),generationLocked:()=>generation.externalBusy});
 const {paperLayout,replan,loadPathReference,drawPaths,stopPlayback,discardExclusions,renderPaperPreview,fitPaperPreview,renderFidelity,renderLighten,refreshPathThumb,updateSelection,auditKey,currentAudit}=paths;
-const generation=createGeneration({$,flow,gate,ui,shell,api,fluxUI,error,assign,paths,toolPanel:()=>toolPanel,update:()=>update(),invalidate:step=>invalidate(step),reviewReady:result=>reviewReady(result),saveWork:()=>saveWork(),clearRecipe:()=>{activeRecipes[0]=null;}});
+const generation=createGeneration({$,flow,gate,ui,shell,queue:createJobQueue({api:createApi(),projectId:()=>sessionStorage.getItem('masar-project')}),fluxUI,error,assign,paths,toolPanel:()=>toolPanel,update:()=>update(),invalidate:step=>invalidate(step),reviewReady:result=>reviewReady(result),saveWork:()=>saveWork(),clearRecipe:()=>{activeRecipes[0]=null;}});
 const workStore=createWorkStore();let saveTimer=0,restoring=true,builtSettings=null;
 // The open project belongs to this tab; it is read now, before the stage routes drop the query.
 const PROJECT_KEY='masar-project';
