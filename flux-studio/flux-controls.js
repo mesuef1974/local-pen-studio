@@ -1,4 +1,4 @@
-import {composePrompt} from './flux-prompts.js';
+import {composePrompt,unfilledPlaceholder} from './flux-prompts.js';
 const $=id=>document.getElementById(id);
 const element=(tag,text,className)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(className)el.className=className;return el;};
 
@@ -60,14 +60,15 @@ export async function createFluxControls({api,onChange,onUseHistory,download}){
  };}
  let shownStyle=null;
  function refreshPrompt(){const s=settings(),preset=catalog.presets.find(item=>item.id===s.style),{warnings,compare:compareWarnings}=promptWarnings(s);
-  if(s.style!==shownStyle){shownStyle=s.style;$('presetSummary').textContent=preset?.description||'';$('promptDetails').open=s.style==='custom';}$('effectivePrompt').value=composePrompt(catalog,s);$('promptCount').textContent=`${$('effectivePrompt').value.length} حرف · يُتحقق من حد 512 رمزًا قبل التوليد`;$('referencePanel').hidden=s.mode!=='multi';$('fluxPreserveSection').hidden=s.mode==='generate';$('textModeHint').hidden=s.mode!=='generate';
-  const summary=guidance(preset?.category);$('fluxNote').textContent=`${summary.purpose} ${summary.fit}`;$('promptConflict').textContent=warnings.join(' ');
+  if(s.style!==shownStyle){shownStyle=s.style;$('presetSummary').textContent=preset?.description||'';$('promptDetails').open=s.style==='custom'||!!unfilledPlaceholder(catalog,s.style,'');}$('effectivePrompt').value=composePrompt(catalog,s);$('promptCount').textContent=`${$('effectivePrompt').value.length} حرف · يُتحقق من حد 512 رمزًا قبل التوليد`;$('referencePanel').hidden=s.mode!=='multi';$('fluxPreserveSection').hidden=s.mode==='generate';$('textModeHint').hidden=s.mode!=='generate';
+  const summary=guidance(preset?.category);$('fluxNote').textContent=`${summary.purpose} ${summary.fit}`;const mark=unfilledPlaceholder(catalog,s.style,s.prompt);if(mark)warnings.unshift(`استبدل ${mark} في نص الوصف قبل التوليد.`);$('promptConflict').textContent=warnings.join(' ');
   const a=$('comparePromptA');if(a)a.textContent=`A · ${preset?.title||'القالب الحالي'} · البذرة ${s.seed} · ${s.resolution}px`;
   const b=$('compareStyleB').value,c=$('compareStyleC').value,busyConflict=new Set([s.style,b,c].filter(Boolean)).size<[s.style,b,c].filter(Boolean).length;
-  const bReady=!!b&&!!$('comparePromptB').value.trim(),cReady=!c||!!$('comparePromptC').value.trim();
-  const canCompare=s.mode==='edit'&&!!sourceForCompare&&!!s.prompt&&bReady&&cReady&&!busyConflict;
+  const filled=(style,id)=>!!$(id).value.trim()&&!unfilledPlaceholder(catalog,style,$(id).value);
+  const bReady=!!b&&filled(b,'comparePromptB'),cReady=!c||filled(c,'comparePromptC');
+  const canCompare=s.mode==='edit'&&!!sourceForCompare&&!!s.prompt&&!mark&&bReady&&cReady&&!busyConflict;
   $('comparePromptB').disabled=!b;$('comparePromptC').disabled=!c;$('generateCompare').disabled=locked||!canCompare;
-  $('compareWarning').textContent=compareStatus||(s.mode!=='edit'?'المقارنة المتوازية متاحة في وضع تعديل الصورة فقط.':!sourceForCompare?'افتح صورة أولًا لتتم مقارنة النسخ على المصدر نفسه.':!s.prompt?'أدخل تعليمات النسخة A قبل المقارنة.':!b?'اختر قالبًا للنسخة B.':!bReady?'أكمل تعليمات النسخة B أو ألغِ اختيارها.':!cReady?'أكمل تعليمات النسخة C أو ألغِ اختيارها.':busyConflict?'اختر قالبًا مختلفًا لكل نسخة.':compareWarnings.join(' ')||'كل نسخة تُرسل بطلب مستقل مع ثبات المصدر والبذرة وبقية الإعدادات.');
+  $('compareWarning').textContent=compareStatus||(s.mode!=='edit'?'المقارنة المتوازية متاحة في وضع تعديل الصورة فقط.':!sourceForCompare?'افتح صورة أولًا لتتم مقارنة النسخ على المصدر نفسه.':!s.prompt||mark?'أكمل تعليمات النسخة A قبل المقارنة.':!b?'اختر قالبًا للنسخة B.':!bReady?'أكمل تعليمات النسخة B أو ألغِ اختيارها.':!cReady?'أكمل تعليمات النسخة C أو ألغِ اختيارها.':busyConflict?'اختر قالبًا مختلفًا لكل نسخة.':compareWarnings.join(' ')||'كل نسخة تُرسل بطلب مستقل مع ثبات المصدر والبذرة وبقية الإعدادات.');
   $('generateCompare').textContent=c?'توليد مقارنة A/B/C':'توليد مقارنة A/B';
  }
  function applyPreset(id){if(locked)return;const preset=catalog.presets.find(p=>p.id===id);if(!preset)return;
@@ -130,7 +131,7 @@ export async function createFluxControls({api,onChange,onUseHistory,download}){
   });
  }
  function render({busy,source,stage=0,processing=false}){locked=busy||uploading;sourceForCompare=source;refreshPrompt();$('generationHistory').hidden=stage!==0||!history.length;$('generationFields').disabled=$('advancedFields').disabled=locked;$('referenceFiles').disabled=locked||references.length>=2;for(const el of document.querySelectorAll('.history-use'))el.disabled=locked||processing;
-  const s=settings();return !locked&&(s.mode==='generate'||!!source)&&(s.mode!=='multi'||references.length>0)&&(s.style!=='custom'||!!s.prompt);
+  const s=settings();return !locked&&(s.mode==='generate'||!!source)&&(s.mode!=='multi'||references.length>0)&&(s.style!=='custom'||!!s.prompt)&&!unfilledPlaceholder(catalog,s.style,s.prompt);
  }
  const drawer=$('advancedDrawer'),shut=()=>{drawer.open=false;drawer.querySelector('summary').focus();};
  $('closeDrawer').onclick=shut;drawer.onkeydown=event=>{if(event.key==='Escape'&&drawer.open){event.stopPropagation();shut();}};

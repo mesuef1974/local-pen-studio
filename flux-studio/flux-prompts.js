@@ -1,3 +1,9 @@
+// A template's [bracketed part] is for the user to replace; it must never reach the model as written.
+export function unfilledPlaceholder(catalog, style, prompt) {
+ const text=prompt?.trim()||catalog.presets.find(item=>item.id===style)?.prompt||'';
+ return catalog.presets.flatMap(item=>item.prompt.match(/\[[^\]]+\]/g)||[]).find(mark=>text.includes(mark))||'';
+}
+
 // Keep instruction composition identical to generation.prompts; covered by parity tests.
 export function composePrompt(catalog, settings) {
  const preset=catalog.presets.find(item=>item.id===settings.style);

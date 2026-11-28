@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
-import {composePrompt,buildComparisonRequests} from './flux-prompts.js';
+import {composePrompt,buildComparisonRequests,unfilledPlaceholder} from './flux-prompts.js';
 const catalog=JSON.parse(readFileSync(new URL('./flux-catalog.json',import.meta.url),'utf8'));
 const settings=(extra={})=>({style:'ink',prompt:'',mode:'edit',references:[],controls:Object.fromEntries(Object.keys(catalog.controls).map(k=>[k,'auto'])),preserve:{identity:true,pose:true,clothes:true},...extra});
 
@@ -86,4 +86,12 @@ test('final prompt saving is local and similarity notice states its weights and 
  assert.match(controls,/finalPrompt:true/);
  assert.match(html,/الوجه 50%، المحيط والوضعية 30%، التكوين والقصّ 20%/);
  assert.match(html,/لن تظهر نسبة فعلية حتى تُنفّذ طريقة القياس وتُعاير وتُختبر/);
+});
+
+test('templates that need the user to name something say so and leave nothing meant for the user',()=>{
+ const needed=catalog.presets.filter(p=>unfilledPlaceholder(catalog,p.id,'')).map(p=>p.id).sort();
+ assert.deepEqual(needed,['generate-lines','generate-scene','reference-object','remove-clutter']);
+ assert.equal(unfilledPlaceholder(catalog,'generate-lines','A [bracket] of my own about a boat'),'');
+ assert.equal(unfilledPlaceholder(catalog,'custom','Draw [subject] now'),'[subject]');
+ for(const preset of catalog.presets)assert.doesNotMatch(preset.prompt,/additional instruction|below/i,preset.id);
 });
