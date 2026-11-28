@@ -110,6 +110,42 @@ jobs:
         working-directory: flux-studio
       - run: python -m unittest discover -p 'test_*.py'
         working-directory: edge-studio
+  masar-server:
+    name: Masar server (PostgreSQL)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: masar
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: masar
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U masar"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      MASAR_SECRET_KEY: ci-only
+      MASAR_DB_PASSWORD: ci
+    defaults:
+      run:
+        working-directory: masar-server
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: masar-server/requirements.lock
+      - run: python -m pip install --require-hashes -r requirements.lock
+      - run: python manage.py makemigrations --check --dry-run
+      - run: python manage.py test
   javascript:
     name: JavaScript (${{ matrix.os }})
     env:
@@ -183,7 +219,7 @@ jobs:
   gate:
     name: Quality gate
     if: always()
-    needs: [policy, secrets, python, javascript, lint, browser]
+    needs: [policy, secrets, python, masar-server, javascript, lint, browser]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:

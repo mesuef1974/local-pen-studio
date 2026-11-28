@@ -1,0 +1,4 @@
+Django==5.2.19
+django-ninja==1.8.0
+psycopg[binary]==3.3.9
+argon2-cffi==25.1.0
