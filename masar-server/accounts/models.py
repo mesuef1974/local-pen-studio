@@ -28,6 +28,23 @@ class User(AbstractBaseUser):
             models.CheckConstraint(condition=models.Q(role__in=Role.values), name='user_role_valid'),
         ]
 
+    # What the read-only Django admin asks of a user; there are no per-object permission tables.
+    @property
+    def is_staff(self):
+        return self.is_active and self.role == Role.SUPERVISOR
+
+    def has_perm(self, perm, obj=None):
+        return self.is_staff
+
+    def has_module_perms(self, app_label):
+        return self.is_staff
+
+    def get_full_name(self):
+        return self.full_name
+
+    def get_short_name(self):
+        return self.full_name
+
 
 class LoginThrottle(models.Model):
     """Failed or in-flight sign-in attempts for one account name or one address."""

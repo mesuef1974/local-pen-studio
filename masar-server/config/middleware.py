@@ -2,7 +2,7 @@ from django.http import HttpResponse
 
 
 class ResponseHeadersMiddleware:
-    """The API serves JSON only: nothing may be cached, framed or executed."""
+    """Nothing may be cached or framed. The API runs nothing; the admin runs only its own files."""
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -10,7 +10,11 @@ class ResponseHeadersMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         response['Cache-Control'] = 'no-store'
-        response['Content-Security-Policy'] = "default-src 'none'; frame-ancestors 'none'"
+        policy = "default-src 'none'; frame-ancestors 'none'"
+        if request.path.startswith(('/admin/', '/static/')):
+            policy = ("default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+                      "object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
+        response['Content-Security-Policy'] = policy
         return response
 
 
