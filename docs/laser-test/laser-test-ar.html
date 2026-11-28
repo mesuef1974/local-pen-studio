@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اختبار النقش الأول على xTool P2S</title>
+<style>
+body{font-family:Tahoma,Arial,sans-serif;max-width:820px;margin:auto;padding:24px;line-height:1.8;color:#1b1b1b;background:#fff;text-align:right}
+h1{font-size:1.5rem}h2{font-size:1.15rem;margin-top:1.6em}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:6px 10px;text-align:right;vertical-align:top}
+img{max-width:100%;border:1px solid #bbb}
+.warn{border-inline-start:4px solid #b3261e;padding:8px 14px;background:#fdf1f0}
+@media print{body{padding:0}img{max-width:60%}}
+</style>
+</head>
+<body>
+<h1>اختبار النقش الأول على xTool P2S</h1>
+<p>الملف: <a href="laser-test-100mm.png">laser-test-100mm.png</a>، مقاسه المطلوب 100×100 مم (1000×1000 بكسل بدقة 254 نقطة في البوصة).</p>
+<img src="laser-test-100mm.png" alt="ملف الاختبار: مسطرتان وتدرج رمادي وخطوط ونصوص وثلاث معالجات لصورة وجه">
+
+<div class="warn">
+<strong>قبل التشغيل:</strong> لا تترك الجهاز يعمل وحده. شغّل العادم، وأبقِ مطفأة مناسبة قريبة.
+لا تضع PVC أو فينيل أو أي خامة لا تعرف تركيبها.
+</div>
+
+<h2>الخطوات</h2>
+<ol>
+<li>ابدأ بقطعة خشب مستوية فاتحة، أكبر من 100×100 مم.</li>
+<li>استورد الصورة في xTool Studio، وتأكد من أن عرضها وارتفاعها 100 مم. إن ظهر رقم آخر فدوّنه، ثم صححه إلى 100.</li>
+<li>اختر عملية النقش (Engrave) للصورة، لا القطع.</li>
+<li>اترك الصورة على الوضع الرمادي إن وُجد الخيار، ولا تطبق عليها تنقيطًا أو عكسًا إضافيًا؛ فالعينة C منقطة مسبقًا.</li>
+<li>خذ القدرة والسرعة من إعدادات الخامة في البرنامج، أو من مصفوفة الاختبار فيه على قصاصة من الخامة نفسها. دوّن القيم.</li>
+<li>ضبط التركيز، ثم عاين الإطار على القطعة قبل البدء.</li>
+<li>بعد الخشب كرر على الأكريليك (المصبوب إن توفر) بإعداداته الخاصة، مع إبقاء ورقة الحماية السفلية أو نزعها بحسب توصية المورد.</li>
+</ol>
+
+<h2>سجل النتائج</h2>
+<table>
+<tr><th>السؤال</th><th>خشب</th><th>أكريليك</th></tr>
+<tr><td>المقاس الذي ظهر عند الاستيراد (مم)</td><td></td><td></td></tr>
+<tr><td>طول المسطرة الأفقية على القطعة (المطلوب 50)</td><td></td><td></td></tr>
+<tr><td>طول المسطرة العمودية على القطعة (المطلوب 50)</td><td></td><td></td></tr>
+<tr><td>أول مربع رمادي يظهر، ومن أين تتشابه المربعات</td><td></td><td></td></tr>
+<tr><td>أدق خط أسود ظهر (مم)</td><td></td><td></td></tr>
+<tr><td>أدق فراغ بقي داخل المربع الأسود (مم)</td><td></td><td></td></tr>
+<tr><td>أصغر نص مقروء: لاتيني / عربي (مم)</td><td></td><td></td></tr>
+<tr><td>أفضل وجه: A أو B أو C</td><td></td><td></td></tr>
+<tr><td>القدرة / السرعة / كثافة الأسطر</td><td></td><td></td></tr>
+<tr><td>سماكة الخامة ونوعها</td><td></td><td></td></tr>
+</table>
+
+<p>A الصورة كما هي، وهي داكنة عمدًا. B مفتحة. C مفتحة ومنقطة. صوّر القطعتين بضوء جانبي وأرسل الصورتين مع الجدول.</p>
+<p>على الأكريليك يظهر المحفور فاتحًا غالبًا، فقد يبدو الوجه معكوس الدرجات. هذا متوقع في هذه الجولة، والغرض ملاحظته.</p>
+
+<h2>المصادر</h2>
+<ul>
+<li><a href="../laser-integration-implementation-plan-ar.html">خطة تهيئة مسار لـ xTool P2S</a> و<a href="../laser-material-process-matrix-ar.html">مصفوفة الخامات والعمليات</a> في المشروع.</li>
+<li>صورة الوجه من <code dir="ltr">drawing-simulator/photo-lineart-comparison/original.png</code>، للاختبار الداخلي فقط.</li>
+</ul>
+<p>أسماء خيارات xTool Studio أعلاه لم تُطابق على البرنامج المثبت لديك.</p>
+</body>
+</html>
