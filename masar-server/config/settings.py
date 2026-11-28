@@ -89,6 +89,8 @@ SESSION_COOKIE_AGE = 30 * 60  # idle timeout: refreshed on every request
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_ABSOLUTE_AGE = 12 * 60 * 60
+# Its own name: cookies ignore ports, so another local Django app would overwrite 'csrftoken'.
+CSRF_COOKIE_NAME = 'masar_csrftoken'
 CSRF_COOKIE_SECURE = SECURE_COOKIES
 CSRF_COOKIE_SAMESITE = 'Strict'
 

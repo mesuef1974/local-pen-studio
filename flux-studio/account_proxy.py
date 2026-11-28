@@ -24,6 +24,11 @@ def body_limit(path):
     return 64 * 1024
 
 
+def verify(headers):
+    """The account server's verdict on this request's session and CSRF token: 204 means go ahead."""
+    return forward('POST', '/api/auth/verify', '', headers, b'')[0]
+
+
 def forward(method, path, query, headers, body=None):
     """Return (status, header pairs, body). Raises OSError or HTTPException when the account server is away."""
     sent = {name: headers[name] for name in REQUEST_HEADERS if headers.get(name) is not None}

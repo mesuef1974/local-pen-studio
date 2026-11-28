@@ -46,6 +46,12 @@ class StartupTests(unittest.TestCase):
 
 
 class HandlerTests(unittest.TestCase):
+    def setUp(self):
+        # These tests are about the handler behind the sign-in; test_account_proxy covers the sign-in itself.
+        patcher = patch.object(server.account_proxy, 'verify', return_value=204)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     @classmethod
     def setUpClass(cls):
         cls.httpd = ThreadingHTTPServer(('127.0.0.1', 0), server.Handler)

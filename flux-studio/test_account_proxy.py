@@ -24,6 +24,10 @@ class Upstream(BaseHTTPRequestHandler):
         body = self.rfile.read(int(self.headers.get('Content-Length', 0)))
         SEEN.append((self.command, self.path, dict(self.headers), body))
         raw = b'{"ok":true}'
+        if self.path == '/api/auth/verify':
+            self.send_response(204 if 'masar_session=ok' in self.headers.get('Cookie', '') else 401)
+            self.end_headers()
+            return
         self.send_response(201)
         self.send_header('Content-Type', 'application/json')
         self.send_header('Set-Cookie', 'csrftoken=a')
@@ -96,10 +100,34 @@ class ProxyTests(unittest.TestCase):
         self.assertEqual(SEEN, [])
 
     def test_oversized_body_is_refused(self):
-        self.assertEqual(self.request('POST', '/api/auth/login', b'x' * (64 * 1024 + 1))[0], 413)
+        # The server closes without reading a large body, and Windows may reset before the reply arrives.
+        try:
+            self.assertEqual(self.request('POST', '/api/auth/login', b'x' * (64 * 1024 + 1))[0], 413)
+        except ConnectionError:
+            pass
         self.assertEqual(SEEN, [])
         self.assertEqual(proxy.body_limit('/api/assets'), 32 * 1024 * 1024)
         self.assertEqual(proxy.body_limit('/api/projects/abc/state'), 16 * 1024 * 1024)
+
+    def test_compute_needs_the_account_server_to_accept_the_session(self):
+        for path in ('/api/editor', '/api/generate', '/api/generation/cancel', '/api/background', '/api/paths'):
+            with patch.object(server, 'process') as process, patch.object(server.GENERATION, 'start') as start, \
+                    patch.object(server.GENERATION, 'unload') as unload:
+                status, _, raw = self.request('POST', path, b'{}')
+                self.assertEqual((status, json.loads(raw)['code']), (401, 'auth_required'), path)
+                self.assertFalse(process.called or start.called or unload.called, path)
+        SEEN.clear()
+        with patch.object(server, 'process', return_value={'ok': True}):
+            status = self.request('POST', '/api/editor', b'{}',
+                                  headers={'Cookie': 'masar_session=ok', 'X-CSRFToken': 't'})[0]
+        self.assertEqual(status, 200)
+        self.assertEqual((SEEN[0][1], SEEN[0][2]['X-CSRFToken'], SEEN[0][3]), ('/api/auth/verify', 't', b''))
+
+    def test_compute_is_refused_without_an_account_server(self):
+        with patch.object(proxy, 'UPSTREAM_PORT', 1), patch.object(server, 'process') as process:
+            status, _, raw = self.request('POST', '/api/editor', b'{}')
+        self.assertEqual((status, json.loads(raw)['code']), (503, 'accounts_unavailable'))
+        self.assertFalse(process.called)
 
     def test_missing_account_server_is_reported(self):
         closed = serve(Upstream)
