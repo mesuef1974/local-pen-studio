@@ -5,6 +5,7 @@ import io
 import json
 import logging
 import os
+import re
 import sys
 import tempfile
 import threading
@@ -22,6 +23,8 @@ from engine_pipe import PYTHON, keep_warm_seconds, terminate_tree
 CATALOG = json.loads((ROOT / 'flux-catalog.json').read_text(encoding='utf-8'))
 PRESETS = {item['id']: item for item in CATALOG['presets']}
 STYLES = {key: item['prompt'] for key, item in PRESETS.items()}
+# The [bracketed parts] templates leave for the user to replace.
+PLACEHOLDERS = [mark for text in STYLES.values() for mark in re.findall(r'\[[^\]]+\]', text)]
 ASPECTS = {'source': None, 'square': (1, 1), 'portrait': (4, 5),
            'tall': (2, 3), 'landscape': (3, 2), 'wide': (16, 9)}
 
@@ -76,6 +79,10 @@ def validate(data):
     result['prompt'] = result['prompt'].strip()
     if result['style'] == 'custom' and not result['prompt']:
         raise ValueError('اكتب تعليمات التعديل المخصص.')
+    effective = result['prompt'] or STYLES[result['style']]
+    for mark in PLACEHOLDERS:
+        if mark in effective:
+            raise ValueError(f'استبدل {mark} في نص الوصف قبل التوليد.')
     if result['mode'] not in ('edit', 'generate', 'multi'):
         raise ValueError('اختر وضع توليد معروفًا.')
     if not isinstance(result['aspect'], str) or result['aspect'] not in ASPECTS:

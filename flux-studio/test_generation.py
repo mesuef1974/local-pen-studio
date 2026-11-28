@@ -41,7 +41,10 @@ class FluxTests(unittest.TestCase):
                 generation.validate({'image': image()} | extra)
 
     def test_text_only_does_not_condition_on_loaded_image_or_preservation(self):
-        settings = generation.validate({'mode': 'generate', 'style': 'generate-lines', 'image': image()})
+        with self.assertRaisesRegex(ValueError, 'subject'):
+            generation.validate({'mode': 'generate', 'style': 'generate-lines'})
+        settings = generation.validate({'mode': 'generate', 'style': 'generate-lines', 'image': image(),
+                                        'prompt': 'A black pen outline of a sailing boat.'})
         self.assertIsNone(settings['image'])
         self.assertNotIn("subject's identity", generation.prompts(settings))
         self.assertEqual(generation.dimensions(settings | {'aspect': 'wide', 'resolution': 512}), (512, 288))
