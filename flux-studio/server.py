@@ -29,7 +29,7 @@ ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/cuda-results.json']=ROOT/'g
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/webgpu-direct-fixed-heldout-comparison.json']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'webgpu-direct-fixed-heldout-comparison.json'
 ASSETS['/gpu-cpu-measurement-2026-10-28/path-profile/benchmark_cuda_path.py']=ROOT/'gpu-cpu-measurement-2026-10-28'/'path-profile'/'benchmark_cuda_path.py'
 GATE=threading.Lock()
-ASSETS.update({'/session-gate.js':ROOT/'session-gate.js','/projects':ROOT/'projects.html','/projects.js':ROOT/'projects.js','/projects.css':ROOT/'projects.css','/account-api.js':ROOT/'account-api.js'})
+ASSETS.update({'/session-gate.js':ROOT/'session-gate.js','/projects':ROOT/'projects.html','/projects.js':ROOT/'projects.js','/projects.css':ROOT/'projects.css','/account-api.js':ROOT/'account-api.js','/project-state.js':ROOT/'project-state.js','/project-session.js':ROOT/'project-session.js'})
 ASSETS['/api-client.js']=ROOT/'api-client.js'
 ASSETS.update({'/tool-settings.js':ROOT/'tool-settings.js','/path-canvas.js':ROOT/'path-canvas.js'})
 ASSETS.update({'/'+name:ROOT/name for name in ('plan-export.js','stage-metrics.js','fidelity-panel.js','paper-preview.js','laser-export.js','laser-template.js','theme.js','ui-text.js','lens.js','screens.css','output-stage.js','work-store.js','export-actions.js','laser-worker.js','work-gate.js','paths-stage.js','generation-stage.js')})

@@ -18,6 +18,15 @@ export function createApi(fetchImpl=(...args)=>globalThis.fetch(...args)){
   return send(path,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf_token},body:JSON.stringify(body??{})});
  };
  const project=id=>`/api/projects/${encodeURIComponent(id)}`;
+ const uploadAsset=async(bytes,type)=>{
+  const {csrf_token}=await send('/api/auth/csrf');
+  return (await send('/api/assets',{method:'POST',headers:{'Content-Type':type,'X-CSRFToken':csrf_token},body:bytes})).sha256;
+ };
+ const downloadAsset=async sha=>{
+  let response;try{response=await fetchImpl(`/api/assets/${encodeURIComponent(sha)}`,{credentials:'same-origin'});}catch{throw new ApiError(0,'offline','تعذر الاتصال بالخادم المحلي.');}
+  if(!response.ok)throw new ApiError(response.status,'asset','تعذر تنزيل إحدى صور المشروع.');
+  return {bytes:await response.arrayBuffer(),type:response.headers.get('Content-Type')};
+ };
  return {
   me:()=>send('/api/auth/me'),
   login:(username,password)=>post('/api/auth/login',{username,password}),
@@ -27,5 +36,8 @@ export function createApi(fetchImpl=(...args)=>globalThis.fetch(...args)){
   createProject:(title,client_key)=>post('/api/projects',{title,client_key}),
   renameProject:(id,title)=>post(`${project(id)}/rename`,{title}),
   deleteProject:id=>post(`${project(id)}/delete`),
+  project:id=>send(project(id)),
+  saveState:(id,revision,state)=>post(`${project(id)}/state`,{revision,state}),
+  uploadAsset,downloadAsset,
  };
 }
