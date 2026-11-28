@@ -1,6 +1,8 @@
 import {createApi} from './account-api.js';
+import {createWorkStore} from './work-store.js';
+import {importWork} from './project-session.js';
 
-const api=createApi(),$=id=>document.getElementById(id);
+const api=createApi(),workStore=createWorkStore(),$=id=>document.getElementById(id);
 const VIEWS=['loading','offline','login','password','projects'];
 const dates=new Intl.DateTimeFormat('ar-QA-u-nu-latn',{dateStyle:'medium',timeStyle:'short'});
 let user=null,createKey=null,createTitle='';
@@ -36,6 +38,7 @@ function card(project){
  when.dateTime=project.updated_at;when.textContent=dates.format(new Date(project.updated_at));
  actions.className='card-actions';
  const reset=()=>item.replaceChildren(title,when,actions);
+ const open=document.createElement('a');open.className='button primary';open.textContent='افتح';open.href=`/prepare?project=${encodeURIComponent(project.id)}`;
  const rename=button('تغيير الاسم','secondary',()=>{
   const form=document.createElement('form'),input=document.createElement('input'),save=button('حفظ','primary');
   form.className='inline';input.value=project.title;input.maxLength=150;input.required=true;input.setAttribute('aria-label','اسم المشروع الجديد');
@@ -52,13 +55,26 @@ function card(project){
   choices.className='card-actions';choices.append(confirm,cancel);
   item.replaceChildren(question,choices);cancel.focus();
  });
- actions.append(rename,remove);reset();return item;
+ actions.append(open,rename,remove);reset();return item;
 }
 
 async function load(){
  const projects=await api.projects();
  $('list').replaceChildren(...projects.map(card));
  $('empty').hidden=projects.length>0;
+ await offerImport(projects.map(project=>project.id));
+}
+
+// The work made before projects existed: offered until this account has a project holding it.
+async function offerImport(existing){
+ let offer=false;
+ try{const record=await workStore.load(`import:${user.id}`);offer=(await workStore.load())?.version===1&&!existing.includes(record?.projectId);}catch(error){console.warn(error);}
+ $('import').hidden=!offer;
+ $('importWork').onclick=()=>run($('importWork'),async()=>{
+  say('جارٍ استيراد العمل…');
+  await importWork({api,store:workStore,userId:user.id,title:'عملي في المتصفح',existing});
+  await load();say('استُورد العمل في مشروع. بقيت نسخة المتصفح احتياطًا.');
+ });
 }
 
 async function enter(account){
@@ -103,7 +119,7 @@ onSubmit('create',async form=>{
  await api.createProject(title,createKey);createKey=null;
  form.reset();await load();say('أُنشئ المشروع.');
 });
-$('logout').onclick=()=>run($('logout'),async()=>{await api.logout();user=null;$('list').replaceChildren();show('login');say('خرجت من الحساب.');});
+$('logout').onclick=()=>run($('logout'),async()=>{await api.logout();sessionStorage.removeItem('masar-project');user=null;$('list').replaceChildren();show('login');say('خرجت من الحساب.');});
 $('changePassword').onclick=()=>{say('');show('password');};
 $('cancelPassword').onclick=start;
 $('retry').onclick=start;

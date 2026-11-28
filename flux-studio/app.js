@@ -5,6 +5,8 @@ import {createGeneration} from './generation-stage.js';
 import {requestJson as api} from './api-client.js';
 import {createImageEditor} from './image-editor.js';
 import {createWorkStore} from './work-store.js';
+import {createProjectSession,draftKey} from './project-session.js';
+import {createApi} from './account-api.js';
 import {createFluxControls} from './flux-controls.js';
 import {defaults,recipes,ids,renderToolPanels} from './tool-settings.js';
 import {createExportActions} from './export-actions.js';
@@ -23,6 +25,13 @@ const paths=createPathsStage({$,flow,gate,ui,api,read,assign,error,update:()=>up
 const {paperLayout,replan,loadPathReference,drawPaths,stopPlayback,discardExclusions,renderPaperPreview,fitPaperPreview,renderFidelity,renderLighten,refreshPathThumb,updateSelection,auditKey,currentAudit}=paths;
 const generation=createGeneration({$,flow,gate,ui,shell,api,fluxUI,error,assign,paths,toolPanel:()=>toolPanel,update:()=>update(),invalidate:step=>invalidate(step),reviewReady:result=>reviewReady(result),saveWork:()=>saveWork(),clearRecipe:()=>{activeRecipes[0]=null;}});
 const workStore=createWorkStore();let saveTimer=0,restoring=true,builtSettings=null;
+// The open project belongs to this tab; it is read now, before the stage routes drop the query.
+const PROJECT_KEY='masar-project';
+const askedProject=new URLSearchParams(location.search).get('project');
+if(/^[0-9a-f-]{36}$/i.test(askedProject??''))sessionStorage.setItem(PROJECT_KEY,askedProject);
+const projectId=sessionStorage.getItem(PROJECT_KEY);
+const project=projectId?createProjectSession({api:createApi(),store:workStore,id:projectId}):null;
+let projectReady=false,projectSaving=false;
 function syncPaperControls(key){if($('s2_paper').value!=='custom')return;const w=$('s2_paperWidth'),h=$('s2_paperHeight'),direction=$('s2_landscape');if(w.value===''||h.value===''||!w.validity.valid||!h.validity.valid)return;if(['paperWidth','paperHeight'].includes(key)){direction.checked=Number(w.value)>Number(h.value);return;}if(['paper','landscape'].includes(key)&&((direction.checked&&Number(w.value)<Number(h.value))||(!direction.checked&&Number(w.value)>Number(h.value))))[w.value,h.value]=[h.value,w.value];}
 $('tools2').prepend($('paperDetails'));$('toolSettings').append($('motionDetails'));
 let outputTool='pen';
@@ -124,7 +133,23 @@ $('directInput').onclick=()=>reviewReady();
 document.addEventListener('keydown',event=>{if((event.ctrlKey||event.metaKey)&&event.key==='Enter'&&!$('run').disabled&&!$('run').hidden&&!document.querySelector('.tools-footer').hidden){event.preventDefault();runStage();}});
 const generationFields=()=>[...document.querySelectorAll('input[id^="gen"],select[id^="gen"],textarea[id^="gen"],input[id^="fluxPreserve_"]')].filter(field=>field.type!=='file');
 function snapshot(){return {version:1,flow:{...flow},settings:[read(0),read(1),read(2)],activeRecipes,auto,excluded:[...paths.excluded],builtSettings,laserTemplate:paths.laserTemplate,candidate:generation.pending?generation.pending.pending:generation.candidate,pendingGeneration:generation.pending,exporting:ui.exporting,fields:generationFields().map(field=>[field.id,field.type==='checkbox'?field.checked:field.value])};}
-async function saveWork(){clearTimeout(saveTimer);if(restoring||!(flow.source||flow.original||generation.pending))return;try{await workStore.save(snapshot());}catch(e){console.warn('work not saved',e);}}
+const hasWork=()=>!!(flow.source||flow.original||generation.pending);
+async function saveWork(){clearTimeout(saveTimer);if(restoring||!hasWork()||(project&&!projectReady))return;try{if(!project)await workStore.save(snapshot());else showProject(await project.keep(snapshot())?'تغييرات لم تُحفظ في المشروع':'محفوظ');}catch(e){console.warn('work not saved',e);}}
+function showProject(state){if(!projectSaving)$('projectState').textContent=`المشروع «${project.title||'بلا اتصال'}» · ${state}`;}
+async function saveProject(){
+ if(!project||!projectReady||projectSaving)return;
+ if(gate.busy||gate.editorActive||generation.busy){$('projectState').textContent='انتظر اكتمال المعالجة ثم احفظ.';return;}
+ if(!hasWork()){$('projectState').textContent='لا يوجد ما يُحفظ بعد.';return;}
+ projectSaving=true;$('projectSave').disabled=true;$('projectState').textContent='جارٍ الحفظ في المشروع…';
+ let failure='';
+ try{await project.push(snapshot());$('restoreNotice').hidden=true;}catch(e){failure=e.status===401?'انتهت الجلسة؛ سجّل الدخول من «مشاريعي» ثم احفظ.':e.message||'تعذر الحفظ.';}
+ projectSaving=false;$('projectSave').disabled=false;
+ await saveWork();
+ if(failure)$('projectState').textContent=`لم يُحفظ في المشروع: ${failure}`;
+}
+$('projectSave').onclick=saveProject;
+$('projectClose').onclick=async()=>{await saveWork();sessionStorage.removeItem(PROJECT_KEY);restoring=true;flow.source=flow.original='';flow.outputs=[null,null,null];generation.candidate=null;location.assign('/prepare');};
+document.addEventListener('keydown',event=>{if(project&&(event.ctrlKey||event.metaKey)&&event.code==='KeyS'){event.preventDefault();saveProject();}});
 // Skips while a stage is running: the update() that follows it schedules the save again.
 function scheduleSave(){if(restoring)return;clearTimeout(saveTimer);saveTimer=setTimeout(()=>{if(!gate.busy&&!gate.editorActive)saveWork();},800);}
 for(const type of ['input','change','click'])document.addEventListener(type,scheduleSave);
@@ -135,14 +160,29 @@ function applySnapshot(saved){
  if(flow.fresh[2]){replan();loadPathReference();}
  const output=!!saved.exporting&&outputReady();if(!output&&!flow.canEnter(flow.stage))flow.stage=0;ui.exporting=output;history.replaceState({stage:output?3:flow.stage},'',ROUTES[output?3:flow.stage]);
 }
+async function openProject(){
+ $('projectBar').hidden=false;$('projectState').textContent='جارٍ فتح المشروع…';$('projectSave').disabled=true;
+ try{return await project.open({useServer:()=>window.confirm('تغيّر المشروع في الخادم بعد آخر تعديل لم تحفظه هنا.\nموافق: افتح نسخة الخادم وأهمل تعديلاتك.\nإلغاء: أبقِ تعديلاتك (لن تُحفظ فوق نسخة الخادم).')});}
+ catch(e){$('projectState').textContent=`تعذر فتح المشروع: ${e.message} لن يُحفظ شيء؛ أعد التحميل أو أغلق المشروع.`;return null;}
+}
 async function restoreWork(){
- let saved=null;try{saved=await workStore.load();}catch(e){console.warn('work not restored',e);}
+ let saved=null,opened=null;
+ if(project){opened=await openProject();if(!opened)return;saved=opened.snapshot;}
+ else{try{saved=await workStore.load();}catch(e){console.warn('work not restored',e);}}
  // Anything the user started while the store was loading wins over the snapshot.
  const usable=saved?.version===1&&!gate.busy&&!flow.source&&!flow.original;
- if(usable){try{applySnapshot(saved);$('restoreNotice').hidden=false;}catch(e){console.warn('work not restored',e);}}
+ let applied=false;
+ if(usable){try{applySnapshot(saved);applied=true;$('restoreNotice').hidden=!!opened&&!opened.unsaved;if(opened){$('restoreNotice').firstChild.textContent='استُعيدت تعديلاتك التي لم تُحفظ في المشروع. ';$('discardWork').textContent='أهملها';}}catch(e){console.warn('work not restored',e);}}
+ // A project opens only whole: saving over it from a half-restored page would lose it.
+ if(project&&saved&&!applied){$('projectState').textContent='تعذر استعادة عمل المشروع. لن يُحفظ شيء؛ أعد التحميل أو أغلق المشروع.';return;}
  restoring=false;update();
+ if(project){
+  if(applied&&!opened.unsaved)project.markClean(snapshot());
+  projectReady=true;$('projectSave').disabled=false;
+  showProject(opened.offline?'خادم الحسابات غير متاح؛ تعمل على المسودة':opened.unsaved?'تغييرات لم تُحفظ في المشروع':saved?'محفوظ':'مشروع جديد');
+ }
  const running=usable&&saved.pendingGeneration;if(!running)return;
  await generation.resume(running);
 }
-$('discardWork').onclick=async()=>{if(!window.confirm('سيُمسح العمل المحفوظ وتبدأ من جديد. هل تتابع؟'))return;restoring=true;clearTimeout(saveTimer);try{await workStore.clear();}catch(e){console.warn(e);}flow.source=flow.original='';flow.outputs=[null,null,null];generation.candidate=null;location.assign('/prepare');};
+$('discardWork').onclick=async()=>{if(!window.confirm(project?'ستُهمل تغييراتك غير المحفوظة ويُعاد فتح المشروع. هل تتابع؟':'سيُمسح العمل المحفوظ وتبدأ من جديد. هل تتابع؟'))return;restoring=true;clearTimeout(saveTimer);try{await workStore.clear(project?draftKey(project.id):undefined);}catch(e){console.warn(e);}flow.source=flow.original='';flow.outputs=[null,null,null];generation.candidate=null;location.assign('/prepare');};
 history.replaceState({stage:0},'','/prepare');shell.dataset.view='compare';shell.dataset.background='white';update();restoreWork();
