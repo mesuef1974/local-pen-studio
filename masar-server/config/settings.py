@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'audit',
     'accounts',
     'projects',
+    'jobs',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -106,6 +107,10 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 64 * 1024
 FILES_DIR = os.environ.get('MASAR_FILES_DIR') or BASE_DIR / 'var' / 'files'
 MAX_ASSET_BYTES = 32 * 1024 * 1024
 MAX_STATE_BYTES = 16 * 1024 * 1024
+# Compute jobs: how many one account may keep waiting, and when a silent worker counts as dead.
+MAX_QUEUED_JOBS = 3
+MAX_JOB_ATTEMPTS = 2
+JOB_HEARTBEAT_TIMEOUT = 120
 
 LANGUAGE_CODE = 'ar'
 TIME_ZONE = 'Asia/Qatar'

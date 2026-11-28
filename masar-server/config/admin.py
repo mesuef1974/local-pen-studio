@@ -8,6 +8,7 @@ from accounts import services
 from accounts.errors import DomainError
 from accounts.models import Role, User
 from audit.models import AuditEvent
+from jobs.models import Job
 from projects.models import Asset, Project
 
 
@@ -84,6 +85,17 @@ class AssetAdmin(OwnOnly):
     fields = list_display = ('sha256', 'content_type', 'size', 'created_at')
 
 
+class JobAdmin(OwnOnly):
+    fields = ('inputs', 'status', 'review', 'attempts', 'error', 'result_meta', 'created_at', 'started_at',
+              'finished_at')
+    list_display = ('prompt', 'status', 'review', 'created_at', 'finished_at')
+    list_filter = ('status', 'review')
+
+    @admin.display(description='الوصف')
+    def prompt(self, job):
+        return str(job.inputs.get('prompt') or job.inputs.get('style') or job.kind)[:60]
+
+
 class AuditAdmin(ReadOnly):
     fields = list_display = ('created_at', 'actor_username', 'action', 'target_type', 'target_id', 'ip_address',
                              'detail')
@@ -94,4 +106,5 @@ site = MasarAdminSite()
 site.register(User, UserAdmin)
 site.register(Project, ProjectAdmin)
 site.register(Asset, AssetAdmin)
+site.register(Job, JobAdmin)
 site.register(AuditEvent, AuditAdmin)
